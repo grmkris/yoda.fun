@@ -2,12 +2,8 @@
   "name": "@yoda.fun/auth",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./src/*.ts"
+      "types": "./dist/auth-config.d.ts",
+      "default": "./src/auth-config.ts"
     }
   },
   "type": "module",
@@ -22,8 +18,8 @@
   },
   "dependencies": {
     "better-auth": "catalog:",
-    "dotenv": "catalog:",
     "zod": "catalog:",
-    "@yoda.fun/db": "workspace:*"
+    "@yoda.fun/db": "workspace:*",
+    "@yoda.fun/shared": "workspace:*"
   }
 }

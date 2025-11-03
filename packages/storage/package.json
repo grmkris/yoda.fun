@@ -1,0 +1,32 @@
+{
+  "name": "@yoda.fun/storage",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/storage-client.d.ts",
+      "default": "./src/storage-client.ts"
+    },
+    "./setup-minio": {
+      "types": "./dist/setup-minio.d.ts",
+      "default": "./src/setup-minio.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/shared": "workspace:*",
+    "zod": "catalog:"
+  }
+}

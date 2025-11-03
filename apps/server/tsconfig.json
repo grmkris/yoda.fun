@@ -4,13 +4,14 @@
     "composite": true,
     "outDir": "dist",
     "baseUrl": ".",
+    "types": ["bun"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "test/*": ["./test/*"]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "strictNullChecks": true
-  }
+  },
+  "include": ["src", "test"]
 }

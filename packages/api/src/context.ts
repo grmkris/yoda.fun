@@ -1,11 +1,12 @@
+import type { Auth } from "@yoda.fun/auth";
 import type { Context as HonoContext } from "hono";
-import { auth } from "@yoda.fun/auth";
 
 export type CreateContextOptions = {
 	context: HonoContext;
+	auth: Auth;
 };
 
-export async function createContext({ context }: CreateContextOptions) {
+export async function createContext({ context, auth }: CreateContextOptions) {
 	const session = await auth.api.getSession({
 		headers: context.req.raw.headers,
 	});

@@ -3,12 +3,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./src/*.ts"
+      "types": "./dist/db.d.ts",
+      "default": "./src/db.ts"
     }
   },
   "scripts": {
@@ -31,9 +27,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/logger": "workspace:*",
     "drizzle-orm": "^0.44.2",
     "pg": "^8.14.1",
-    "dotenv": "catalog:",
     "zod": "catalog:"
   }
 }

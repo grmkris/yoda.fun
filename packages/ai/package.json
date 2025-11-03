@@ -1,0 +1,47 @@
+{
+  "name": "@yoda.fun/ai",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/ai-client.d.ts",
+      "default": "./src/ai-client.ts"
+    },
+    "./label-detection": {
+      "types": "./dist/label-detection.d.ts",
+      "default": "./src/label-detection.ts"
+    },
+    "./image-generation": {
+      "types": "./dist/image-generation.d.ts",
+      "default": "./src/image-generation.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.1",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "2.0.41",
+    "@ai-sdk/google": "2.0.27",
+    "@ai-sdk/groq": "2.0.28",
+    "@ai-sdk/xai": "2.0.31",
+    "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/shared": "workspace:*",
+    "@posthog/ai": "^6.4.4",
+    "ai": "5.0.87",
+    "posthog-node": "catalog:",
+    "zod": "catalog:"
+  }
+}

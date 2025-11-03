@@ -1,58 +1,59 @@
-import "dotenv/config";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
-import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { RPCHandler } from "@orpc/server/fetch";
-import { onError } from "@orpc/server";
+import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers/index";
-import { auth } from "@yoda.fun/auth";
+import { createAuth } from "@yoda.fun/auth";
+import { createDb } from "@yoda.fun/db";
+import { SERVICE_URLS } from "@yoda.fun/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { env } from "@/env";
 
 const app = new Hono();
 
+// Create db and auth instances
+const db = createDb({ databaseUrl: env.DATABASE_URL });
+const auth = createAuth({
+	db,
+	appEnv: env.APP_ENV,
+	secret: env.BETTER_AUTH_SECRET,
+});
+
 app.use(logger());
 app.use(
-	"/*",
-	cors({
-		origin: process.env.CORS_ORIGIN || "",
-		allowMethods: ["GET", "POST", "OPTIONS"],
-		allowHeaders: ["Content-Type", "Authorization"],
-		credentials: true,
-	}),
+  "/*",
+  cors({
+    origin: SERVICE_URLS[env.APP_ENV].web,
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
 );
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
-	plugins: [
-		new OpenAPIReferencePlugin({
-			schemaConverters: [new ZodToJsonSchemaConverter()],
-		}),
-	],
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
+  plugins: [
+    new OpenAPIReferencePlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
+  ],
 });
 
-export const rpcHandler = new RPCHandler(appRouter, {
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
-});
+export const rpcHandler = new RPCHandler(appRouter);
 
 app.use("/*", async (c, next) => {
-	const context = await createContext({ context: c });
+	const context = await createContext({
+		context: c,
+		auth,
+	});
 
 	const rpcResult = await rpcHandler.handle(c.req.raw, {
 		prefix: "/rpc",
-		context: context,
+		context,
 	});
 
 	if (rpcResult.matched) {
@@ -61,7 +62,7 @@ app.use("/*", async (c, next) => {
 
 	const apiResult = await apiHandler.handle(c.req.raw, {
 		prefix: "/api-reference",
-		context: context,
+		context,
 	});
 
 	if (apiResult.matched) {
@@ -71,8 +72,6 @@ app.use("/*", async (c, next) => {
 	await next();
 });
 
-app.get("/", (c) => {
-	return c.text("OK");
-});
+app.get("/", (c) => c.text("OK"));
 
 export default app;

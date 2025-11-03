@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "build": "tsdown",
-    "check-types": "tsc -b",
+    "typecheck": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.js"
+    "start": "bun run dist/index.js",
+    "test": "bun test --preload ./test/test.setup.ts",
+    "test:watch": "bun test --watch --preload ./test/test.setup.ts"
   },
   "dependencies": {
     "hono": "catalog:",
@@ -15,15 +17,18 @@
     "@orpc/openapi": "catalog:",
     "@orpc/zod": "catalog:",
     "better-auth": "catalog:",
-    "dotenv": "catalog:",
     "zod": "catalog:",
     "@yoda.fun/api": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
-    "@yoda.fun/db": "workspace:*"
+    "@yoda.fun/db": "workspace:*",
+    "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/test-utils": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",
     "@types/bun": "^1.2.6",
-    "tsdown": "catalog:"
+    "tsdown": "catalog:",
+    "@faker-js/faker": "^10.0.0",
+    "drizzle-orm": "^0.44.2"
   }
 }
