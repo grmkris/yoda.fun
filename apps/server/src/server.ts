@@ -3,7 +3,7 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@yoda.fun/api/context";
-import { appRouter } from "@yoda.fun/api/routers/index";
+import { appRouter } from "@yoda.fun/api/routers";
 import { createAuth } from "@yoda.fun/auth";
 import { createDb } from "@yoda.fun/db";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";

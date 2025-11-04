@@ -2,12 +2,16 @@
   "name": "@yoda.fun/api",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/api.d.ts",
+      "default": "./src/api.ts"
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./src/*.ts"
+    "./routers": {
+      "types": "./dist/routers/routers.d.ts",
+      "default": "./src/routers/routers.ts"
+    },
+    "./context": {
+      "types": "./dist/context.d.ts",
+      "default": "./src/context.ts"
     }
   },
   "type": "module",

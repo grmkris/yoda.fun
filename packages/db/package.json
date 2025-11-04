@@ -6,13 +6,9 @@
       "types": "./dist/db.d.ts",
       "default": "./src/db.ts"
     },
-    "./schema/auth": {
-      "types": "./dist/schema/auth/index.d.ts",
-      "default": "./src/schema/auth/index.ts"
-    },
-    "./schema/auth/index": {
-      "types": "./dist/schema/auth/index.d.ts",
-      "default": "./src/schema/auth/index.ts"
+    "./schema": {
+      "types": "./dist/schema/schema.db.d.ts",
+      "default": "./src/schema/schema.db.ts"
     }
   },
   "scripts": {

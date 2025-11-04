@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { call, ORPCError } from "@orpc/server";
-import { appRouter } from "@yoda.fun/api/routers/index";
+import { appRouter } from "@yoda.fun/api/routers";
 import { createTestSetup, type TestSetup } from "test/test.setup";
 import {
   createAuthenticatedContext,

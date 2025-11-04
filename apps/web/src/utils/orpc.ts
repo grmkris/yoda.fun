@@ -2,7 +2,7 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
-import type { AppRouterClient } from "@yoda.fun/api/routers/index";
+import type { AppRouterClient } from "@yoda.fun/api/routers";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { toast } from "sonner";
 import { env } from "@/env";
