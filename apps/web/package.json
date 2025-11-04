@@ -5,7 +5,12 @@
   "scripts": {
     "dev": "next dev --port=3001",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@orpc/client": "catalog:",
@@ -23,6 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.552.0",
+    "motion": "^12.23.24",
     "next": "16.0.1",
     "next-themes": "^0.4.6",
     "porto": "^0.2.35",

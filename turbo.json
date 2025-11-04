@@ -13,6 +13,9 @@
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
+    "fix:unsafe": {
+      "dependsOn": ["^fix:unsafe"]
+    },
     "test": {
       "cache": false,
       "outputs": ["coverage/**"],

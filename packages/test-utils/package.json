@@ -4,11 +4,25 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./pg-lite": "./src/pg-lite.ts"
+    "./pg-lite": "./src/pg-lite.ts",
+    "./s3-test-server": "./src/s3-test-server.ts",
+    "./redis-test-server": "./src/redis-test-server.ts"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.10",
     "@faker-js/faker": "^10.0.0",
+    "minio": "^8.0.6",
+    "redis-memory-server": "^0.13.0",
+    "s3rver": "3.7.1",
+    "@types/s3rver": "^3.7.4",
     "zod": "catalog:"
   },
   "devDependencies": {

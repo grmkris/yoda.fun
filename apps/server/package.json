@@ -18,17 +18,21 @@
     "@orpc/zod": "catalog:",
     "better-auth": "catalog:",
     "zod": "catalog:",
+    "@yoda.fun/ai": "workspace:*",
     "@yoda.fun/api": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
+    "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/storage": "workspace:*",
     "@yoda.fun/test-utils": "workspace:*"
   },
   "devDependencies": {
     "typescript": "catalog:",
     "@types/bun": "^1.2.6",
     "tsdown": "catalog:",
-    "@faker-js/faker": "^10.0.0",
-    "drizzle-orm": "^0.44.2"
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
+    "@faker-js/faker": "^10.0.0"
   }
 }

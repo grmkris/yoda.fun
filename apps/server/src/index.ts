@@ -6,7 +6,7 @@ import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers/index";
 import { createAuth } from "@yoda.fun/auth";
 import { createDb } from "@yoda.fun/db";
-import { SERVICE_URLS } from "@yoda.fun/shared";
+import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -15,11 +15,11 @@ import { env } from "@/env";
 const app = new Hono();
 
 // Create db and auth instances
-const db = createDb({ databaseUrl: env.DATABASE_URL });
+const db = createDb({ dbData: { type: "pg", databaseUrl: env.DATABASE_URL } });
 const auth = createAuth({
-	db,
-	appEnv: env.APP_ENV,
-	secret: env.BETTER_AUTH_SECRET,
+  db,
+  appEnv: env.APP_ENV,
+  secret: env.BETTER_AUTH_SECRET,
 });
 
 app.use(logger());
@@ -46,30 +46,30 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 export const rpcHandler = new RPCHandler(appRouter);
 
 app.use("/*", async (c, next) => {
-	const context = await createContext({
-		context: c,
-		auth,
-	});
+  const context = await createContext({
+    context: c,
+    auth,
+  });
 
-	const rpcResult = await rpcHandler.handle(c.req.raw, {
-		prefix: "/rpc",
-		context,
-	});
+  const rpcResult = await rpcHandler.handle(c.req.raw, {
+    prefix: "/rpc",
+    context,
+  });
 
-	if (rpcResult.matched) {
-		return c.newResponse(rpcResult.response.body, rpcResult.response);
-	}
+  if (rpcResult.matched) {
+    return c.newResponse(rpcResult.response.body, rpcResult.response);
+  }
 
-	const apiResult = await apiHandler.handle(c.req.raw, {
-		prefix: "/api-reference",
-		context,
-	});
+  const apiResult = await apiHandler.handle(c.req.raw, {
+    prefix: "/api-reference",
+    context,
+  });
 
-	if (apiResult.matched) {
-		return c.newResponse(apiResult.response.body, apiResult.response);
-	}
+  if (apiResult.matched) {
+    return c.newResponse(apiResult.response.body, apiResult.response);
+  }
 
-	await next();
+  await next();
 });
 
 app.get("/", (c) => c.text("OK"));

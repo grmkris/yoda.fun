@@ -5,10 +5,23 @@
     ".": {
       "types": "./dist/db.d.ts",
       "default": "./src/db.ts"
+    },
+    "./schema/auth": {
+      "types": "./dist/schema/auth/index.d.ts",
+      "default": "./src/schema/auth/index.ts"
+    },
+    "./schema/auth/index": {
+      "types": "./dist/schema/auth/index.d.ts",
+      "default": "./src/schema/auth/index.ts"
     }
   },
   "scripts": {
     "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
@@ -27,10 +40,11 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.10",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
-    "drizzle-orm": "^0.44.2",
-    "pg": "^8.14.1",
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
     "zod": "catalog:"
   }
 }

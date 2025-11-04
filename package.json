@@ -17,7 +17,9 @@
       "typescript": "^5.8.2",
       "tsdown": "^0.15.5",
       "@orpc/client": "^1.10.0",
-      "posthog-node": "^5.11.0"
+      "posthog-node": "^5.11.0",
+      "drizzle-orm": "^0.44.2",
+      "drizzle-zod": "^0.7.0"
     }
   },
   "scripts": {
@@ -26,6 +28,7 @@
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "fix:unsafe": "turbo fix:unsafe",
     "test:watch": "turbo test:watch",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",

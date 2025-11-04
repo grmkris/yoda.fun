@@ -1,3 +1,26 @@
 export const NUMERIC_CONSTANTS = {
   MAX_DELAY: 1000,
+  validationLimits: {
+    minStringLength: 1,
+  },
+  swipe: {
+    exitDistance: 1000,
+    animationDuration: 300,
+    dragElasticity: 0.7,
+    scaleOnDrag: 1.05,
+    exitScale: 0.8,
+    stackScaleFactor: 0.05,
+    stackOpacityFactor: 0.2,
+    stackYOffset: 10,
+    buttonSize: 60,
+    buttonBorderWidth: 2,
+    buttonScale: 1.1,
+    iconSize: 32,
+    iconStrokeWidth: 2.5,
+    transitionDuration: 0.2,
+    overlayOpacity: 0.3,
+    disabledOpacity: 0.5,
+    emptyStateHeight: 400,
+    millisecondsPerSecond: 1000,
+  },
 };

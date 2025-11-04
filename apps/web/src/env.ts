@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { Environment } from "@yoda.fun/shared";
+import { Environment } from "@yoda.fun/shared/services";
 import { z } from "zod";
 
 export const env = createEnv({

@@ -1,4 +1,4 @@
-import { Environment } from "@yoda.fun/shared";
+import { Environment } from "@yoda.fun/shared/services";
 import { z } from "zod";
 
 export const envSchema = z.object({
