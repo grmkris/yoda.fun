@@ -134,6 +134,8 @@
         "@yoda.fun/db": "workspace:*",
         "@yoda.fun/shared": "workspace:*",
         "better-auth": "catalog:",
+        "porto": "^0.2.35",
+        "viem": "2.38.6",
         "zod": "catalog:",
       },
       "devDependencies": {

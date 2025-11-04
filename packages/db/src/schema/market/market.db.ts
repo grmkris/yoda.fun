@@ -1,0 +1,130 @@
+import {
+  type BetId,
+  type MarketId,
+  typeIdGenerator,
+  type UserBalanceId,
+  type UserId,
+} from "@yoda.fun/shared/typeid";
+import {
+  boolean,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from "drizzle-orm/pg-core";
+import {
+  baseEntityFields,
+  createTimestampField,
+  typeId,
+} from "../../utils/db-utils";
+import { user } from "../auth/auth.db";
+
+// Enums
+export const marketStatusEnum = pgEnum("market_status", [
+  "ACTIVE",
+  "CLOSED",
+  "RESOLVED",
+  "CANCELLED",
+]);
+
+export const marketResultEnum = pgEnum("market_result", [
+  "YES",
+  "NO",
+  "INVALID",
+]);
+
+export const betVoteEnum = pgEnum("bet_vote", ["YES", "NO"]);
+
+export const betStatusEnum = pgEnum("bet_status", [
+  "ACTIVE",
+  "WON",
+  "LOST",
+  "REFUNDED",
+]);
+
+// Tables
+export const market = pgTable("market", {
+  id: typeId("market", "id")
+    .primaryKey()
+    .$defaultFn(() => typeIdGenerator("market"))
+    .$type<MarketId>(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  imageUrl: text("image_url"),
+  category: text("category"),
+  tags: text("tags").array(),
+  status: marketStatusEnum("status").notNull().default("ACTIVE"),
+  votingEndsAt: createTimestampField("voting_ends_at").notNull(),
+  resolutionDeadline: createTimestampField("resolution_deadline").notNull(),
+  betAmount: numeric("bet_amount", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0.10"),
+  totalYesVotes: integer("total_yes_votes").notNull().default(0),
+  totalNoVotes: integer("total_no_votes").notNull().default(0),
+  totalPool: numeric("total_pool", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  result: marketResultEnum("result"),
+  sources: jsonb("sources").$type<Array<{ url: string; description?: string }>>(),
+  createdById: typeId("user", "created_by_id")
+    .references(() => user.id, { onDelete: "set null" })
+    .$type<UserId>(),
+  resolvedAt: createTimestampField("resolved_at"),
+  ...baseEntityFields,
+});
+
+export const bet = pgTable(
+  "bet",
+  {
+    id: typeId("bet", "id")
+      .primaryKey()
+      .$defaultFn(() => typeIdGenerator("bet"))
+      .$type<BetId>(),
+    userId: typeId("user", "user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" })
+      .$type<UserId>(),
+    marketId: typeId("market", "market_id")
+      .notNull()
+      .references(() => market.id, { onDelete: "cascade" })
+      .$type<MarketId>(),
+    vote: betVoteEnum("vote").notNull(),
+    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+    status: betStatusEnum("status").notNull().default("ACTIVE"),
+    payout: numeric("payout", { precision: 10, scale: 2 }),
+    ...baseEntityFields,
+  },
+  (table) => [
+    // Each user can only bet once per market
+    unique("unique_user_market_bet").on(table.userId, table.marketId),
+  ]
+);
+
+export const userBalance = pgTable("user_balance", {
+  id: typeId("userBalance", "id")
+    .primaryKey()
+    .$defaultFn(() => typeIdGenerator("userBalance"))
+    .$type<UserBalanceId>(),
+  userId: typeId("user", "user_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" })
+    .$type<UserId>(),
+  availableBalance: numeric("available_balance", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  pendingBalance: numeric("pending_balance", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  totalDeposited: numeric("total_deposited", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  totalWithdrawn: numeric("total_withdrawn", { precision: 12, scale: 2 })
+    .notNull()
+    .default("0.00"),
+  ...baseEntityFields,
+});

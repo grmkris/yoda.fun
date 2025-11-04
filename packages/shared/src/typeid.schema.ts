@@ -8,9 +8,18 @@ export const idTypesMapNameToPrefix = {
   session: "ses",
   account: "acc",
   verification: "ver",
+  walletAddress: "wal",
 
   // ai related
   aiGeneration: "aig",
+
+  // prediction market related
+  market: "mkt",
+  bet: "bet",
+  transaction: "txn",
+  deposit: "dep",
+  withdrawal: "wdl",
+  userBalance: "bal",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -92,3 +101,24 @@ export type AccountId = z.infer<typeof AccountId>;
 
 export const VerificationId = typeIdValidator("verification");
 export type VerificationId = z.infer<typeof VerificationId>;
+
+export const MarketId = typeIdValidator("market");
+export type MarketId = z.infer<typeof MarketId>;
+
+export const BetId = typeIdValidator("bet");
+export type BetId = z.infer<typeof BetId>;
+
+export const TransactionId = typeIdValidator("transaction");
+export type TransactionId = z.infer<typeof TransactionId>;
+
+export const DepositId = typeIdValidator("deposit");
+export type DepositId = z.infer<typeof DepositId>;
+
+export const WithdrawalId = typeIdValidator("withdrawal");
+export type WithdrawalId = z.infer<typeof WithdrawalId>;
+
+export const UserBalanceId = typeIdValidator("userBalance");
+export type UserBalanceId = z.infer<typeof UserBalanceId>;
+
+export const WalletAddressId = typeIdValidator("walletAddress");
+export type WalletAddressId = z.infer<typeof WalletAddressId>;

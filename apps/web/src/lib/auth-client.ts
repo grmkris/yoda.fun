@@ -1,8 +1,10 @@
 import type { Auth } from "@yoda.fun/auth";
-import { inferAdditionalFields } from "better-auth/client/plugins";
+import { SERVICE_URLS } from "@yoda.fun/shared/services";
+import { inferAdditionalFields, siweClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { env } from "@/env";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SERVER_URL,
-  plugins: [inferAdditionalFields<Auth>()],
+  baseURL: SERVICE_URLS[env.NEXT_PUBLIC_ENV].auth,
+  plugins: [inferAdditionalFields<Auth>(), siweClient()],
 });

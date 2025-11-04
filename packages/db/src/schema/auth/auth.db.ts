@@ -4,8 +4,9 @@ import {
   typeIdGenerator,
   type UserId,
   type VerificationId,
+  type WalletAddressId,
 } from "@yoda.fun/shared/typeid";
-import { boolean, pgTable, text } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text } from "drizzle-orm/pg-core";
 import {
   baseEntityFields,
   createTimestampField,
@@ -75,4 +76,21 @@ export const verification = pgTable("verification", {
   expiresAt: createTimestampField("expires_at").notNull(),
   createdAt: createTimestampField("created_at").$defaultFn(() => new Date()),
   updatedAt: createTimestampField("updated_at").$defaultFn(() => new Date()),
+});
+
+export const walletAddress = pgTable("wallet_address", {
+  id: typeId("walletAddress", "id")
+    .primaryKey()
+    .$defaultFn(() => typeIdGenerator("walletAddress"))
+    .$type<WalletAddressId>(),
+  userId: typeId("user", "user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" })
+    .$type<UserId>(),
+  address: text("address").notNull(),
+  chainId: integer("chain_id").notNull(),
+  isPrimary: boolean("is_primary")
+    .$defaultFn(() => false)
+    .notNull(),
+  ...baseEntityFields,
 });

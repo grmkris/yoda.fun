@@ -49,6 +49,7 @@ app.use("/*", async (c, next) => {
   const context = await createContext({
     context: c,
     auth,
+    db,
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {

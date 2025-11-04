@@ -12,7 +12,8 @@ export const SERVICE_URLS: Record<
     api: string;
     web: string;
     cookieDomain: string;
-    storage: string;
+    siweDomain: string;
+    storageUrl: string;
   }
 > = {
   dev: {
@@ -20,13 +21,15 @@ export const SERVICE_URLS: Record<
     api: "http://localhost:3000",
     web: "http://localhost:3001",
     cookieDomain: "localhost",
-    storage: "http://localhost:9000",
+    siweDomain: "localhost",
+    storageUrl: "http://localhost:9000",
   },
   prod: {
     auth: "https://api.yoda.fun",
     api: "https://api.yoda.fun",
     web: "https://yoda.fun",
     cookieDomain: ".yoda.fun",
-    storage: "https://storage.yoda.fun",
+    siweDomain: ".yoda.fun",
+    storageUrl: "https://storage.yoda.fun",
   },
 } as const;
