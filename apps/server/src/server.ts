@@ -23,8 +23,8 @@ const auth = createAuth({
   secret: env.BETTER_AUTH_SECRET,
 });
 const logger = createLogger({
-  level: env.APP_ENV === "production" ? "info" : "debug",
-  nodeEnv: env.APP_ENV === "production" ? "production" : "development",
+  level: env.APP_ENV === "prod" ? "info" : "debug",
+  nodeEnv: env.APP_ENV === "prod" ? "production" : "development",
   appName: "yoda-server",
 });
 

@@ -1,9 +1,14 @@
 import { ORPCError } from "@orpc/server";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import { and, desc, eq, gt, notInArray } from "@yoda.fun/db/drizzle";
+import { and, desc, eq, gt, notInArray, type SQL } from "@yoda.fun/db/drizzle";
 import { MarketId, UserId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
+
+const MAX_MARKETS_PER_PAGE = 100;
+const DEFAULT_MARKETS_PER_PAGE = 20;
+const MAX_STACK_SIZE = 50;
+const DEFAULT_STACK_SIZE = 10;
 
 export const marketRouter = {
   /**
@@ -15,13 +20,18 @@ export const marketRouter = {
         status: z
           .enum(["ACTIVE", "CLOSED", "RESOLVED", "CANCELLED"])
           .optional(),
-        limit: z.number().min(1).max(100).optional().default(20),
+        limit: z
+          .number()
+          .min(1)
+          .max(MAX_MARKETS_PER_PAGE)
+          .optional()
+          .default(DEFAULT_MARKETS_PER_PAGE),
         offset: z.number().min(0).optional().default(0),
         category: z.string().optional(),
       })
     )
     .handler(async ({ context, input }) => {
-      const conditions = [];
+      const conditions: SQL[] = [];
 
       if (input.status) {
         conditions.push(eq(DB_SCHEMA.market.status, input.status));
@@ -76,7 +86,12 @@ export const marketRouter = {
   getStack: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(50).optional().default(10),
+        limit: z
+          .number()
+          .min(1)
+          .max(MAX_STACK_SIZE)
+          .optional()
+          .default(DEFAULT_STACK_SIZE),
       })
     )
     .handler(async ({ context, input }) => {

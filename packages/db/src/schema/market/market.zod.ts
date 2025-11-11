@@ -1,5 +1,5 @@
 import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import type { z } from "zod";
 import { bet, market, userBalance } from "./market.db";
 import {
   deposit,
@@ -49,7 +49,9 @@ export type InsertUserBalance = z.infer<typeof insertUserBalanceSchema>;
 
 // Transaction schemas
 export const selectTransactionSchema = createSelectSchema(transactionTable);
-export const insertTransactionSchema = createSelectSchema(transactionTable).omit({
+export const insertTransactionSchema = createSelectSchema(
+  transactionTable
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

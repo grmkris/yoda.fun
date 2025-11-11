@@ -107,12 +107,15 @@ export function createBetService({
         return betRecord;
       });
 
-      logger.info({
-        userId,
-        marketId: input.marketId,
-        vote: input.vote,
-        betId: result.id,
-      }, "Vote placed");
+      logger.info(
+        {
+          userId,
+          marketId: input.marketId,
+          vote: input.vote,
+          betId: result.id,
+        },
+        "Vote placed"
+      );
 
       return result;
     },

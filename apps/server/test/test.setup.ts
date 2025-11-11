@@ -1,4 +1,5 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
+import { createBetService } from "@yoda.fun/api/services/bet-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
@@ -29,6 +30,7 @@ export type TestSetup = {
     storage: ReturnType<typeof createStorageClient>;
     aiClient: AiClient;
     redis: Awaited<ReturnType<typeof createTestRedisSetup>>;
+    betService: ReturnType<typeof createBetService>;
   };
   users: {
     authenticated: TestUser;
@@ -126,7 +128,7 @@ export async function createTestSetup(): Promise<TestSetup> {
   // Run migrations
   try {
     await runMigrations(db, logger);
-    logger.debug("Migrations applied successfully");
+    logger.debug({ msg: "Migrations applied successfully" });
   } catch (error) {
     logger.error({ msg: "Migration failed", error });
     throw error;
@@ -139,7 +141,7 @@ export async function createTestSetup(): Promise<TestSetup> {
     secret: process.env.BETTER_AUTH_SECRET || "test-secret-key",
   });
 
-  logger.debug("Creating test users...");
+  logger.debug({ msg: "Creating test users..." });
 
   // Create test users using real auth API
   const authenticatedUser = await createTestUser(
@@ -177,17 +179,22 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   });
 
+  // Create bet service
+  const betService = createBetService({
+    deps: { db, logger },
+  });
+
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
-    services: ["db", "auth", "storage", "redis", "ai"],
+    services: ["db", "auth", "storage", "redis", "ai", "betService"],
   });
 
   // Cleanup function to reset data between tests
   const cleanup = async () => {
     await Promise.resolve(); // TODO
 
-    logger.debug("Test data cleaned up");
+    logger.debug({ msg: "Test data cleaned up" });
   };
 
   // Close function to shut down all services
@@ -196,7 +203,7 @@ export async function createTestSetup(): Promise<TestSetup> {
       await s3Setup.shutdown();
       await redis.shutdown();
       await pgLite.close();
-      logger.info("Test environment closed");
+      logger.info({ msg: "Test environment closed" });
     } catch (error) {
       logger.error({ msg: "Error closing test environment", error });
     }
@@ -211,6 +218,7 @@ export async function createTestSetup(): Promise<TestSetup> {
       storage,
       aiClient,
       redis,
+      betService,
     },
     users: {
       authenticated: authenticatedUser,

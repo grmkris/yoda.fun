@@ -23,12 +23,14 @@ const TITLE_TEXT = `
 export default function Home() {
   const healthCheck = useQuery(orpc.healthCheck.queryOptions());
   const [connector] = useConnectors();
-  const { connect } = Hooks.useConnect();
+  const { mutate: connect } = Hooks.useConnect();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
   const handleConnect = () => {
-    if (!connector) return;
+    if (!connector) {
+      return;
+    }
     connect({
       connector,
       signInWithEthereum: {
@@ -74,23 +76,23 @@ export default function Home() {
                 <span className="text-muted-foreground text-sm">Connected</span>
               </div>
               <div className="rounded bg-muted p-3">
-                <p className="text-muted-foreground text-xs mb-1">Address</p>
-                <p className="font-mono text-sm break-all">{address}</p>
+                <p className="mb-1 text-muted-foreground text-xs">Address</p>
+                <p className="break-all font-mono text-sm">{address}</p>
               </div>
               <button
-                type="button"
+                className="rounded bg-red-500 px-4 py-2 font-medium text-sm text-white hover:bg-red-600"
                 onClick={() => disconnect()}
-                className="rounded bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+                type="button"
               >
                 Disconnect
               </button>
             </div>
           ) : (
             <button
-              type="button"
-              onClick={handleConnect}
+              className="rounded bg-blue-500 px-4 py-2 font-medium text-sm text-white hover:bg-blue-600 disabled:opacity-50"
               disabled={!connector}
-              className="rounded bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50"
+              onClick={handleConnect}
+              type="button"
             >
               Sign in with Ethereum
             </button>

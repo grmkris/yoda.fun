@@ -20,7 +20,7 @@ describe("App Router (oRPC)", () => {
 
   describe("Health Check", () => {
     test("returns OK for public endpoint", async () => {
-      const context = createUnauthenticatedContext();
+      const context = createUnauthenticatedContext(testEnv);
 
       const result = await call(appRouter.healthCheck, undefined, {
         context,
@@ -45,7 +45,7 @@ describe("App Router (oRPC)", () => {
     });
 
     test("throws UNAUTHORIZED when not authenticated", async () => {
-      const context = createUnauthenticatedContext();
+      const context = createUnauthenticatedContext(testEnv);
 
       await expect(() =>
         call(appRouter.privateData, undefined, { context })
