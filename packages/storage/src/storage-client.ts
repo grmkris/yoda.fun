@@ -133,7 +133,7 @@ export function createStorageClient(config: StorageConfig) {
 
       const signedUrl = s3Client.presign(key, {
         expiresIn,
-        endpoint: SERVICE_URLS[config.env].storage,
+        endpoint: SERVICE_URLS[config.env].storageUrl,
       });
 
       logger?.info({ msg: "Signed URL generated", key });
@@ -162,7 +162,7 @@ export function createStorageClient(config: StorageConfig) {
       });
 
       const uploadUrl = s3Client.presign(key, {
-        endpoint: SERVICE_URLS[config.env].storage,
+        endpoint: SERVICE_URLS[config.env].storageUrl,
         method: "PUT",
         expiresIn,
         type: contentType,

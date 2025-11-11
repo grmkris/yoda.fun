@@ -6,14 +6,12 @@ import {
   type UserId,
 } from "@yoda.fun/shared/typeid";
 import {
-  boolean,
   integer,
   jsonb,
   numeric,
   pgEnum,
   pgTable,
   text,
-  timestamp,
   unique,
 } from "drizzle-orm/pg-core";
 import {
@@ -69,7 +67,8 @@ export const market = pgTable("market", {
     .notNull()
     .default("0.00"),
   result: marketResultEnum("result"),
-  sources: jsonb("sources").$type<Array<{ url: string; description?: string }>>(),
+  sources:
+    jsonb("sources").$type<Array<{ url: string; description?: string }>>(),
   createdById: typeId("user", "created_by_id")
     .references(() => user.id, { onDelete: "set null" })
     .$type<UserId>(),

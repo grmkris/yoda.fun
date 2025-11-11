@@ -1,19 +1,6 @@
 import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { S3Client as BunS3Client } from "bun";
 import S3rver from "s3rver";
-
-/**
- * Creates a temporary directory for S3rver to use
- */
-const createTempDir = () => {
-  const tmpDir = path.join(os.tmpdir(), `s3rver-test-${Date.now()}`);
-  if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir, { recursive: true });
-  }
-  return tmpDir;
-};
 
 /**
  * Generate a random port number between min and max
@@ -28,13 +15,12 @@ export async function createTestS3Setup(bucketName: string) {
   // Set up the S3rver server
   const port = getRandomPort();
   const hostname = "localhost";
-  const directory = createTempDir();
 
   // Create the S3rver instance
   const s3rver = new S3rver({
     port,
-    directory,
     silent: true,
+    directory: "/tmp/s3rver-test",
     configureBuckets: [{ name: bucketName, configs: [] }],
   });
 
@@ -53,7 +39,7 @@ export async function createTestS3Setup(bucketName: string) {
   // Create a method to shutdown the server
   const shutdown = async () => {
     await s3rver.close();
-    fs.rmSync(directory, { recursive: true, force: true });
+    fs.rmSync("/tmp/s3rver-test", { recursive: true, force: true });
   };
 
   return {

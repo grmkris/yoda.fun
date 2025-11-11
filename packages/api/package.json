@@ -26,13 +26,11 @@
   "devDependencies": {
     "tsdown": "catalog:"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
   "dependencies": {
     "@orpc/server": "catalog:",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@yoda.fun/logger": "workspace:*",
     "@orpc/zod": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:",

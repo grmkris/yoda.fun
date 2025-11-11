@@ -9,10 +9,19 @@ export type LoggerConfig = {
   appName?: string;
 };
 
+export type Logger = {
+  info: (obj: Record<string, unknown>, msg?: string) => void;
+  error: (obj: Record<string, unknown>, msg?: string) => void;
+  warn: (obj: Record<string, unknown>, msg?: string) => void;
+  debug: (obj: Record<string, unknown>, msg?: string) => void;
+  fatal: (obj: Record<string, unknown>, msg?: string) => void;
+  trace: (obj: Record<string, unknown>, msg?: string) => void;
+};
+
 /**
  * Create a Pino logger instance with the given configuration
  */
-export function createLogger(config: LoggerConfig = {}) {
+export function createLogger(config: LoggerConfig = {}): Logger {
   const {
     level = "info",
     nodeEnv = "development",
@@ -79,5 +88,3 @@ export function createLogger(config: LoggerConfig = {}) {
 
   return logger;
 }
-
-export type Logger = ReturnType<typeof createLogger>;

@@ -6,23 +6,29 @@ import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers";
 import { createAuth } from "@yoda.fun/auth";
 import { createDb } from "@yoda.fun/db";
+import { createLogger } from "@yoda.fun/logger";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 import { env } from "@/env";
 
 const app = new Hono();
 
-// Create db and auth instances
+// Create db, auth, and logger instances
 const db = createDb({ dbData: { type: "pg", databaseUrl: env.DATABASE_URL } });
 const auth = createAuth({
   db,
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
 });
+const logger = createLogger({
+  level: env.APP_ENV === "production" ? "info" : "debug",
+  nodeEnv: env.APP_ENV === "production" ? "production" : "development",
+  appName: "yoda-server",
+});
 
-app.use(logger());
+app.use(honoLogger());
 app.use(
   "/*",
   cors({
@@ -50,6 +56,7 @@ app.use("/*", async (c, next) => {
     context: c,
     auth,
     db,
+    logger,
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {

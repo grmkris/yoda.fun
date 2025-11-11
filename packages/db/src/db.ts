@@ -58,7 +58,7 @@ export async function runMigrations(
   db: Database,
   logger?: Logger
 ): Promise<void> {
-  logger?.info("Running database migrations");
+  logger?.info({}, "Running database migrations");
 
   // Resolve migrations folder
   // In development: import.meta.dir is packages/db/src, use relative path
@@ -76,5 +76,5 @@ export async function runMigrations(
     throw new Error("Unsupported database type");
   }
 
-  logger?.info("Database migrations completed");
+  logger?.info({}, "Database migrations completed");
 }

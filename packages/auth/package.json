@@ -18,9 +18,6 @@
   "devDependencies": {
     "tsdown": "catalog:"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
   "dependencies": {
     "better-auth": "catalog:",
     "porto": "^0.2.35",

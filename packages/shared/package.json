@@ -32,9 +32,6 @@
   "devDependencies": {
     "tsdown": "catalog:"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
   "dependencies": {
     "zod": "catalog:",
     "typeid-js": "^1.0.1"

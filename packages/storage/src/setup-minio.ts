@@ -136,16 +136,21 @@ function logTroubleshooting(
     (error.message.includes("ECONNREFUSED") ||
       error.message.includes("fetch failed"))
   ) {
-    logger.error("Troubleshooting:");
-    logger.error("1. Make sure MinIO is running: docker ps | grep minio");
-    logger.error("2. Start services: docker-compose up -d");
-    logger.error(`3. Check MinIO health: curl ${endpoint}/minio/health/live`);
-    logger.error(
-      "4. If MinIO is running but bucket creation fails, create it manually:"
-    );
-    logger.error(
-      `   curl -X PUT "http://localhost:9000/${bucket}" --aws-sigv4 "aws:amz:auto:s3" --user "minioadmin:minioadmin"`
-    );
+    logger.error({ message: "Troubleshooting:" });
+    logger.error({
+      message: "1. Make sure MinIO is running: docker ps | grep minio",
+    });
+    logger.error({ message: "2. Start services: docker-compose up -d" });
+    logger.error({
+      message: `3. Check MinIO health: curl ${endpoint}/minio/health/live`,
+    });
+    logger.error({
+      message:
+        "4. If MinIO is running but bucket creation fails, create it manually:",
+    });
+    logger.error({
+      message: `   curl -X PUT "http://localhost:9000/${bucket}" --aws-sigv4 "aws:amz:auto:s3" --user "minioadmin:minioadmin"`,
+    });
   }
 }
 
@@ -153,14 +158,14 @@ function logTroubleshooting(
 export async function setupMinIO(config: MinIOSetupConfig): Promise<void> {
   const { s3Client, endpoint, bucket, logger } = config;
 
-  logger.info("Starting MinIO setup...");
+  logger.info({ message: "Starting MinIO setup..." });
   logger.info({ bucket, endpoint }, "MinIO configuration");
 
   try {
-    logger.info("Checking if bucket exists...");
+    logger.info({ message: "Checking if bucket exists..." });
     const bucketExists = await checkBucketExists(s3Client, bucket, logger);
     if (bucketExists) {
-      logger.info("MinIO setup complete - nothing to do");
+      logger.info({ message: "MinIO setup complete - nothing to do" });
       return;
     }
 
@@ -173,7 +178,7 @@ export async function setupMinIO(config: MinIOSetupConfig): Promise<void> {
       },
       "Note: You may want to set bucket access policy via MinIO Console"
     );
-    logger.info("MinIO setup complete");
+    logger.info({ message: "MinIO setup complete" });
   } catch (error) {
     logger.error({ error }, "MinIO setup failed");
     logTroubleshooting(error, endpoint, bucket, logger);

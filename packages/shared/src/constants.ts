@@ -3,6 +3,11 @@ export const NUMERIC_CONSTANTS = {
   validationLimits: {
     minStringLength: 1,
   },
+  pagination: {
+    minLimit: 1,
+    maxLimit: 100,
+    defaultLimit: 20,
+  },
   swipe: {
     exitDistance: 1000,
     animationDuration: 300,

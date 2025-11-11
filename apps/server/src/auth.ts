@@ -1,8 +1,9 @@
 import { createAuth } from "@yoda.fun/auth";
 import { createDb } from "@yoda.fun/db";
+import { createPgLite } from "@yoda.fun/test-utils/pg-lite";
 import { env } from "./env";
 
-const db = createDb({ dbData: { type: "pg", databaseUrl: env.DATABASE_URL } });
+const db = createDb({ dbData: { type: "pglite", db: createPgLite() } });
 export const auth = createAuth({
   db,
   appEnv: env.APP_ENV,

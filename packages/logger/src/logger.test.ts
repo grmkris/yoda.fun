@@ -7,11 +7,11 @@ describe("Logger", () => {
     const logger = createLogger({ appName: "test", level: "debug" });
 
     // Test that logger[level] can be called without throwing
-    logger.info("Hello, world!");
-    logger.error("Error: Hello, world!");
-    logger.warn("Warning: Hello, world!");
-    logger.debug("Debug: Hello, world!");
-    logger.trace("Trace: Hello, world!");
+    logger.info({ message: "Hello, world!" });
+    logger.error({ message: "Error: Hello, world!" });
+    logger.warn({ message: "Warning: Hello, world!" });
+    logger.debug({ message: "Debug: Hello, world!" });
+    logger.trace({ message: "Trace: Hello, world!" });
 
     // Test logging objects
     logger.info({ message: "Hello, world!", data: { foo: "bar" } });
