@@ -1,13 +1,13 @@
 {
   "name": "server",
-  "main": "src/index.ts",
+  "main": "src/server.ts",
   "type": "module",
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.js",
+    "dev": "bun run --hot src/server.ts",
+    "start": "bun run dist/server.js",
     "test": "bun test --preload ./test/test.setup.ts",
     "test:watch": "bun test --watch --preload ./test/test.setup.ts",
     "auth:generate": "cli generate"
