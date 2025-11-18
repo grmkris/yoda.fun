@@ -17,11 +17,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.3.10",
-    "@faker-js/faker": "^10.0.0",
+    "@electric-sql/pglite": "^0.3.14",
+    "@faker-js/faker": "^10.1.0",
+    "@types/s3rver": "^3.7.4",
     "redis-memory-server": "^0.14.0",
     "s3rver": "3.7.1",
-    "@types/s3rver": "^3.7.4",
     "zod": "catalog:"
   },
   "devDependencies": {

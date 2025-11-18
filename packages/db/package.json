@@ -32,14 +32,14 @@
     "db:down": "docker compose down"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.2",
-    "@types/pg": "^8.11.11",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.7",
     "tsdown": "catalog:"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.3.10",
-    "@yoda.fun/shared": "workspace:*",
+    "@electric-sql/pglite": "^0.3.14",
     "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/shared": "workspace:*",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
     "zod": "catalog:"

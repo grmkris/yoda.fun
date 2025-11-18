@@ -19,11 +19,11 @@
     "tsdown": "catalog:"
   },
   "dependencies": {
-    "better-auth": "catalog:",
-    "porto": "^0.2.35",
-    "viem": "2.38.6",
-    "zod": "catalog:",
     "@yoda.fun/db": "workspace:*",
-    "@yoda.fun/shared": "workspace:*"
+    "@yoda.fun/shared": "workspace:*",
+    "better-auth": "catalog:",
+    "porto": "^0.2.37",
+    "viem": "2.38.6",
+    "zod": "catalog:"
   }
 }

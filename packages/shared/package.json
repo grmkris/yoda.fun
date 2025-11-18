@@ -33,7 +33,7 @@
     "tsdown": "catalog:"
   },
   "dependencies": {
-    "zod": "catalog:",
-    "typeid-js": "^1.0.1"
+    "typeid-js": "^1.2.0",
+    "zod": "catalog:"
   }
 }

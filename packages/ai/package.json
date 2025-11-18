@@ -34,9 +34,9 @@
     "@ai-sdk/google": "2.0.28",
     "@ai-sdk/groq": "2.0.28",
     "@ai-sdk/xai": "2.0.31",
+    "@posthog/ai": "^7.1.0",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
-    "@posthog/ai": "^6.4.4",
     "ai": "5.0.87",
     "posthog-node": "catalog:",
     "zod": "catalog:"
