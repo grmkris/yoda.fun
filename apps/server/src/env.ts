@@ -25,6 +25,18 @@ export const envSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
+  // Enable market generation (requires REDIS_URL and XAI_API_KEY)
+  ENABLE_MARKET_GENERATION: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  // Cron pattern for market generation (default: every 6 hours)
+  MARKET_GENERATION_CRON: z.string().default("0 */6 * * *"),
+  // Number of markets to generate per run
+  MARKET_GENERATION_COUNT: z
+    .string()
+    .default("5")
+    .transform((v) => Number.parseInt(v, 10)),
   // PostHog analytics
   POSTHOG_API_KEY: z.string().optional(),
   POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),

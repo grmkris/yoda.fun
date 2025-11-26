@@ -20,6 +20,7 @@ import {
   shutdownPostHog,
 } from "@/lib/posthog";
 import { createDepositRoutes } from "@/routes/deposit";
+import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
 
 const app = new Hono();
@@ -126,11 +127,18 @@ app.use("/*", async (c, next) => {
 
 app.get("/", (c) => c.text("OK"));
 
-// Initialize queue and worker (if enabled)
+// Initialize queue and workers (if enabled)
 let queue: QueueClient | undefined;
 let resolutionWorker: { close: () => Promise<void> } | undefined;
+let generationWorker: { close: () => Promise<void> } | undefined;
 
-if (env.ENABLE_RESOLUTION_WORKER && env.REDIS_URL && env.XAI_API_KEY) {
+// Check if we have queue requirements
+const hasQueueRequirements = env.REDIS_URL && env.XAI_API_KEY;
+const shouldStartQueue =
+  hasQueueRequirements &&
+  (env.ENABLE_RESOLUTION_WORKER || env.ENABLE_MARKET_GENERATION);
+
+if (shouldStartQueue && env.REDIS_URL && env.XAI_API_KEY) {
   queue = createQueueClient({
     url: env.REDIS_URL,
     logger,
@@ -145,14 +153,51 @@ if (env.ENABLE_RESOLUTION_WORKER && env.REDIS_URL && env.XAI_API_KEY) {
     },
   });
 
-  resolutionWorker = createMarketResolutionWorker({
-    queue,
-    db,
-    logger,
-    aiClient,
-  });
+  // Start resolution worker if enabled
+  if (env.ENABLE_RESOLUTION_WORKER) {
+    resolutionWorker = createMarketResolutionWorker({
+      queue,
+      db,
+      logger,
+      aiClient,
+    });
+    logger.info({ msg: "Market resolution worker started" });
+  }
 
-  logger.info({ msg: "Market resolution worker started" });
+  // Start generation worker if enabled
+  if (env.ENABLE_MARKET_GENERATION) {
+    generationWorker = createMarketGenerationWorker({
+      queue,
+      db,
+      logger,
+      aiClient,
+    });
+
+    // Schedule recurring market generation using BullMQ repeatable jobs
+    queue
+      .addJob(
+        "generate-market",
+        {
+          count: env.MARKET_GENERATION_COUNT,
+          trigger: "scheduled",
+        },
+        {
+          repeat: { pattern: env.MARKET_GENERATION_CRON },
+        }
+      )
+      .then(() => {
+        logger.info({
+          msg: "Market generation scheduled",
+          cron: env.MARKET_GENERATION_CRON,
+          count: env.MARKET_GENERATION_COUNT,
+        });
+      })
+      .catch((err) => {
+        logger.error({ err }, "Failed to schedule market generation");
+      });
+
+    logger.info({ msg: "Market generation worker started" });
+  }
 }
 
 // Export queue for use in other modules (e.g., market creation)
@@ -162,6 +207,7 @@ export { queue };
 process.on("SIGTERM", async () => {
   logger.info({ msg: "Shutting down server..." });
   await resolutionWorker?.close();
+  await generationWorker?.close();
   await queue?.close();
   await shutdownPostHog();
   process.exit(0);

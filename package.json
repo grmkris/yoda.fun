@@ -57,7 +57,12 @@
     "db:start": "turbo -F @yoda.fun/db db:start",
     "db:watch": "turbo -F @yoda.fun/db db:watch",
     "db:stop": "turbo -F @yoda.fun/db db:stop",
-    "db:down": "turbo -F @yoda.fun/db db:down"
+    "db:down": "turbo -F @yoda.fun/db db:down",
+    "docker:build:web": "docker build -f apps/web/Dockerfile -t yoda-fun-web .",
+    "docker:build:server": "docker build -f apps/server/Dockerfile -t yoda-fun-server .",
+    "docker:build:all": "bun run docker:build:web && bun run docker:build:server",
+    "docker:run:web": "docker run -p 3001:3001 --env-file apps/web/.env yoda-fun-web",
+    "docker:run:server": "docker run -p 3000:3000 --env-file apps/server/.env yoda-fun-server"
   },
   "dependencies": {
     "react-card-swiper": "^1.1.25",

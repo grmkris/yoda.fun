@@ -2,6 +2,7 @@ import type { Logger } from "@yoda.fun/logger";
 import { type JobType, WORKER_CONFIG } from "@yoda.fun/shared/constants";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
+import type { GenerateMarketJob } from "./jobs/generate-market-job";
 import type { ResolveMarketJob } from "./jobs/resolve-market-job";
 
 export type QueueConfig = {
@@ -11,10 +12,12 @@ export type QueueConfig = {
 
 export type JobData = {
   "resolve-market": ResolveMarketJob;
+  "generate-market": GenerateMarketJob;
 };
 
 export type JobResult = {
   "resolve-market": { success: boolean; marketId: string };
+  "generate-market": { success: boolean; marketsCreated: number };
 };
 
 const TIME_SECONDS = {
@@ -27,25 +30,32 @@ export function createQueueClient(config: QueueConfig) {
   const redis = new Redis(url, { maxRetriesPerRequest: null });
   const connection = redis;
 
+  // Default job options shared across queues
+  const defaultJobOptions = {
+    attempts: 3,
+    backoff: {
+      type: "exponential" as const,
+      delay: 2000,
+    },
+    removeOnComplete: {
+      count: 100,
+      age: TIME_SECONDS.ONE_DAY,
+    },
+    removeOnFail: {
+      count: 1000,
+      age: TIME_SECONDS.ONE_WEEK,
+    },
+  };
+
   // Create queues
   const queues = {
     "resolve-market": new Queue<ResolveMarketJob>("resolve-market", {
       connection,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 2000,
-        },
-        removeOnComplete: {
-          count: 100,
-          age: TIME_SECONDS.ONE_DAY,
-        },
-        removeOnFail: {
-          count: 1000,
-          age: TIME_SECONDS.ONE_WEEK,
-        },
-      },
+      defaultJobOptions,
+    }),
+    "generate-market": new Queue<GenerateMarketJob>("generate-market", {
+      connection,
+      defaultJobOptions,
     }),
   };
 
@@ -56,34 +66,48 @@ export function createQueueClient(config: QueueConfig) {
   async function addJob<T extends JobType>(
     queueName: T,
     data: JobData[T],
-    options?: { priority?: number; delay?: number }
+    options?: { priority?: number; delay?: number; repeat?: { pattern: string } }
   ) {
     try {
       logger?.debug({ msg: "Adding job to queue", queueName, data });
 
-      if (queueName === "resolve-market") {
-        const queue = queues["resolve-market"];
-        const job = await queue.add(
-          "resolve-market",
-          data as ResolveMarketJob,
-          {
-            priority: options?.priority,
-            delay: options?.delay,
-          }
-        );
+      const jobOptions = {
+        priority: options?.priority,
+        delay: options?.delay,
+        repeat: options?.repeat,
+      };
 
-        logger?.info({
-          msg: "Job added successfully",
+      // Type-narrow by queue name for proper typing
+      let jobId: string | undefined;
+
+      if (queueName === "resolve-market") {
+        const job = await queues["resolve-market"].add(
           queueName,
-          jobId: job.id,
-          delay: options?.delay,
-        });
-        return { jobId: job.id, queue: queueName };
+          data as ResolveMarketJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else if (queueName === "generate-market") {
+        const job = await queues["generate-market"].add(
+          queueName,
+          data as GenerateMarketJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else {
+        const _exhaustive: never = queueName;
+        throw new Error(`Unknown queue type: ${_exhaustive}`);
       }
 
-      // Exhaustiveness check
-      const _exhaustive: never = queueName;
-      throw new Error(`Unknown queue type: ${_exhaustive}`);
+      logger?.info({
+        msg: "Job added successfully",
+        queueName,
+        jobId,
+        delay: options?.delay,
+        repeat: options?.repeat?.pattern,
+      });
+
+      return { jobId, queue: queueName };
     } catch (error) {
       logger?.error({ msg: "Failed to add job", queueName, error });
       throw new Error(`Failed to add job to queue: ${queueName}`);

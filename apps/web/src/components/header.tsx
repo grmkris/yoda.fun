@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { BalanceDisplay } from "./balance-display";
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
@@ -7,6 +8,7 @@ export default function Header() {
   const links = [
     { to: "/", label: "Home" },
     { to: "/dashboard", label: "Dashboard" },
+    { to: "/bets", label: "My Bets" },
   ] as const;
 
   return (
@@ -19,7 +21,8 @@ export default function Header() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <BalanceDisplay />
           <ModeToggle />
           <UserMenu />
         </div>

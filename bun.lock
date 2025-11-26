@@ -119,6 +119,7 @@
         "@orpc/openapi": "catalog:",
         "@orpc/server": "catalog:",
         "@orpc/zod": "catalog:",
+        "@yoda.fun/ai": "workspace:*",
         "@yoda.fun/auth": "workspace:*",
         "@yoda.fun/db": "workspace:*",
         "@yoda.fun/logger": "workspace:*",

@@ -1,0 +1,60 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+**/.next
+dist
+**/dist
+build
+**/build
+.turbo
+**/.turbo
+
+# Environment files (security)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Git
+.git
+.gitignore
+
+# IDE and editor configs
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Docker files (prevent recursion)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Test and coverage
+coverage
+**/.coverage
+*.test.ts
+*.spec.ts
+__tests__
+
+# TypeScript cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Documentation
+*.md
+docs
+
+# Logs
+*.log
+logs
+
+# Misc
+.npmrc
+.yarnrc
+.pnpm-debug.log
+bun.lockb

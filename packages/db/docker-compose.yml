@@ -2,7 +2,7 @@ name: yoda.fun
 
 services:
   postgres:
-    image: postgres
+    image: postgres:17
     container_name: yoda.fun-postgres
     environment:
       POSTGRES_DB: yoda.fun
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - yoda.fun_postgres_data:/var/lib/postgresql
+      - yoda.fun_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -19,5 +19,20 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: yoda.fun-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - yoda.fun_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   yoda.fun_postgres_data:
+  yoda.fun_redis_data:

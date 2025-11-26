@@ -7,6 +7,10 @@
       "types": "./dist/ai-client.d.ts",
       "default": "./src/ai-client.ts"
     },
+    "./ai-config": {
+      "types": "./dist/ai-config.d.ts",
+      "default": "./src/ai-config.ts"
+    },
     "./label-detection": {
       "types": "./dist/label-detection.d.ts",
       "default": "./src/label-detection.ts"

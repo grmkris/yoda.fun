@@ -1,0 +1,14 @@
+# Build outputs
+.next
+node_modules
+
+# Environment
+.env
+.env.*
+
+# Git and IDE
+.git
+.vscode
+
+# Misc
+*.md

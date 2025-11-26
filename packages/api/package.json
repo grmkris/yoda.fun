@@ -28,6 +28,10 @@
     "./services/withdrawal-service": {
       "types": "./dist/services/withdrawal-service.d.ts",
       "default": "./src/services/withdrawal-service.ts"
+    },
+    "./services/market-generation-service": {
+      "types": "./dist/services/market-generation-service.d.ts",
+      "default": "./src/services/market-generation-service.ts"
     }
   },
   "type": "module",
@@ -47,6 +51,7 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@yoda.fun/ai": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
