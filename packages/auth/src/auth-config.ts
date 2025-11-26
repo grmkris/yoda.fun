@@ -29,6 +29,9 @@ export const createAuth = (config: AuthConfig) => {
     secret: config.secret,
     baseURL,
     trustedOrigins,
+    emailAndPassword: {
+      enabled: true,
+    },
     plugins: [
       siwe({
         domain: SERVICE_URLS[config.appEnv].siweDomain,
@@ -50,6 +53,9 @@ export const createAuth = (config: AuthConfig) => {
       }),
     ],
     advanced: {
+      database: {
+        generateId: false,
+      },
       defaultCookieAttributes: {
         sameSite: "none",
         secure: true,

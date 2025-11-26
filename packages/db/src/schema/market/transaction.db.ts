@@ -1,17 +1,26 @@
 import {
   type DepositId,
+  type SettlementBatchId,
   type TransactionId,
   typeIdGenerator,
   type UserId,
   type WithdrawalId,
 } from "@yoda.fun/shared/typeid";
-import { jsonb, numeric, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+} from "drizzle-orm/pg-core";
 import {
   baseEntityFields,
   createTimestampField,
   typeId,
 } from "../../utils/db-utils";
 import { user } from "../auth/auth.db";
+import { settlementBatch } from "./settlement.db";
 
 // Enums
 export const transactionTypeEnum = pgEnum("transaction_type", [
@@ -104,5 +113,12 @@ export const withdrawal = pgTable("withdrawal", {
     .references(() => transaction.id, { onDelete: "set null" })
     .$type<TransactionId>(),
   completedAt: createTimestampField("completed_at"),
+  // Settlement tracking
+  settlementBatchId: typeId("settlementBatch", "settlement_batch_id")
+    .references(() => settlementBatch.id, { onDelete: "set null" })
+    .$type<SettlementBatchId>(),
+  requestedAmount: numeric("requested_amount", { precision: 10, scale: 2 }),
+  actualAmount: numeric("actual_amount", { precision: 10, scale: 2 }),
+  minimumThresholdMet: boolean("minimum_threshold_met").notNull().default(true),
   ...baseEntityFields,
 });

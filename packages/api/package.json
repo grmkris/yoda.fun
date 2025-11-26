@@ -16,6 +16,18 @@
     "./services/bet-service": {
       "types": "./dist/services/bet-service.d.ts",
       "default": "./src/services/bet-service.ts"
+    },
+    "./services/balance-service": {
+      "types": "./dist/services/balance-service.d.ts",
+      "default": "./src/services/balance-service.ts"
+    },
+    "./services/settlement-service": {
+      "types": "./dist/services/settlement-service.d.ts",
+      "default": "./src/services/settlement-service.ts"
+    },
+    "./services/withdrawal-service": {
+      "types": "./dist/services/withdrawal-service.d.ts",
+      "default": "./src/services/withdrawal-service.ts"
     }
   },
   "type": "module",
@@ -38,6 +50,7 @@
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
+    "posthog-node": "catalog:",
     "@yoda.fun/shared": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:"

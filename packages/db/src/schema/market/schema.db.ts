@@ -2,4 +2,5 @@
 export * from "./market.db";
 export * from "./market.relations";
 export * from "./market.zod";
+export * from "./settlement.db";
 export * from "./transaction.db";

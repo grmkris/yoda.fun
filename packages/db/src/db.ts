@@ -9,9 +9,11 @@ import { migrate as migratePgLite } from "drizzle-orm/pglite/migrator";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as authSchema from "./schema/auth/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as configSchema from "./schema/config/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as marketSchema from "./schema/market/schema.db";
 
-const schema = { ...authSchema, ...marketSchema };
+const schema = { ...authSchema, ...configSchema, ...marketSchema };
 export const DB_SCHEMA = schema;
 export type Database =
   | BunSQLDatabase<typeof schema>

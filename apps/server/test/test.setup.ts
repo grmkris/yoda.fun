@@ -1,8 +1,11 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
+import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createBetService } from "@yoda.fun/api/services/bet-service";
+import { createWithdrawalService } from "@yoda.fun/api/services/withdrawal-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
+import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
 import type { Environment } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
 import { createPgLite, type PGlite } from "@yoda.fun/test-utils/pg-lite";
@@ -30,7 +33,10 @@ export type TestSetup = {
     storage: ReturnType<typeof createStorageClient>;
     aiClient: AiClient;
     redis: Awaited<ReturnType<typeof createTestRedisSetup>>;
+    queue: QueueClient;
     betService: ReturnType<typeof createBetService>;
+    balanceService: ReturnType<typeof createBalanceService>;
+    withdrawalService: ReturnType<typeof createWithdrawalService>;
   };
   users: {
     authenticated: TestUser;
@@ -167,6 +173,12 @@ export async function createTestSetup(): Promise<TestSetup> {
   // Create Redis test server
   const redis = await createTestRedisSetup();
 
+  // Create queue client (using in-memory Redis)
+  const queue = createQueueClient({
+    url: redis.uri,
+    logger,
+  });
+
   // Create AI client
   const aiClient = createAiClient({
     logger,
@@ -179,15 +191,25 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   });
 
-  // Create bet service
-  const betService = createBetService({
-    deps: { db, logger },
-  });
+  // Create services
+  const betService = createBetService({ deps: { db, logger } });
+  const balanceService = createBalanceService({ deps: { db, logger } });
+  const withdrawalService = createWithdrawalService({ deps: { db, logger } });
 
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
-    services: ["db", "auth", "storage", "redis", "ai", "betService"],
+    services: [
+      "db",
+      "auth",
+      "storage",
+      "redis",
+      "queue",
+      "ai",
+      "betService",
+      "balanceService",
+      "withdrawalService",
+    ],
   });
 
   // Cleanup function to reset data between tests
@@ -200,6 +222,7 @@ export async function createTestSetup(): Promise<TestSetup> {
   // Close function to shut down all services
   const close = async () => {
     try {
+      await queue.close();
       await s3Setup.shutdown();
       await redis.shutdown();
       await pgLite.close();
@@ -218,7 +241,10 @@ export async function createTestSetup(): Promise<TestSetup> {
       storage,
       aiClient,
       redis,
+      queue,
       betService,
+      balanceService,
+      withdrawalService,
     },
     users: {
       authenticated: authenticatedUser,

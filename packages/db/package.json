@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.15.6",
+    "dotenv": "catalog:",
     "drizzle-kit": "^0.31.7",
     "tsdown": "catalog:"
   },

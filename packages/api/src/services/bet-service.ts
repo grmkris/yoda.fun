@@ -1,6 +1,6 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import { and, desc, eq } from "@yoda.fun/db/drizzle";
+import { and, desc, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { MarketId, UserId } from "@yoda.fun/shared/typeid";
 
@@ -9,25 +9,20 @@ type BetServiceDeps = {
   logger: Logger;
 };
 
-type BetServiceParams = Record<string, never>;
-
-export function createBetService({
-  deps,
-}: {
-  deps: BetServiceDeps;
-  params?: BetServiceParams;
-}) {
+export function createBetService({ deps }: { deps: BetServiceDeps }) {
   const { db, logger } = deps;
 
   return {
     /**
-     * Place a vote on a market
+     * Place a bet on a market
+     * Validates balance, deducts funds, creates bet record
      */
     async placeBet(
       userId: UserId,
       input: {
         marketId: MarketId;
         vote: "YES" | "NO";
+        amount?: number; // If not provided, uses market's betAmount
       }
     ) {
       // Get the market
@@ -68,16 +63,60 @@ export function createBetService({
         throw new Error("You have already placed a bet on this market");
       }
 
-      // Place vote in a transaction
+      // Use provided amount or market's default bet amount
+      const betAmount = input.amount ?? Number(marketData.betAmount);
+      if (betAmount <= 0) {
+        throw new Error("Bet amount must be greater than 0");
+      }
+
+      // Place bet in a transaction
       const result = await db.transaction(async (tx) => {
-        // Create bet record (vote only, no money)
+        // Get user's balance
+        const balanceRecords = await tx
+          .select()
+          .from(DB_SCHEMA.userBalance)
+          .where(eq(DB_SCHEMA.userBalance.userId, userId))
+          .limit(1);
+
+        const balance = balanceRecords[0];
+        const availableBalance = balance ? Number(balance.availableBalance) : 0;
+
+        if (availableBalance < betAmount) {
+          throw new Error(
+            `Insufficient balance: ${availableBalance.toFixed(2)} < ${betAmount.toFixed(2)}`
+          );
+        }
+
+        // Deduct from user's balance
+        if (balance) {
+          await tx
+            .update(DB_SCHEMA.userBalance)
+            .set({
+              availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} - ${betAmount.toFixed(2)}`,
+            })
+            .where(eq(DB_SCHEMA.userBalance.userId, userId));
+        }
+
+        // Create transaction record for bet
+        await tx.insert(DB_SCHEMA.transaction).values({
+          userId,
+          type: "BET_PLACED",
+          amount: betAmount.toFixed(2),
+          status: "COMPLETED",
+          metadata: {
+            marketId: input.marketId,
+            vote: input.vote,
+          },
+        });
+
+        // Create bet record
         const betRecords = await tx
           .insert(DB_SCHEMA.bet)
           .values({
             userId,
             marketId: input.marketId,
             vote: input.vote,
-            amount: "0.00", // No money in MVP
+            amount: betAmount.toFixed(2),
             status: "ACTIVE",
           })
           .returning();
@@ -87,22 +126,22 @@ export function createBetService({
           throw new Error("Failed to create bet record");
         }
 
-        // Update market vote counts
-        if (input.vote === "YES") {
-          await tx
-            .update(DB_SCHEMA.market)
-            .set({
-              totalYesVotes: marketData.totalYesVotes + 1,
-            })
-            .where(eq(DB_SCHEMA.market.id, input.marketId));
-        } else {
-          await tx
-            .update(DB_SCHEMA.market)
-            .set({
-              totalNoVotes: marketData.totalNoVotes + 1,
-            })
-            .where(eq(DB_SCHEMA.market.id, input.marketId));
-        }
+        // Update market vote counts and total pool
+        const updateData =
+          input.vote === "YES"
+            ? {
+                totalYesVotes: marketData.totalYesVotes + 1,
+                totalPool: sql`${DB_SCHEMA.market.totalPool} + ${betAmount.toFixed(2)}`,
+              }
+            : {
+                totalNoVotes: marketData.totalNoVotes + 1,
+                totalPool: sql`${DB_SCHEMA.market.totalPool} + ${betAmount.toFixed(2)}`,
+              };
+
+        await tx
+          .update(DB_SCHEMA.market)
+          .set(updateData)
+          .where(eq(DB_SCHEMA.market.id, input.marketId));
 
         return betRecord;
       });
@@ -112,9 +151,10 @@ export function createBetService({
           userId,
           marketId: input.marketId,
           vote: input.vote,
+          amount: betAmount,
           betId: result.id,
         },
-        "Vote placed"
+        "Bet placed"
       );
 
       return result;

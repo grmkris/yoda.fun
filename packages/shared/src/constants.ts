@@ -1,3 +1,19 @@
+// Queue types (defined here to avoid circular deps with @yoda.fun/queue)
+export type JobType = "resolve-market";
+export type RateLimitConfig = { max: number; duration: number };
+
+// Worker Configuration
+export const WORKER_CONFIG = {
+  // Per-queue concurrency
+  CONCURRENCY: {
+    "resolve-market": 2, // Keep low - AI calls are expensive
+  } satisfies Record<JobType, number>,
+  // Per-queue rate limits
+  RATE_LIMITS: {
+    "resolve-market": { max: 10, duration: 60_000 }, // 10/min
+  } satisfies Record<JobType, RateLimitConfig>,
+} as const;
+
 export const NUMERIC_CONSTANTS = {
   MAX_DELAY: 1000,
   validationLimits: {

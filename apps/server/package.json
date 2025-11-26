@@ -8,6 +8,9 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/server.ts",
     "start": "bun run dist/server.js",
+    "lint": "ultracite check",
+    "fix": "ultracite fix",
+    "fix:unsafe": "ultracite fix --unsafe",
     "test": "bun test --preload ./test/test.setup.ts",
     "test:watch": "bun test --watch --preload ./test/test.setup.ts",
     "auth:generate": "cli generate"
@@ -21,11 +24,14 @@
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/queue": "workspace:*",
+    "posthog-node": "catalog:",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",
     "@yoda.fun/test-utils": "workspace:*",
     "better-auth": "catalog:",
     "hono": "catalog:",
+    "x402-hono": "^0.7.3",
     "zod": "catalog:"
   },
   "devDependencies": {

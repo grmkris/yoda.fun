@@ -20,6 +20,7 @@ export const idTypesMapNameToPrefix = {
   deposit: "dep",
   withdrawal: "wdl",
   userBalance: "bal",
+  settlementBatch: "stl",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -122,3 +123,6 @@ export type UserBalanceId = z.infer<typeof UserBalanceId>;
 
 export const WalletAddressId = typeIdValidator("walletAddress");
 export type WalletAddressId = z.infer<typeof WalletAddressId>;
+
+export const SettlementBatchId = typeIdValidator("settlementBatch");
+export type SettlementBatchId = z.infer<typeof SettlementBatchId>;
