@@ -34,7 +34,7 @@ const auth = createAuth({
 });
 const logger = createLogger({
   level: env.APP_ENV === "prod" ? "info" : "debug",
-  nodeEnv: env.APP_ENV === "prod" ? "production" : "development",
+  environment: env.APP_ENV,
   appName: "yoda-server",
 });
 
@@ -133,12 +133,12 @@ let resolutionWorker: { close: () => Promise<void> } | undefined;
 let generationWorker: { close: () => Promise<void> } | undefined;
 
 // Check if we have queue requirements
-const hasQueueRequirements = env.REDIS_URL && env.XAI_API_KEY;
+const hasQueueRequirements = env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY;
 const shouldStartQueue =
   hasQueueRequirements &&
   (env.ENABLE_RESOLUTION_WORKER || env.ENABLE_MARKET_GENERATION);
 
-if (shouldStartQueue && env.REDIS_URL && env.XAI_API_KEY) {
+if (shouldStartQueue && env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY) {
   queue = createQueueClient({
     url: env.REDIS_URL,
     logger,
@@ -149,7 +149,7 @@ if (shouldStartQueue && env.REDIS_URL && env.XAI_API_KEY) {
     environment: env.APP_ENV,
     posthog,
     providerConfigs: {
-      xaiApiKey: env.XAI_API_KEY,
+      xaiApiKey: env.GOOGLE_GEMINI_API_KEY,
     },
   });
 

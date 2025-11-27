@@ -1,0 +1,15 @@
+import Leaderboard from "./leaderboard";
+
+export const metadata = {
+  title: "Leaderboard | Yoda.fun",
+  description: "See the top predictors on Yoda.fun",
+};
+
+export default function LeaderboardPage() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-8 font-bold text-3xl">Leaderboard</h1>
+      <Leaderboard />
+    </div>
+  );
+}

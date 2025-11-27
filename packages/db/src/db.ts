@@ -12,8 +12,15 @@ import * as authSchema from "./schema/auth/schema.db";
 import * as configSchema from "./schema/config/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as marketSchema from "./schema/market/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as socialSchema from "./schema/social/schema.db";
 
-const schema = { ...authSchema, ...configSchema, ...marketSchema };
+const schema = {
+  ...authSchema,
+  ...configSchema,
+  ...marketSchema,
+  ...socialSchema,
+};
 export const DB_SCHEMA = schema;
 export type Database =
   | BunSQLDatabase<typeof schema>

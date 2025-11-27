@@ -1,18 +1,22 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
+import { createActivityService } from "@yoda.fun/api/services/activity-service";
 import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createBetService } from "@yoda.fun/api/services/bet-service";
+import { createFollowService } from "@yoda.fun/api/services/follow-service";
+import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
+import { createProfileService } from "@yoda.fun/api/services/profile-service";
 import { createWithdrawalService } from "@yoda.fun/api/services/withdrawal-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
-import type { Environment } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
 import { createPgLite, type PGlite } from "@yoda.fun/test-utils/pg-lite";
 import { createTestRedisSetup } from "@yoda.fun/test-utils/redis-test-server";
 import { createTestS3Setup } from "@yoda.fun/test-utils/s3-test-server";
 import type { User } from "better-auth";
 import type { Logger as DrizzleLogger } from "drizzle-orm";
+import { env } from "@/env";
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
 
@@ -37,6 +41,10 @@ export type TestSetup = {
     betService: ReturnType<typeof createBetService>;
     balanceService: ReturnType<typeof createBalanceService>;
     withdrawalService: ReturnType<typeof createWithdrawalService>;
+    leaderboardService: ReturnType<typeof createLeaderboardService>;
+    profileService: ReturnType<typeof createProfileService>;
+    followService: ReturnType<typeof createFollowService>;
+    activityService: ReturnType<typeof createActivityService>;
   };
   users: {
     authenticated: TestUser;
@@ -107,7 +115,7 @@ export async function createTestSetup(): Promise<TestSetup> {
   const logger = createLogger({
     appName: "test.setup",
     level: testLogLevel,
-    nodeEnv: "test",
+    environment: "dev",
   });
 
   // Create in-memory PGlite database
@@ -143,8 +151,8 @@ export async function createTestSetup(): Promise<TestSetup> {
   // Create auth client
   const authClient = createAuth({
     db,
-    appEnv: (process.env.APP_ENV as Environment) || "development",
-    secret: process.env.BETTER_AUTH_SECRET || "test-secret-key",
+    appEnv: env.APP_ENV,
+    secret: env.BETTER_AUTH_SECRET,
   });
 
   logger.debug({ msg: "Creating test users..." });
@@ -166,7 +174,7 @@ export async function createTestSetup(): Promise<TestSetup> {
   const s3Setup = await createTestS3Setup("test-s3-bucket");
   const storage = createStorageClient({
     s3Client: s3Setup.client,
-    env: (process.env.APP_ENV as Environment) || "development",
+    env: env.APP_ENV,
     logger,
   });
 
@@ -182,7 +190,7 @@ export async function createTestSetup(): Promise<TestSetup> {
   // Create AI client
   const aiClient = createAiClient({
     logger,
-    environment: (process.env.APP_ENV as Environment) || "development",
+    environment: env.APP_ENV,
     providerConfigs: {
       googleGeminiApiKey: process.env.GOOGLE_GEMINI_API_KEY || "",
       anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
@@ -195,7 +203,14 @@ export async function createTestSetup(): Promise<TestSetup> {
   const betService = createBetService({ deps: { db, logger } });
   const balanceService = createBalanceService({ deps: { db, logger } });
   const withdrawalService = createWithdrawalService({ deps: { db, logger } });
-
+  const leaderboardService = createLeaderboardService({ deps: { db, logger } });
+  const profileService = createProfileService({ deps: { db, logger } });
+  const followService = createFollowService({
+    deps: { db, logger, profileService },
+  });
+  const activityService = createActivityService({
+    deps: { db, logger, followService },
+  });
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
@@ -245,6 +260,10 @@ export async function createTestSetup(): Promise<TestSetup> {
       betService,
       balanceService,
       withdrawalService,
+      leaderboardService,
+      profileService,
+      followService,
+      activityService,
     },
     users: {
       authenticated: authenticatedUser,

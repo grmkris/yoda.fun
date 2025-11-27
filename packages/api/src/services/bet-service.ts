@@ -3,14 +3,16 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, desc, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { MarketId, UserId } from "@yoda.fun/shared/typeid";
+import type { ActivityService } from "./activity-service";
 
 type BetServiceDeps = {
   db: Database;
   logger: Logger;
+  activityService?: ActivityService;
 };
 
 export function createBetService({ deps }: { deps: BetServiceDeps }) {
-  const { db, logger } = deps;
+  const { db, logger, activityService } = deps;
 
   return {
     /**
@@ -156,6 +158,17 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         },
         "Bet placed"
       );
+
+      // Log activity
+      if (activityService) {
+        await activityService.logBetPlaced({
+          userId,
+          marketId: input.marketId,
+          marketTitle: marketData.title,
+          amount: betAmount,
+          vote: input.vote,
+        });
+      }
 
       return result;
     },

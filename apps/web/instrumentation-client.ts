@@ -18,7 +18,7 @@ if (posthogKey) {
     capture_performance: true,
     // Debug mode in development
     loaded: (instance) => {
-      if (process.env.NODE_ENV === "development") {
+      if (env.NEXT_PUBLIC_ENV === "dev") {
         instance.debug();
       }
     },

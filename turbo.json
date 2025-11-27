@@ -19,7 +19,7 @@
     "test": {
       "cache": false,
       "outputs": ["coverage/**"],
-      "env": ["NODE_ENV", "DATABASE_URL"]
+      "env": ["APP_ENV", "DATABASE_URL"]
     },
     "test:watch": {
       "cache": false,

@@ -18,9 +18,7 @@ export function usePlaceBet() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: PlaceBetInput) => {
-      return client.bet.place(input);
-    },
+    mutationFn: async (input: PlaceBetInput) => client.bet.place(input),
     onSuccess: (data) => {
       toast.success(`Bet placed! ${data.vote} on market`);
 

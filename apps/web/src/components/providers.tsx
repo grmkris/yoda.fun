@@ -2,6 +2,7 @@
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { env } from "@/env";
 import { PostHogProvider } from "@/providers/posthog-provider";
 import { queryClient } from "@/utils/orpc";
 import { ThemeProvider } from "./theme-provider";
@@ -18,7 +19,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
           enableSystem
         >
-          {process.env.NODE_ENV === "development" && <ReactQueryDevtools />}
+          {env.NEXT_PUBLIC_ENV === "dev" && <ReactQueryDevtools />}
           <Web3Provider>{children}</Web3Provider>
           <Toaster richColors />
         </ThemeProvider>

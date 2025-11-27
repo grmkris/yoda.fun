@@ -32,6 +32,22 @@
     "./services/market-generation-service": {
       "types": "./dist/services/market-generation-service.d.ts",
       "default": "./src/services/market-generation-service.ts"
+    },
+    "./services/activity-service": {
+      "types": "./dist/services/activity-service.d.ts",
+      "default": "./src/services/activity-service.ts"
+    },
+    "./services/follow-service": {
+      "types": "./dist/services/follow-service.d.ts",
+      "default": "./src/services/follow-service.ts"
+    },
+    "./services/leaderboard-service": {
+      "types": "./dist/services/leaderboard-service.d.ts",
+      "default": "./src/services/leaderboard-service.ts"
+    },
+    "./services/profile-service": {
+      "types": "./dist/services/profile-service.d.ts",
+      "default": "./src/services/profile-service.ts"
     }
   },
   "type": "module",

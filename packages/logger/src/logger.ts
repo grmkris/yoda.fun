@@ -1,11 +1,11 @@
+import type { Environment } from "@yoda.fun/shared/services";
 import type { LoggerOptions } from "pino";
 import { pino } from "pino";
-
 import pkg from "pino-std-serializers";
 
 export type LoggerConfig = {
   level?: string;
-  nodeEnv?: "development" | "production" | "test";
+  environment?: Environment;
   appName?: string;
 };
 
@@ -24,11 +24,11 @@ export type Logger = {
 export function createLogger(config: LoggerConfig = {}): Logger {
   const {
     level = "info",
-    nodeEnv = "development",
-    appName = "capbet",
+    appName = "yoda-server",
+    environment = "dev",
   } = config;
 
-  const isDevelopment = nodeEnv !== "production";
+  const isDevelopment = environment === "dev";
 
   // Base logger configuration
   const loggerOptions: LoggerOptions = {
@@ -57,7 +57,7 @@ export function createLogger(config: LoggerConfig = {}): Logger {
     },
     // Base context to include in all logs
     base: {
-      env: nodeEnv,
+      env: environment,
       app: appName,
     },
     // Timestamp function

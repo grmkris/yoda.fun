@@ -3,11 +3,11 @@
 import { useRef, useState } from "react";
 import type { SwipeStackRef } from "@/components/swipe/swipe-stack";
 import { SwipeStack } from "@/components/swipe/swipe-stack";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketStack, usePlaceBet } from "@/hooks";
 import { BetConfirmationModal } from "./bet-confirmation-modal";
 import { EmptyState } from "./empty-state";
 import { GameCard, type MarketCard } from "./game-card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export function CardSwiperSection() {
   const swipeRef = useRef<SwipeStackRef>(null);
@@ -31,7 +31,9 @@ export function CardSwiperSection() {
   };
 
   const handleConfirmBet = (vote: "YES" | "NO") => {
-    if (!pendingBet) return;
+    if (!pendingBet) {
+      return;
+    }
 
     placeBet.mutate(
       { marketId: pendingBet.id, vote },

@@ -81,7 +81,10 @@ Your job is to generate engaging, binary YES/NO betting markets based on current
       if (ctx.existingMarketTitles?.length) {
         sections.push(`## AVOID DUPLICATES
 These markets already exist, do NOT create similar ones:
-${ctx.existingMarketTitles.slice(0, 20).map((t) => `- ${t}`).join("\n")}`);
+${ctx.existingMarketTitles
+  .slice(0, 20)
+  .map((t) => `- ${t}`)
+  .join("\n")}`);
       }
 
       // Output format

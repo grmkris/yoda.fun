@@ -1,4 +1,8 @@
 import type { AiClient } from "@yoda.fun/ai";
+import { createActivityService } from "@yoda.fun/api/services/activity-service";
+import { createFollowService } from "@yoda.fun/api/services/follow-service";
+import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
+import { createProfileService } from "@yoda.fun/api/services/profile-service";
 import { createSettlementService } from "@yoda.fun/api/services/settlement-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
@@ -39,7 +43,19 @@ export function createMarketResolutionWorker(
   close: () => Promise<void>;
 } {
   const { queue, db, logger, aiClient } = config;
-  const settlementService = createSettlementService({ deps: { db, logger } });
+
+  // Create services for stats tracking
+  const leaderboardService = createLeaderboardService({ deps: { db, logger } });
+  const profileService = createProfileService({ deps: { db, logger } });
+  const followService = createFollowService({
+    deps: { db, logger, profileService },
+  });
+  const activityService = createActivityService({
+    deps: { db, logger, followService },
+  });
+  const settlementService = createSettlementService({
+    deps: { db, logger, leaderboardService, activityService },
+  });
 
   logger.info({ msg: "Starting market resolution worker" });
 
@@ -125,8 +141,8 @@ Based on the current date and available information, determine if the market out
 Provide your analysis with confidence level (0-100) and reasoning.`;
 
     const model = aiClient.getModel({
-      provider: "xai",
-      modelId: "grok-3-mini",
+      provider: "google",
+      modelId: "gemini-2.5-flash",
     });
 
     const response = await aiClient.generateObject({
@@ -160,5 +176,5 @@ Provide your analysis with confidence level (0-100) and reasoning.`;
     logger.info({ marketId: market.id, result }, "Market resolved and settled");
   }
 
-  return worker;
+  return { close: () => worker.close() };
 }

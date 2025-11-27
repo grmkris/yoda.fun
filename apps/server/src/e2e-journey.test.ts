@@ -8,6 +8,7 @@ import { createTestSetup, type TestSetup } from "test/test.setup";
 import {
   createEndedTestMarket,
   createTestContext,
+  createTestMarket,
   createTestUserWithFunds,
   type E2ETestUser,
   generateWalletAddress,
@@ -96,7 +97,7 @@ describe("E2E: Complete User Journey", () => {
 
     // ========== PHASE 2: CREATE MARKET ==========
     // Clear factual question for AI resolution
-    const market = await createEndedTestMarket(testEnv.deps.db, {
+    const market = await createTestMarket(testEnv.deps.db, {
       title: "Is water composed of hydrogen and oxygen atoms?",
       description:
         "This market resolves YES if water (H2O) is composed of hydrogen and oxygen atoms. Scientific fact check.",

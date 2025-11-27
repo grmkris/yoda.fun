@@ -19,7 +19,9 @@ export default async function BetsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-bold text-2xl">My Bets</h1>
-        <p className="text-muted-foreground">Track your predictions and winnings</p>
+        <p className="text-muted-foreground">
+          Track your predictions and winnings
+        </p>
       </div>
       <BetsHistory />
     </div>

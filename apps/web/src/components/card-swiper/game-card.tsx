@@ -22,12 +22,16 @@ function formatTimeRemaining(date: Date): string {
   const now = new Date();
   const diff = new Date(date).getTime() - now.getTime();
 
-  if (diff <= 0) return "Ended";
+  if (diff <= 0) {
+    return "Ended";
+  }
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-  if (days > 0) return `${days}d ${hours}h left`;
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
   return `${hours}h left`;
 }
 
@@ -44,10 +48,7 @@ export function GameCard({ card }: GameCardProps) {
           alt={card.title}
           className="h-full w-full object-cover"
           fill
-          src={
-            card.imageUrl ||
-            `https://picsum.photos/seed/${card.id}/400/600`
-          }
+          src={card.imageUrl || `https://picsum.photos/seed/${card.id}/400/600`}
         />
         {/* Gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -87,7 +88,7 @@ export function GameCard({ card }: GameCardProps) {
               style={{ width: `${yesPercent}%` }}
             />
           </div>
-          <div className="mt-1 text-center text-xs text-white/70">
+          <div className="mt-1 text-center text-white/70 text-xs">
             {totalVotes} votes - {formatTimeRemaining(card.votingEndsAt)}
           </div>
         </div>

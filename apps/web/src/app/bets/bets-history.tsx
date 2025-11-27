@@ -92,7 +92,7 @@ export function BetsHistory() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && bets.length === 0 && (
+      {!(isLoading || error) && bets.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground">
@@ -105,17 +105,19 @@ export function BetsHistory() {
       )}
 
       {/* Bets List */}
-      {!isLoading && !error && bets.length > 0 && (
+      {!(isLoading || error) && bets.length > 0 && (
         <div className="space-y-3">
           {bets.map(({ bet, market }) => (
             <Card key={bet.id}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-1">
-                    <h3 className="font-medium leading-tight">{market.title}</h3>
+                    <h3 className="font-medium leading-tight">
+                      {market.title}
+                    </h3>
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(bet.status)}`}
+                        className={`rounded-full px-2 py-0.5 font-medium text-xs ${getStatusColor(bet.status)}`}
                       >
                         {bet.status}
                       </span>
@@ -162,7 +164,7 @@ export function BetsHistory() {
       )}
 
       {/* Pagination */}
-      {!isLoading && !error && (hasPrevious || hasMore) && (
+      {!(isLoading || error) && (hasPrevious || hasMore) && (
         <div className="flex justify-center gap-2">
           <Button
             disabled={!hasPrevious}

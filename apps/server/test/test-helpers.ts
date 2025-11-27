@@ -33,6 +33,10 @@ export async function createTestContext(props: {
     betService: deps.betService,
     balanceService: deps.balanceService,
     withdrawalService: deps.withdrawalService,
+    leaderboardService: deps.leaderboardService,
+    profileService: deps.profileService,
+    followService: deps.followService,
+    activityService: deps.activityService,
   };
 }
 
@@ -48,6 +52,10 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     betService: testEnv.deps.betService,
     balanceService: testEnv.deps.balanceService,
     withdrawalService: testEnv.deps.withdrawalService,
+    leaderboardService: testEnv.deps.leaderboardService,
+    profileService: testEnv.deps.profileService,
+    followService: testEnv.deps.followService,
+    activityService: testEnv.deps.activityService,
   };
 }
 

@@ -82,7 +82,7 @@ export function createMarketGenerationWorker(
       return { success: true, marketsCreated: inserted.length };
     },
     {
-      onFailed: async (job: GenerateMarketJob, error: Error) => {
+      onFailed: (job, error) => {
         logger.error({
           msg: "Market generation failed after all retries",
           count: job.count,
@@ -90,9 +90,10 @@ export function createMarketGenerationWorker(
           trigger: job.trigger,
           error: error.message,
         });
+        return Promise.resolve();
       },
     }
   );
 
-  return worker;
+  return { close: () => worker.close() };
 }

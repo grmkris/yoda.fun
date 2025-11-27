@@ -19,7 +19,7 @@ function StatCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-muted-foreground text-sm font-medium">
+        <CardTitle className="font-medium text-muted-foreground text-sm">
           {title}
         </CardTitle>
       </CardHeader>
@@ -39,6 +39,66 @@ function StatCard({
   );
 }
 
+type BetWithMarket = {
+  bet: { id: string; vote: string; amount: string; payout: string | null };
+  market: { title: string; category: string | null };
+};
+
+function ActiveBetsContent({
+  bets,
+  isLoading,
+}: {
+  bets: BetWithMarket[] | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton className="h-16 w-full" key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!bets?.length) {
+    return (
+      <p className="py-8 text-center text-muted-foreground">
+        No active bets. Start predicting!
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {bets.map(({ bet, market }) => (
+        <div
+          className="flex items-center justify-between rounded-lg border p-3"
+          key={bet.id}
+        >
+          <div className="flex-1">
+            <p className="line-clamp-1 font-medium text-sm">{market.title}</p>
+            <p className="text-muted-foreground text-xs">
+              Your vote:{" "}
+              <span
+                className={
+                  bet.vote === "YES" ? "text-emerald-600" : "text-red-500"
+                }
+              >
+                {bet.vote}
+              </span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="font-medium">${bet.amount}</p>
+            <p className="text-muted-foreground text-xs">{market.category}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { data: balance, isLoading: balanceLoading } = useBalance();
   const { data: activeBets, isLoading: betsLoading } = useBetHistory({
@@ -50,10 +110,8 @@ export default function Dashboard() {
   const availableBalance = Number(balance?.available ?? 0);
   const totalDeposited = Number(balance?.totalDeposited ?? 0);
   const totalWithdrawn = Number(balance?.totalWithdrawn ?? 0);
-  const totalWon = wonBets?.bets?.reduce(
-    (sum, b) => sum + Number(b.bet.payout ?? 0),
-    0
-  ) ?? 0;
+  const totalWon =
+    wonBets?.bets?.reduce((sum, b) => sum + Number(b.bet.payout ?? 0), 0) ?? 0;
 
   return (
     <div className="space-y-6">
@@ -88,58 +146,12 @@ export default function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Active Bets</CardTitle>
-          <Link
-            className="text-primary text-sm hover:underline"
-            href="/bets"
-          >
+          <Link className="text-primary text-sm hover:underline" href="/bets">
             View all
           </Link>
         </CardHeader>
         <CardContent>
-          {betsLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton className="h-16 w-full" key={i} />
-              ))}
-            </div>
-          ) : activeBets?.bets?.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              No active bets. Start predicting!
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {activeBets?.bets?.map(({ bet, market }) => (
-                <div
-                  className="flex items-center justify-between rounded-lg border p-3"
-                  key={bet.id}
-                >
-                  <div className="flex-1">
-                    <p className="line-clamp-1 font-medium text-sm">
-                      {market.title}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      Your vote:{" "}
-                      <span
-                        className={
-                          bet.vote === "YES"
-                            ? "text-emerald-600"
-                            : "text-red-500"
-                        }
-                      >
-                        {bet.vote}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">${bet.amount}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {market.category}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <ActiveBetsContent bets={activeBets?.bets} isLoading={betsLoading} />
         </CardContent>
       </Card>
     </div>

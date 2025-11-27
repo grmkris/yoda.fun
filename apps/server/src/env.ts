@@ -4,9 +4,6 @@ import { z } from "zod";
 const NetworkSchema = z.enum(["base", "base-sepolia"]).default("base-sepolia");
 
 export const envSchema = z.object({
-  NODE_ENV: z
-    .enum(["development", "test", "production"])
-    .default("development"),
   APP_ENV: Environment,
   DATABASE_URL: z.string(),
   BETTER_AUTH_SECRET: z.string(),
@@ -17,15 +14,15 @@ export const envSchema = z.object({
     .optional(),
   NETWORK: NetworkSchema,
   // AI config for market resolution
-  XAI_API_KEY: z.string().optional(),
+  GOOGLE_GEMINI_API_KEY: z.string().optional(),
   // Redis/Queue config
   REDIS_URL: z.string().url().optional(),
-  // Enable market resolution worker (requires REDIS_URL and XAI_API_KEY)
+  // Enable market resolution worker (requires REDIS_URL and GOOGLE_GEMINI_API_KEY)
   ENABLE_RESOLUTION_WORKER: z
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
-  // Enable market generation (requires REDIS_URL and XAI_API_KEY)
+  // Enable market generation (requires REDIS_URL and GOOGLE_GEMINI_API_KEY)
   ENABLE_MARKET_GENERATION: z
     .enum(["true", "false"])
     .default("false")

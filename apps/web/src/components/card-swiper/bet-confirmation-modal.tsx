@@ -24,10 +24,12 @@ export function BetConfirmationModal({
   onCancel,
   isLoading,
 }: BetConfirmationModalProps) {
-  if (!market) return null;
+  if (!market) {
+    return null;
+  }
 
   return (
-    <Dialog open={!!market} onOpenChange={(open) => !open && onCancel()}>
+    <Dialog onOpenChange={(open) => !open && onCancel()} open={!!market}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg">Place Your Bet</DialogTitle>
@@ -39,7 +41,7 @@ export function BetConfirmationModal({
         <div className="space-y-4 py-4">
           {/* Market info */}
           <div className="rounded-lg bg-muted p-4">
-            <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">
+            <p className="mb-2 line-clamp-2 text-muted-foreground text-sm">
               {market.description}
             </p>
             <div className="flex items-center justify-between text-sm">
@@ -53,7 +55,7 @@ export function BetConfirmationModal({
           {/* Vote buttons */}
           <div className="grid grid-cols-2 gap-4">
             <Button
-              className="h-16 text-lg font-bold"
+              className="h-16 font-bold text-lg"
               disabled={isLoading}
               onClick={() => onConfirm("YES")}
               variant="default"
@@ -61,7 +63,7 @@ export function BetConfirmationModal({
               {isLoading ? "..." : "YES"}
             </Button>
             <Button
-              className="h-16 text-lg font-bold"
+              className="h-16 font-bold text-lg"
               disabled={isLoading}
               onClick={() => onConfirm("NO")}
               variant="secondary"

@@ -21,6 +21,12 @@ export const idTypesMapNameToPrefix = {
   withdrawal: "wdl",
   userBalance: "bal",
   settlementBatch: "stl",
+
+  // social features
+  userStats: "ust",
+  userProfile: "upr",
+  follow: "flw",
+  activity: "act",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -126,3 +132,16 @@ export type WalletAddressId = z.infer<typeof WalletAddressId>;
 
 export const SettlementBatchId = typeIdValidator("settlementBatch");
 export type SettlementBatchId = z.infer<typeof SettlementBatchId>;
+
+// Social feature types
+export const UserStatsId = typeIdValidator("userStats");
+export type UserStatsId = z.infer<typeof UserStatsId>;
+
+export const UserProfileId = typeIdValidator("userProfile");
+export type UserProfileId = z.infer<typeof UserProfileId>;
+
+export const FollowId = typeIdValidator("follow");
+export type FollowId = z.infer<typeof FollowId>;
+
+export const ActivityId = typeIdValidator("activity");
+export type ActivityId = z.infer<typeof ActivityId>;

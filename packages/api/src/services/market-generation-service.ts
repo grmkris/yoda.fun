@@ -5,10 +5,10 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import {
+  type GeneratedMarket,
   GeneratedMarketsResponseSchema,
   type GenerateMarketsInput,
   type GenerateMarketsResult,
-  type GeneratedMarket,
 } from "./market-generation-schemas";
 
 type MarketGenerationServiceDeps = {
@@ -95,9 +95,9 @@ export function createMarketGenerationService({
      */
     async insertMarkets(
       markets: GeneratedMarket[]
-    ): Promise<Array<typeof DB_SCHEMA.market.$inferSelect>> {
+    ): Promise<(typeof DB_SCHEMA.market.$inferSelect)[]> {
       const now = new Date();
-      const insertedMarkets: Array<typeof DB_SCHEMA.market.$inferSelect> = [];
+      const insertedMarkets: (typeof DB_SCHEMA.market.$inferSelect)[] = [];
 
       for (const market of markets) {
         const votingEndsAt = new Date(
@@ -145,7 +145,7 @@ export function createMarketGenerationService({
      */
     async generateAndInsertMarkets(input: GenerateMarketsInput): Promise<{
       generated: GenerateMarketsResult;
-      inserted: Array<typeof DB_SCHEMA.market.$inferSelect>;
+      inserted: (typeof DB_SCHEMA.market.$inferSelect)[];
     }> {
       const generated = await this.generateMarkets(input);
       const inserted = await this.insertMarkets(generated.markets);

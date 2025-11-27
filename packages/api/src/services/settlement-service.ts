@@ -3,10 +3,14 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
+import type { ActivityService } from "./activity-service";
+import type { LeaderboardService } from "./leaderboard-service";
 
 type SettlementServiceDeps = {
   db: Database;
   logger: Logger;
+  leaderboardService?: LeaderboardService;
+  activityService?: ActivityService;
 };
 
 type MarketResult = "YES" | "NO" | "INVALID";
@@ -22,7 +26,102 @@ export function createSettlementService({
 }: {
   deps: SettlementServiceDeps;
 }) {
-  const { db, logger } = deps;
+  const { db, logger, leaderboardService, activityService } = deps;
+
+  /**
+   * Process a single winning bet within a transaction
+   */
+  async function processWinningBetInTx(
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+    bet: { id: BetId; userId: UserId; amount: string },
+    payout: number,
+    marketId: MarketId
+  ) {
+    await tx
+      .update(DB_SCHEMA.bet)
+      .set({
+        status: "WON",
+        payout: payout.toFixed(2),
+        settlementStatus: "SETTLED",
+        settledAt: new Date(),
+      })
+      .where(eq(DB_SCHEMA.bet.id, bet.id));
+
+    await tx
+      .update(DB_SCHEMA.userBalance)
+      .set({
+        availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} + ${payout.toFixed(2)}`,
+      })
+      .where(eq(DB_SCHEMA.userBalance.userId, bet.userId));
+
+    await tx.insert(DB_SCHEMA.transaction).values({
+      userId: bet.userId,
+      type: "PAYOUT",
+      amount: payout.toFixed(2),
+      status: "COMPLETED",
+      metadata: {
+        marketId,
+        betId: bet.id,
+        originalBet: Number(bet.amount),
+      },
+    });
+  }
+
+  /**
+   * Process a single losing bet within a transaction
+   */
+  async function processLosingBetInTx(
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+    betId: BetId
+  ) {
+    await tx
+      .update(DB_SCHEMA.bet)
+      .set({
+        status: "LOST",
+        payout: "0.00",
+        settlementStatus: "SETTLED",
+        settledAt: new Date(),
+      })
+      .where(eq(DB_SCHEMA.bet.id, betId));
+  }
+
+  /**
+   * Track stats and log activity for a settled bet
+   */
+  async function trackBetOutcome(options: {
+    userId: UserId;
+    won: boolean;
+    profit: number;
+    marketId: MarketId;
+    marketTitle: string;
+    payout: number;
+  }) {
+    const { userId, won, profit, marketId, marketTitle, payout } = options;
+    if (leaderboardService) {
+      const streakResult = await leaderboardService.updateStatsOnSettlement({
+        userId,
+        won,
+        profit,
+      });
+
+      if (activityService && won && streakResult) {
+        await activityService.logStreakMilestone({
+          userId,
+          streakCount: streakResult.newCurrentStreak,
+        });
+      }
+    }
+
+    if (activityService) {
+      await activityService.logBetResult({
+        userId,
+        marketId,
+        marketTitle,
+        won,
+        payout,
+      });
+    }
+  }
 
   return {
     /**
@@ -122,57 +221,15 @@ export function createSettlementService({
       const result_data = await db.transaction(async (tx) => {
         let totalPayout = 0;
 
-        // Process winning bets
         for (const bet of winningBets) {
-          // Parimutuel payout: (userBet / totalWinningBets) * totalPool
           const betAmount = Number(bet.amount);
           const payout = (betAmount / totalWinningAmount) * totalPool;
           totalPayout += payout;
-
-          // Update bet status
-          await tx
-            .update(DB_SCHEMA.bet)
-            .set({
-              status: "WON",
-              payout: payout.toFixed(2),
-              settlementStatus: "SETTLED",
-              settledAt: new Date(),
-            })
-            .where(eq(DB_SCHEMA.bet.id, bet.id));
-
-          // Credit user's balance
-          await tx
-            .update(DB_SCHEMA.userBalance)
-            .set({
-              availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} + ${payout.toFixed(2)}`,
-            })
-            .where(eq(DB_SCHEMA.userBalance.userId, bet.userId));
-
-          // Create payout transaction
-          await tx.insert(DB_SCHEMA.transaction).values({
-            userId: bet.userId,
-            type: "PAYOUT",
-            amount: payout.toFixed(2),
-            status: "COMPLETED",
-            metadata: {
-              marketId,
-              betId: bet.id,
-              originalBet: betAmount,
-            },
-          });
+          await processWinningBetInTx(tx, bet, payout, marketId);
         }
 
-        // Process losing bets
         for (const bet of losingBets) {
-          await tx
-            .update(DB_SCHEMA.bet)
-            .set({
-              status: "LOST",
-              payout: "0.00",
-              settlementStatus: "SETTLED",
-              settledAt: new Date(),
-            })
-            .where(eq(DB_SCHEMA.bet.id, bet.id));
+          await processLosingBetInTx(tx, bet.id);
         }
 
         return { settled: bets.length, totalPayout };
@@ -188,6 +245,40 @@ export function createSettlementService({
         },
         "Market settled"
       );
+
+      // Get market title for activity logging
+      const marketRecords = await db
+        .select({ title: DB_SCHEMA.market.title })
+        .from(DB_SCHEMA.market)
+        .where(eq(DB_SCHEMA.market.id, marketId))
+        .limit(1);
+      const marketTitle = marketRecords[0]?.title ?? "Unknown market";
+
+      // Track stats and log activities for all bets
+      for (const bet of winningBets) {
+        const betAmount = Number(bet.amount);
+        const payout = (betAmount / totalWinningAmount) * totalPool;
+        await trackBetOutcome({
+          userId: bet.userId,
+          won: true,
+          profit: payout - betAmount,
+          marketId,
+          marketTitle,
+          payout,
+        });
+      }
+
+      for (const bet of losingBets) {
+        const betAmount = Number(bet.amount);
+        await trackBetOutcome({
+          userId: bet.userId,
+          won: false,
+          profit: -betAmount,
+          marketId,
+          marketTitle,
+          payout: 0,
+        });
+      }
 
       return result_data;
     },
