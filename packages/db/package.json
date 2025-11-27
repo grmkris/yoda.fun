@@ -34,11 +34,11 @@
   "devDependencies": {
     "@types/pg": "^8.15.6",
     "dotenv": "catalog:",
-    "drizzle-kit": "^0.31.7",
+    "drizzle-kit": "catalog:",
     "tsdown": "catalog:"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.3.14",
+    "@electric-sql/pglite": "catalog:",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "drizzle-orm": "catalog:",

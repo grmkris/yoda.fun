@@ -22,8 +22,8 @@
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "better-auth": "catalog:",
-    "porto": "^0.2.37",
-    "viem": "2.38.6",
+    "porto": "catalog:",
+    "viem": "catalog:",
     "zod": "catalog:"
   }
 }
