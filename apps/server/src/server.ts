@@ -9,6 +9,7 @@ import { createAuth } from "@yoda.fun/auth";
 import { createDb } from "@yoda.fun/db";
 import { createLogger } from "@yoda.fun/logger";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
+import { ENV_CONFIG, MARKET_GENERATION } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -73,16 +74,17 @@ app.onError(async (err, c) => {
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 // x402 deposit routes (only if wallet configured)
-if (env.DEPOSIT_WALLET_ADDRESS) {
+const envConfig = ENV_CONFIG[env.APP_ENV];
+if (envConfig.depositWalletAddress) {
   const depositRoutes = createDepositRoutes({
     db,
     auth,
     logger,
-    depositWalletAddress: env.DEPOSIT_WALLET_ADDRESS as `0x${string}`,
-    network: env.NETWORK,
+    depositWalletAddress: envConfig.depositWalletAddress,
+    network: envConfig.network,
   });
   app.route("/api", depositRoutes);
-  logger.info({ network: env.NETWORK }, "x402 deposit routes enabled");
+  logger.info({ network: envConfig.network }, "x402 deposit routes enabled");
 }
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
@@ -127,18 +129,12 @@ app.use("/*", async (c, next) => {
 
 app.get("/", (c) => c.text("OK"));
 
-// Initialize queue and workers (if enabled)
+// Initialize queue and workers (auto-start if REDIS_URL is configured)
 let queue: QueueClient | undefined;
 let resolutionWorker: { close: () => Promise<void> } | undefined;
 let generationWorker: { close: () => Promise<void> } | undefined;
 
-// Check if we have queue requirements
-const hasQueueRequirements = env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY;
-const shouldStartQueue =
-  hasQueueRequirements &&
-  (env.ENABLE_RESOLUTION_WORKER || env.ENABLE_MARKET_GENERATION);
-
-if (shouldStartQueue && env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY) {
+if (env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY) {
   queue = createQueueClient({
     url: env.REDIS_URL,
     logger,
@@ -153,51 +149,47 @@ if (shouldStartQueue && env.REDIS_URL && env.GOOGLE_GEMINI_API_KEY) {
     },
   });
 
-  // Start resolution worker if enabled
-  if (env.ENABLE_RESOLUTION_WORKER) {
-    resolutionWorker = createMarketResolutionWorker({
-      queue,
-      db,
-      logger,
-      aiClient,
-    });
-    logger.info({ msg: "Market resolution worker started" });
-  }
+  // Start resolution worker
+  resolutionWorker = createMarketResolutionWorker({
+    queue,
+    db,
+    logger,
+    aiClient,
+  });
+  logger.info({ msg: "Market resolution worker started" });
 
-  // Start generation worker if enabled
-  if (env.ENABLE_MARKET_GENERATION) {
-    generationWorker = createMarketGenerationWorker({
-      queue,
-      db,
-      logger,
-      aiClient,
-    });
+  // Start generation worker
+  generationWorker = createMarketGenerationWorker({
+    queue,
+    db,
+    logger,
+    aiClient,
+  });
 
-    // Schedule recurring market generation using BullMQ repeatable jobs
-    queue
-      .addJob(
-        "generate-market",
-        {
-          count: env.MARKET_GENERATION_COUNT,
-          trigger: "scheduled",
-        },
-        {
-          repeat: { pattern: env.MARKET_GENERATION_CRON },
-        }
-      )
-      .then(() => {
-        logger.info({
-          msg: "Market generation scheduled",
-          cron: env.MARKET_GENERATION_CRON,
-          count: env.MARKET_GENERATION_COUNT,
-        });
-      })
-      .catch((err) => {
-        logger.error({ err }, "Failed to schedule market generation");
+  // Schedule recurring market generation using BullMQ repeatable jobs
+  queue
+    .addJob(
+      "generate-market",
+      {
+        count: MARKET_GENERATION.COUNT,
+        trigger: "scheduled",
+      },
+      {
+        repeat: { pattern: MARKET_GENERATION.CRON },
+      }
+    )
+    .then(() => {
+      logger.info({
+        msg: "Market generation scheduled",
+        cron: MARKET_GENERATION.CRON,
+        count: MARKET_GENERATION.COUNT,
       });
+    })
+    .catch((err) => {
+      logger.error({ err }, "Failed to schedule market generation");
+    });
 
-    logger.info({ msg: "Market generation worker started" });
-  }
+  logger.info({ msg: "Market generation worker started" });
 }
 
 // Export queue for use in other modules (e.g., market creation)

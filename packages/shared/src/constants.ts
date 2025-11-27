@@ -16,6 +16,27 @@ export const WORKER_CONFIG = {
   } satisfies Record<JobType, RateLimitConfig>,
 } as const;
 
+// Market Generation Config
+export const MARKET_GENERATION = {
+  COUNT: 5,
+  CRON: "0 */6 * * *", // Every 6 hours
+} as const;
+
+// Network types
+export type Network = "base" | "base-sepolia";
+
+// Environment-specific configuration
+export const ENV_CONFIG = {
+  dev: {
+    network: "base-sepolia" as const,
+    depositWalletAddress: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
+  },
+  prod: {
+    network: "base" as const,
+    depositWalletAddress: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
+  },
+} as const;
+
 export const NUMERIC_CONSTANTS = {
   MAX_DELAY: 1000,
   validationLimits: {

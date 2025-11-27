@@ -2,10 +2,10 @@ import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import type { Auth } from "@yoda.fun/auth";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
+import type { Network } from "@yoda.fun/shared/constants";
 import { UserId } from "@yoda.fun/shared/typeid";
 import { Hono } from "hono";
 import { paymentMiddleware } from "x402-hono";
-import type { Network } from "../env";
 
 type DepositRouteDeps = {
   db: Database;
