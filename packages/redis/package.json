@@ -2,8 +2,7 @@
   "name": "@yoda.fun/redis",
   "type": "module",
   "exports": {
-    ".": "./src/redis.ts",
-    "./chat": "./src/chat-redis.ts"
+    ".": "./src/redis.ts"
   },
   "scripts": {
     "build": "tsdown",
