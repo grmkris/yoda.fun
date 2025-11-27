@@ -57,8 +57,8 @@ function LeaderboardRow({
   stats: { totalBets: number; winRate: number; currentStreak: number };
   isCurrentUser?: boolean;
 }) {
-  const getRankStyle = (rank: number) => {
-    switch (rank) {
+  const getRankStyle = (r: number) => {
+    switch (r) {
       case 1:
         return "bg-amber-500/10 border-amber-500/20 text-amber-500";
       case 2:
