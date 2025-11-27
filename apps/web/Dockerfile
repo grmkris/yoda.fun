@@ -3,7 +3,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM oven/bun:1 AS builder
+FROM oven/bun:1.3.3 AS builder
 
 # Install build dependencies for native modules
 RUN apt-get update && apt-get install -y \
@@ -51,7 +51,7 @@ RUN bun run build
 # ============================================
 # Stage 2: Runner
 # ============================================
-FROM oven/bun:1.1.35 AS runner
+FROM oven/bun:1.3.3 AS runner
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
