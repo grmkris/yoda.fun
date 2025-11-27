@@ -42,7 +42,7 @@ const logger = createLogger({
 // Initialize PostHog (optional - only if API key is configured)
 const posthog = createPostHogClient({
   apiKey: env.POSTHOG_API_KEY,
-  host: env.POSTHOG_HOST,
+  host: SERVICE_URLS[env.APP_ENV].posthog,
   logger,
 });
 
@@ -128,6 +128,7 @@ app.use("/*", async (c, next) => {
 });
 
 app.get("/", (c) => c.text("OK"));
+app.get("/health", (c) => c.text("OK"));
 
 // Initialize queue and workers (auto-start if REDIS_URL is configured)
 let queue: QueueClient | undefined;

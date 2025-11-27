@@ -11,7 +11,6 @@ export const envSchema = z.object({
   REDIS_URL: z.string().url().optional(),
   // PostHog analytics
   POSTHOG_API_KEY: z.string().optional(),
-  POSTHOG_HOST: z.string().url().default("https://us.i.posthog.com"),
 });
 
 export const env = envSchema.parse(process.env);
