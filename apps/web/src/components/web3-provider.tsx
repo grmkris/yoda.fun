@@ -1,14 +1,26 @@
 "use client";
 
+import type { Network } from "@yoda.fun/shared/constants";
+import { ENV_CONFIG } from "@yoda.fun/shared/constants";
 import { porto } from "porto/wagmi";
+import type { Chain } from "viem";
 import { createConfig, http, WagmiProvider } from "wagmi";
-import { base } from "wagmi/chains";
+import { base, baseSepolia } from "wagmi/chains";
+import { env } from "@/env";
+
+const CHAINS: Record<Network, Chain> = {
+  base,
+  "base-sepolia": baseSepolia,
+};
+
+const network = ENV_CONFIG[env.NEXT_PUBLIC_ENV].network;
+const chain = CHAINS[network];
 
 const wagmiConfig = createConfig({
-  chains: [base],
+  chains: [chain],
   connectors: [porto()],
   transports: {
-    [base.id]: http(),
+    [chain.id]: http(),
   },
   ssr: true,
 });

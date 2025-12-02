@@ -7,6 +7,12 @@ export {
 export { useBalance } from "./use-balance";
 export { useBetHistory } from "./use-bet-history";
 export {
+  DEPOSIT_TIERS,
+  type DepositTier,
+  useCanDeposit,
+  useDeposit,
+} from "./use-deposit";
+export {
   useFollowCounts,
   useFollowers,
   useFollowing,
