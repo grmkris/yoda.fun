@@ -10,6 +10,7 @@ if (!process.env.DATABASE_URL) {
 
 export default defineConfig({
   schema: [
+    "./src/schema/audit",
     "./src/schema/auth",
     "./src/schema/market",
     "./src/schema/config",

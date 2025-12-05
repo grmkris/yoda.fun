@@ -73,16 +73,16 @@ COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.base.json ./
 # Set environment variables
 ENV NODE_ENV=production
 ENV HOME=/home/nodejs
-ENV PORT=3000
+ENV PORT=4200
 
 # Switch to non-root user
 USER nodejs
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:4200/health || exit 1
 
-EXPOSE 3000
+EXPOSE 4200
 
 WORKDIR /app/apps/server
 

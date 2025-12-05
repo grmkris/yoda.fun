@@ -8,10 +8,6 @@ import type { JobType } from "@yoda.fun/shared/constants";
 import { type MarketId, UserId } from "@yoda.fun/shared/typeid";
 import type { TestSetup, TestUser } from "./test.setup";
 
-/**
- * Creates oRPC context for API tests
- * Pass token for authenticated, omit for unauthenticated
- */
 export async function createTestContext(props: {
   token?: string;
   testSetup: TestSetup;
@@ -30,59 +26,44 @@ export async function createTestContext(props: {
     db: deps.db,
     logger: deps.logger,
     posthog: undefined,
+    storage: deps.storage,
     betService: deps.betService,
     balanceService: deps.balanceService,
     withdrawalService: deps.withdrawalService,
     leaderboardService: deps.leaderboardService,
     profileService: deps.profileService,
     followService: deps.followService,
-    activityService: deps.activityService,
   };
 }
 
-/**
- * Creates an orpc context without authentication
- */
 export function createUnauthenticatedContext(testEnv: TestSetup): Context {
   return {
     session: null,
     db: testEnv.deps.db,
     logger: testEnv.deps.logger,
     posthog: undefined,
+    storage: testEnv.deps.storage,
     betService: testEnv.deps.betService,
     balanceService: testEnv.deps.balanceService,
     withdrawalService: testEnv.deps.withdrawalService,
     leaderboardService: testEnv.deps.leaderboardService,
     profileService: testEnv.deps.profileService,
     followService: testEnv.deps.followService,
-    activityService: testEnv.deps.activityService,
   };
 }
 
-/**
- * Generates a test wallet address (Ethereum format)
- */
 export function generateWalletAddress(): `0x${string}` {
   return `0x${faker.string.hexadecimal({ length: 40, casing: "lower", prefix: "" })}`;
 }
 
-/**
- * Generates a test email
- */
 export function generateEmail(): string {
   return faker.internet.email();
 }
 
-/**
- * Generates a test user name
- */
 export function generateName(): string {
   return faker.person.fullName();
 }
 
-/**
- * Options for creating a test market
- */
 export type CreateTestMarketOptions = {
   title?: string;
   description?: string;
@@ -96,9 +77,6 @@ export type CreateTestMarketOptions = {
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 
-/**
- * Creates a test market in the database
- */
 export async function createTestMarket(
   db: Database,
   options: CreateTestMarketOptions = {}
@@ -129,9 +107,6 @@ export async function createTestMarket(
   return market;
 }
 
-/**
- * Creates a test market that has already ended (for testing settlement)
- */
 export function createEndedTestMarket(
   db: Database,
   options: CreateTestMarketOptions = {}
@@ -145,9 +120,6 @@ export function createEndedTestMarket(
   });
 }
 
-/**
- * Fund a user's balance directly via the balance service
- */
 export async function fundUserBalance(
   balanceService: BalanceService,
   userId: UserId,
@@ -166,9 +138,6 @@ type CreateTestBetOptions = {
   amount?: string;
 };
 
-/**
- * Create a test bet directly in the database (bypasses balance checks)
- */
 export async function createTestBet(
   options: CreateTestBetOptions
 ): Promise<typeof DB_SCHEMA.bet.$inferSelect> {
@@ -193,16 +162,10 @@ export async function createTestBet(
   return bet;
 }
 
-/**
- * Extended test user with typed userId
- */
 export type E2ETestUser = TestUser & { userId: UserId };
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
 
-/**
- * Creates a test user with initial balance funded
- */
 export async function createTestUserWithFunds(
   testSetup: TestSetup,
   name: string,
@@ -212,7 +175,6 @@ export async function createTestUserWithFunds(
   const { deps } = testSetup;
   const password = "testtesttesttest";
 
-  // Sign up
   const signUpResult = await deps.authClient.api.signUpEmail({
     body: { email, name, password },
   });
@@ -221,7 +183,6 @@ export async function createTestUserWithFunds(
     throw new Error(`Failed to sign up user ${email}`);
   }
 
-  // Sign in to get session cookie
   const signInResponse = await deps.authClient.api.signInEmail({
     body: { email, password },
     asResponse: true,
@@ -239,7 +200,6 @@ export async function createTestUserWithFunds(
 
   const userId = UserId.parse(signUpResult.user.id);
 
-  // Fund the user
   await fundUserBalance(deps.balanceService, userId, initialBalance);
 
   return {
@@ -252,9 +212,6 @@ export async function createTestUserWithFunds(
   };
 }
 
-/**
- * Polls queue until job completes or times out
- */
 export async function waitForQueueJob<T extends JobType>(
   queue: QueueClient,
   queueName: T,
@@ -282,29 +239,22 @@ export async function waitForQueueJob<T extends JobType>(
   throw new Error(`Job timed out after ${maxWaitMs}ms`);
 }
 
-/**
- * Verifies balance integrity - sum of all balances + withdrawals should equal total deposits
- */
 export async function verifyBalanceIntegrity(
   db: Database,
   expectedTotal: number
 ): Promise<{ valid: boolean; actual: number; expected: number }> {
-  // Get all balances
   const balances = await db.select().from(DB_SCHEMA.userBalance);
 
-  // Sum available + pending (which represents total held by users)
   const totalBalances = balances.reduce(
     (sum, b) => sum + Number(b.availableBalance) + Number(b.pendingBalance),
     0
   );
 
-  // Get all completed withdrawals
   const withdrawals = await db.select().from(DB_SCHEMA.withdrawal);
   const totalWithdrawn = withdrawals
     .filter((w) => w.status === "COMPLETED")
     .reduce((sum, w) => sum + Number(w.amount), 0);
 
-  // Also count pending withdrawals (funds already deducted from balance)
   const pendingWithdrawn = withdrawals
     .filter((w) => w.status === "PENDING")
     .reduce((sum, w) => sum + Number(w.amount), 0);

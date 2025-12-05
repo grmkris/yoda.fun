@@ -16,13 +16,12 @@ const BET_STATUS_REGEX = /^(WON|LOST|REFUNDED)$/;
 
 describe("Market Resolution Queue", () => {
   let testEnv: TestSetup;
-  let worker: { close: () => Promise<void> };
 
   beforeAll(async () => {
     testEnv = await createTestSetup();
 
-    // Start real worker with AI client
-    worker = createMarketResolutionWorker({
+    // Start real worker with AI client (closed via queue.close())
+    createMarketResolutionWorker({
       queue: testEnv.deps.queue,
       db: testEnv.deps.db,
       logger: testEnv.deps.logger,
@@ -31,7 +30,6 @@ describe("Market Resolution Queue", () => {
   });
 
   afterAll(async () => {
-    await worker.close();
     await testEnv.close();
   });
 

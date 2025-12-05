@@ -58,11 +58,11 @@ export function GameCard({ card }: GameCardProps) {
       <div className="absolute right-0 bottom-0 left-0 p-6 text-white">
         {/* Top badges row */}
         <div className="mb-3 flex items-center justify-between">
-          {card.category && (
+          {card.category ? (
             <div className="inline-block rounded-full bg-white/20 px-3 py-1 font-medium text-xs backdrop-blur-sm">
               {card.category}
             </div>
-          )}
+          ) : null}
           <div className="rounded-full bg-emerald-500/90 px-3 py-1 font-bold text-xs">
             ${card.betAmount}
           </div>
@@ -94,9 +94,9 @@ export function GameCard({ card }: GameCardProps) {
         </div>
 
         {/* Tags */}
-        {card.tags && card.tags.length > 0 && (
+        {(card.tags?.length ?? 0) > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {card.tags.slice(0, 3).map((tag) => (
+            {card.tags?.slice(0, 3).map((tag) => (
               <span
                 className="rounded-md bg-white/10 px-2 py-1 text-xs backdrop-blur-sm"
                 key={tag}
@@ -105,7 +105,7 @@ export function GameCard({ card }: GameCardProps) {
               </span>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

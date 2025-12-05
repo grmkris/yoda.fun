@@ -33,10 +33,6 @@
       "types": "./dist/services/market-generation-service.d.ts",
       "default": "./src/services/market-generation-service.ts"
     },
-    "./services/activity-service": {
-      "types": "./dist/services/activity-service.d.ts",
-      "default": "./src/services/activity-service.ts"
-    },
     "./services/follow-service": {
       "types": "./dist/services/follow-service.d.ts",
       "default": "./src/services/follow-service.ts"
@@ -71,6 +67,7 @@
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/storage": "workspace:*",
     "posthog-node": "catalog:",
     "@yoda.fun/shared": "workspace:*",
     "hono": "catalog:",

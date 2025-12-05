@@ -6,9 +6,14 @@ export const envSchema = z.object({
   DATABASE_URL: z.string(),
   BETTER_AUTH_SECRET: z.string(),
   // AI config for market resolution
-  GOOGLE_GEMINI_API_KEY: z.string().optional(),
+  GOOGLE_GEMINI_API_KEY: z.string(),
   // Redis/Queue config
-  REDIS_URL: z.string().url().optional(),
+  REDIS_URL: z.string().url(),
+  // S3/MinIO config
+  S3_ENDPOINT: z.string().url(),
+  S3_ACCESS_KEY: z.string(),
+  S3_SECRET_KEY: z.string(),
+  S3_BUCKET: z.string(),
   // PostHog analytics
   POSTHOG_API_KEY: z.string().optional(),
 });

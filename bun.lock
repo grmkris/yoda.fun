@@ -126,6 +126,7 @@
         "@yoda.fun/db": "workspace:*",
         "@yoda.fun/logger": "workspace:*",
         "@yoda.fun/shared": "workspace:*",
+        "@yoda.fun/storage": "workspace:*",
         "hono": "catalog:",
         "posthog-node": "catalog:",
         "zod": "catalog:",

@@ -23,7 +23,6 @@ const BET_STATUS_REGEX = /^(WON|LOST|REFUNDED)$/;
 
 describe("E2E: Complete User Journey", () => {
   let testEnv: TestSetup;
-  let worker: { close: () => Promise<void> };
 
   // Test users
   let alice: E2ETestUser;
@@ -35,8 +34,8 @@ describe("E2E: Complete User Journey", () => {
   beforeAll(async () => {
     testEnv = await createTestSetup();
 
-    // Start resolution worker with real AI
-    worker = createMarketResolutionWorker({
+    // Start resolution worker with real AI (closed via queue.close())
+    createMarketResolutionWorker({
       queue: testEnv.deps.queue,
       db: testEnv.deps.db,
       logger: testEnv.deps.logger,
@@ -70,7 +69,6 @@ describe("E2E: Complete User Journey", () => {
   });
 
   afterAll(async () => {
-    await worker.close();
     await testEnv.close();
   });
 

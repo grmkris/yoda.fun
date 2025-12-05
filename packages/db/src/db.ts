@@ -7,6 +7,8 @@ import { migrate as migrateBunSql } from "drizzle-orm/bun-sql/migrator";
 import { drizzle as drizzlePglite, PgliteDatabase } from "drizzle-orm/pglite";
 import { migrate as migratePgLite } from "drizzle-orm/pglite/migrator";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as auditSchema from "./schema/audit/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as authSchema from "./schema/auth/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as configSchema from "./schema/config/schema.db";
@@ -16,6 +18,7 @@ import * as marketSchema from "./schema/market/schema.db";
 import * as socialSchema from "./schema/social/schema.db";
 
 const schema = {
+  ...auditSchema,
   ...authSchema,
   ...configSchema,
   ...marketSchema,
@@ -57,12 +60,6 @@ export function withTransaction<T>(
   return db.transaction(callback);
 }
 
-/**
- * Run database migrations
- * Automatically detects database type and uses appropriate migrator
- * @param db - Database instance (BunSQL or PGlite)
- * @param logger - Optional logger for migration progress
- */
 export async function runMigrations(
   db: Database,
   logger?: Logger

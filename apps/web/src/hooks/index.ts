@@ -1,9 +1,4 @@
 // biome-ignore lint/performance/noBarrelFile: intentional public API
-export {
-  useFollowingActivity,
-  useGlobalActivity,
-  useUserActivity,
-} from "./use-activity";
 export { useBalance } from "./use-balance";
 export { useBetHistory } from "./use-bet-history";
 export {

@@ -70,11 +70,24 @@ function LeaderboardRow({
     }
   };
 
+  const getRankDisplay = (r: number): string => {
+    switch (r) {
+      case 1:
+        return "🥇";
+      case 2:
+        return "🥈";
+      case 3:
+        return "🥉";
+      default:
+        return String(r);
+    }
+  };
+
   return (
     <Link
       className={cn(
         "flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50",
-        isCurrentUser && "border-primary bg-primary/5"
+        !!isCurrentUser && "border-primary bg-primary/5"
       )}
       href={`/u/${username}`}
     >
@@ -84,7 +97,7 @@ function LeaderboardRow({
           getRankStyle(rank)
         )}
       >
-        {rank <= 3 ? ["", "🥇", "🥈", "🥉"][rank] : rank}
+        {getRankDisplay(rank)}
       </div>
 
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
@@ -236,7 +249,7 @@ export default function Leaderboard() {
       </div>
 
       {/* Your Rank Card */}
-      {myRank && (
+      {myRank ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Your Rank</CardTitle>
@@ -256,7 +269,7 @@ export default function Leaderboard() {
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* Leaderboard */}
       <Card>

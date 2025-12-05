@@ -1,7 +1,5 @@
 import {
-  type ActivityId,
   type FollowId,
-  type MarketId,
   typeIdGenerator,
   type UserId,
   type UserProfileId,
@@ -11,7 +9,6 @@ import {
   boolean,
   index,
   integer,
-  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -26,16 +23,6 @@ import {
 import { user } from "../auth/auth.db";
 
 // Enums
-export const activityTypeEnum = pgEnum("activity_type", [
-  "BET_PLACED",
-  "BET_WON",
-  "BET_LOST",
-  "STREAK_MILESTONE",
-  "LEADERBOARD_RANK",
-  "FOLLOWED_USER",
-  "PROFILE_UPDATED",
-]);
-
 export const leaderboardPeriodEnum = pgEnum("leaderboard_period", [
   "DAILY",
   "WEEKLY",
@@ -171,49 +158,5 @@ export const follow = pgTable(
     // Indexes for efficient queries
     index("idx_follow_follower").on(table.followerId),
     index("idx_follow_following").on(table.followingId),
-  ]
-);
-
-/**
- * Activity feed entries for social features
- */
-export const activity = pgTable(
-  "activity",
-  {
-    id: typeId("activity", "id")
-      .primaryKey()
-      .$defaultFn(() => typeIdGenerator("activity"))
-      .$type<ActivityId>(),
-    userId: typeId("user", "user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" })
-      .$type<UserId>(),
-    type: activityTypeEnum("type").notNull(),
-
-    // Flexible metadata for different activity types
-    metadata: jsonb("metadata").$type<{
-      marketId?: MarketId;
-      marketTitle?: string;
-      amount?: string;
-      payout?: string;
-      vote?: "YES" | "NO";
-      result?: "WON" | "LOST";
-      streakCount?: number;
-      rank?: number;
-      period?: "DAILY" | "WEEKLY" | "MONTHLY" | "ALL_TIME";
-      followedUserId?: UserId;
-      followedUsername?: string;
-    }>(),
-
-    // Visibility
-    isPublic: boolean("is_public").notNull().default(true),
-
-    ...baseEntityFields,
-  },
-  (table) => [
-    index("idx_activity_user").on(table.userId),
-    index("idx_activity_type").on(table.type),
-    index("idx_activity_created").on(table.createdAt),
-    index("idx_activity_public").on(table.isPublic, table.createdAt),
   ]
 );

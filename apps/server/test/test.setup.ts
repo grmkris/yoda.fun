@@ -1,5 +1,4 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
-import { createActivityService } from "@yoda.fun/api/services/activity-service";
 import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createBetService } from "@yoda.fun/api/services/bet-service";
 import { createFollowService } from "@yoda.fun/api/services/follow-service";
@@ -44,7 +43,6 @@ export type TestSetup = {
     leaderboardService: ReturnType<typeof createLeaderboardService>;
     profileService: ReturnType<typeof createProfileService>;
     followService: ReturnType<typeof createFollowService>;
-    activityService: ReturnType<typeof createActivityService>;
   };
   users: {
     authenticated: TestUser;
@@ -54,9 +52,6 @@ export type TestSetup = {
   close: () => Promise<void>;
 };
 
-/**
- * Creates a test user with better-auth API
- */
 async function createTestUser(
   authClient: Auth,
   email: string,
@@ -64,7 +59,6 @@ async function createTestUser(
 ): Promise<TestUser> {
   const password = "testtesttesttest";
 
-  // Sign up
   const signUpResult = await authClient.api.signUpEmail({
     body: { email, name, password },
   });
@@ -73,7 +67,6 @@ async function createTestUser(
     throw new Error(`Failed to sign up user ${email}`);
   }
 
-  // Sign in to get session cookie
   const signInResponse = await authClient.api.signInEmail({
     body: { email, password },
     asResponse: true,
@@ -83,10 +76,7 @@ async function createTestUser(
     throw new Error(`Failed to sign in user ${email}`);
   }
 
-  // Extract session cookie from headers
   const setCookieHeader = signInResponse.headers.get("set-cookie") || "";
-
-  // Parse the session token from the cookie header
   const sessionTokenMatch = setCookieHeader.match(SessionTokenRegex);
   if (!sessionTokenMatch) {
     throw new Error(`Failed to extract session token for user ${email}`);
@@ -105,11 +95,7 @@ async function createTestUser(
   };
 }
 
-/**
- * Creates a complete test environment with in-memory database and all services
- */
 export async function createTestSetup(): Promise<TestSetup> {
-  // Create logger
   const testLogLevel =
     (process.env.TEST_LOG_LEVEL as LoggerConfig["level"]) ?? "error";
   const logger = createLogger({
@@ -118,10 +104,7 @@ export async function createTestSetup(): Promise<TestSetup> {
     environment: "dev",
   });
 
-  // Create in-memory PGlite database
   const pgLite = createPgLite();
-
-  // Only log SQL queries in debug mode to reduce test noise
   const drizzleLogger: DrizzleLogger = {
     logQuery: (query, params) => {
       if (testLogLevel === "debug" || testLogLevel === "trace") {
@@ -130,7 +113,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   };
 
-  // Create Drizzle instance
   const db = createDb({
     logger: drizzleLogger,
     dbData: {
@@ -139,7 +121,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   });
 
-  // Run migrations
   try {
     await runMigrations(db, logger);
     logger.debug({ msg: "Migrations applied successfully" });
@@ -148,7 +129,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     throw error;
   }
 
-  // Create auth client
   const authClient = createAuth({
     db,
     appEnv: env.APP_ENV,
@@ -157,7 +137,6 @@ export async function createTestSetup(): Promise<TestSetup> {
 
   logger.debug({ msg: "Creating test users..." });
 
-  // Create test users using real auth API
   const authenticatedUser = await createTestUser(
     authClient,
     "authenticated@test.com",
@@ -170,7 +149,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     "Unauthenticated User"
   );
 
-  // Create S3 test server and storage client
   const s3Setup = await createTestS3Setup("test-s3-bucket");
   const storage = createStorageClient({
     s3Client: s3Setup.client,
@@ -178,16 +156,12 @@ export async function createTestSetup(): Promise<TestSetup> {
     logger,
   });
 
-  // Create Redis test server
   const redis = await createTestRedisSetup();
-
-  // Create queue client (using in-memory Redis)
   const queue = createQueueClient({
     url: redis.uri,
     logger,
   });
 
-  // Create AI client
   const aiClient = createAiClient({
     logger,
     environment: env.APP_ENV,
@@ -199,7 +173,6 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   });
 
-  // Create services
   const betService = createBetService({ deps: { db, logger } });
   const balanceService = createBalanceService({ deps: { db, logger } });
   const withdrawalService = createWithdrawalService({ deps: { db, logger } });
@@ -207,9 +180,6 @@ export async function createTestSetup(): Promise<TestSetup> {
   const profileService = createProfileService({ deps: { db, logger } });
   const followService = createFollowService({
     deps: { db, logger, profileService },
-  });
-  const activityService = createActivityService({
-    deps: { db, logger, followService },
   });
   logger.info({
     msg: "Test environment setup complete",
@@ -227,14 +197,11 @@ export async function createTestSetup(): Promise<TestSetup> {
     ],
   });
 
-  // Cleanup function to reset data between tests
   const cleanup = async () => {
-    await Promise.resolve(); // TODO
-
+    await Promise.resolve();
     logger.debug({ msg: "Test data cleaned up" });
   };
 
-  // Close function to shut down all services
   const close = async () => {
     try {
       await queue.close();
@@ -263,7 +230,6 @@ export async function createTestSetup(): Promise<TestSetup> {
       leaderboardService,
       profileService,
       followService,
-      activityService,
     },
     users: {
       authenticated: authenticatedUser,

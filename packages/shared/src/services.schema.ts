@@ -20,12 +20,12 @@ export const SERVICE_URLS: Record<
   }
 > = {
   dev: {
-    auth: "http://localhost:3000",
-    api: "http://localhost:3000",
-    web: "http://localhost:3001",
+    auth: "http://localhost:4200",
+    api: "http://localhost:4200",
+    web: "http://localhost:4201",
     cookieDomain: "localhost",
     siweDomain: "localhost",
-    storageUrl: "http://localhost:9000",
+    storageUrl: "http://localhost:9100",
     posthog: "https://eu.i.posthog.com",
     posthogAssets: "https://eu-assets.i.posthog.com",
     posthogUi: "https://eu.posthog.com",

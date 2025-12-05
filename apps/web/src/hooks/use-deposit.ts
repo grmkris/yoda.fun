@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { toast } from "sonner";
-import { parseUnits } from "viem";
+import { parseUnits, publicActions } from "viem";
 import { useAccount, useWalletClient } from "wagmi";
 import { wrapFetchWithPayment } from "x402-fetch";
 import { env } from "@/env";
@@ -19,10 +19,6 @@ type DepositResponse = {
   transactionId: string;
 };
 
-/**
- * Deposit funds using x402 payment protocol
- * Automatically handles wallet signing and 402 payment flow
- */
 export function useDeposit() {
   const queryClient = useQueryClient();
   const { data: walletClient } = useWalletClient();
@@ -33,16 +29,10 @@ export function useDeposit() {
         throw new Error("Wallet not connected");
       }
 
-      // Max payment value in USDC base units (6 decimals)
-      // Set to tier amount + small buffer for fees
       const maxValue = parseUnits(String(tier + 1), 6);
+      const signer = walletClient.extend(publicActions);
 
-      // Wrap fetch with x402 payment handling
-      const fetchWithPayment = wrapFetchWithPayment(
-        fetch,
-        walletClient,
-        maxValue
-      );
+      const fetchWithPayment = wrapFetchWithPayment(fetch, signer, maxValue);
 
       const apiUrl = SERVICE_URLS[env.NEXT_PUBLIC_ENV].api;
       const response = await fetchWithPayment(`${apiUrl}/api/deposit/${tier}`, {
@@ -77,9 +67,6 @@ export function useDeposit() {
   });
 }
 
-/**
- * Check if user can deposit (wallet connected)
- */
 export function useCanDeposit() {
   const { isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();

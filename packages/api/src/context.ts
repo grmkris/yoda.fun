@@ -1,9 +1,9 @@
 import type { Auth } from "@yoda.fun/auth";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
+import type { StorageClient } from "@yoda.fun/storage";
 import type { Context as HonoContext } from "hono";
 import type { PostHog } from "posthog-node";
-import { createActivityService } from "./services/activity-service";
 import { createBalanceService } from "./services/balance-service";
 import { createBetService } from "./services/bet-service";
 import { createFollowService } from "./services/follow-service";
@@ -17,6 +17,7 @@ export type CreateContextOptions = {
   db: Database;
   logger: Logger;
   posthog?: PostHog;
+  storage?: StorageClient;
 };
 
 export async function createContext({
@@ -25,6 +26,7 @@ export async function createContext({
   db,
   logger,
   posthog,
+  storage,
 }: CreateContextOptions) {
   const session = await auth.api.getSession({
     headers: context.req.raw.headers,
@@ -38,11 +40,8 @@ export async function createContext({
   const followService = createFollowService({
     deps: { db, logger, profileService },
   });
-  const activityService = createActivityService({
-    deps: { db, logger, followService },
-  });
   const betService = createBetService({
-    deps: { db, logger, activityService },
+    deps: { db, logger },
   });
 
   return {
@@ -50,13 +49,13 @@ export async function createContext({
     db,
     logger,
     posthog,
+    storage,
     betService,
     balanceService,
     withdrawalService,
     leaderboardService,
     profileService,
     followService,
-    activityService,
   };
 }
 

@@ -74,22 +74,22 @@ export function BetsHistory() {
       </div>
 
       {/* Loading State */}
-      {isLoading && (
+      {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton className="h-24 w-full" key={i} />
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Error State */}
-      {error && (
+      {error ? (
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-muted-foreground">Failed to load bets</p>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* Empty State */}
       {!(isLoading || error) && bets.length === 0 && (
@@ -133,11 +133,11 @@ export function BetsHistory() {
                           {bet.vote}
                         </span>
                       </span>
-                      {market.category && (
+                      {market.category ? (
                         <span className="text-muted-foreground">
                           {market.category}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <p className="text-muted-foreground text-xs">
                       Placed on {formatDate(bet.createdAt)}
@@ -145,16 +145,16 @@ export function BetsHistory() {
                   </div>
                   <div className="text-right">
                     <p className="font-bold">${bet.amount}</p>
-                    {bet.payout && (
+                    {bet.payout ? (
                       <p className="text-emerald-600 text-sm">
                         Won ${bet.payout}
                       </p>
-                    )}
-                    {market.result && (
+                    ) : null}
+                    {market.result ? (
                       <p className="text-muted-foreground text-xs">
                         Result: {market.result}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </CardContent>

@@ -133,12 +133,12 @@ function SwipeStackComponent<T>(
                 key={index}
                 style={{
                   position: isTopCard ? "relative" : "absolute",
-                  top: isTopCard ? 0 : yOffset,
+                  top: isTopCard ? 0 : Number(yOffset),
                   left: 0,
                   right: 0,
                   zIndex: visibleCards.length - stackIndex,
                   transform: `scale(${scale})`,
-                  opacity: isRemoved ? 0 : opacity,
+                  opacity: isRemoved ? 0 : Number(opacity),
                   transformOrigin: "top center",
                   transition: isTopCard
                     ? "none"

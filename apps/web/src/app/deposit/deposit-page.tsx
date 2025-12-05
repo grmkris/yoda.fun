@@ -112,7 +112,7 @@ function DepositTiers() {
       {DEPOSIT_TIERS.map((tier) => (
         <TierCard
           amount={tier}
-          isLoading={isPending && pendingTier === tier}
+          isLoading={isPending === true && pendingTier === tier}
           key={tier}
           onSelect={() => handleDeposit(tier)}
         />
@@ -139,7 +139,7 @@ export function DepositPage() {
       <BalanceCard />
 
       {/* Deposit Options or Connect Prompt */}
-      {isConnected && canDeposit ? (
+      {isConnected === true && canDeposit === true ? (
         <div className="space-y-4">
           <h2 className="font-semibold text-xl">Select Amount</h2>
           <DepositTiers />

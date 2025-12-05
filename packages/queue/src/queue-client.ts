@@ -223,7 +223,8 @@ export function createQueueClient(config: QueueConfig) {
     logger?.info({ msg: "Closing queue connections" });
     await Promise.all(workers.map((w) => w.close()));
     await Promise.all(Object.values(queues).map((q) => q.close()));
-    await redis.quit();
+    // Use disconnect() for faster shutdown without waiting for pending replies
+    redis.disconnect();
     logger?.info({ msg: "Queue connections closed" });
   }
 

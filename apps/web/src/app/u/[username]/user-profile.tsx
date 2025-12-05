@@ -8,12 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  useIsFollowing,
-  useProfileByUsername,
-  useToggleFollow,
-  useUserActivity,
-} from "@/hooks";
+import { useIsFollowing, useProfileByUsername, useToggleFollow } from "@/hooks";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +23,9 @@ function StatCard({
 }) {
   return (
     <div className="text-center">
-      <p className={cn("font-bold text-2xl", highlight && "text-emerald-500")}>
+      <p
+        className={cn("font-bold text-2xl", !!highlight && "text-emerald-500")}
+      >
         {value}
       </p>
       <p className="text-muted-foreground text-xs">{label}</p>
@@ -58,64 +55,6 @@ function FollowButton({ userId }: { userId: UserId }) {
     >
       {followStatus?.isFollowing ? "Following" : "Follow"}
     </Button>
-  );
-}
-
-function ActivityItem({
-  type,
-  metadata,
-  createdAt,
-}: {
-  type: string;
-  metadata: Record<string, unknown> | null;
-  createdAt: Date;
-}) {
-  const getActivityText = () => {
-    switch (type) {
-      case "BET_PLACED":
-        return `Bet ${metadata?.vote} on "${metadata?.marketTitle}"`;
-      case "BET_WON":
-        return `Won $${metadata?.payout} on "${metadata?.marketTitle}"`;
-      case "BET_LOST":
-        return `Lost on "${metadata?.marketTitle}"`;
-      case "STREAK_MILESTONE":
-        return `Reached a ${metadata?.streakCount} win streak! 🔥`;
-      default:
-        return type;
-    }
-  };
-
-  const getActivityColor = () => {
-    switch (type) {
-      case "BET_WON":
-        return "text-emerald-500";
-      case "BET_LOST":
-        return "text-red-500";
-      case "STREAK_MILESTONE":
-        return "text-amber-500";
-      default:
-        return "";
-    }
-  };
-
-  return (
-    <div className="flex items-start gap-3 border-b py-3 last:border-b-0">
-      <div
-        className={cn(
-          "mt-2 h-2 w-2 rounded-full",
-          type === "BET_WON" && "bg-emerald-500",
-          type === "BET_LOST" && "bg-red-500",
-          type === "BET_PLACED" && "bg-blue-500",
-          type === "STREAK_MILESTONE" && "bg-amber-500"
-        )}
-      />
-      <div className="flex-1">
-        <p className={cn("text-sm", getActivityColor())}>{getActivityText()}</p>
-        <p className="text-muted-foreground text-xs">
-          {new Date(createdAt).toLocaleDateString()}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -197,16 +136,16 @@ export default function UserProfile({ username }: { username: string }) {
         <div className="flex-1">
           <div className="flex items-center gap-4">
             <h1 className="font-bold text-2xl">{displayName}</h1>
-            {user?.id && <FollowButton userId={user.id} />}
+            {user?.id ? <FollowButton userId={user.id} /> : null}
           </div>
-          {user?.username && (
+          {user?.username ? (
             <p className="text-muted-foreground">@{user.username}</p>
-          )}
-          {profile?.bio && <p className="mt-2">{profile.bio}</p>}
+          ) : null}
+          {profile?.bio ? <p className="mt-2">{profile.bio}</p> : null}
 
           {/* Social Links */}
           <div className="mt-2 flex gap-4">
-            {profile?.twitterHandle && (
+            {profile?.twitterHandle ? (
               <a
                 className="text-muted-foreground text-sm hover:text-foreground"
                 href={`https://twitter.com/${profile.twitterHandle}`}
@@ -215,7 +154,7 @@ export default function UserProfile({ username }: { username: string }) {
               >
                 @{profile.twitterHandle}
               </a>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -233,7 +172,7 @@ export default function UserProfile({ username }: { username: string }) {
       </div>
 
       {/* Stats */}
-      {stats && (
+      {stats ? (
         <Card>
           <CardContent className="grid grid-cols-2 gap-4 py-6 sm:grid-cols-4">
             <StatCard label="Total Bets" value={stats.totalBets} />
@@ -253,7 +192,7 @@ export default function UserProfile({ username }: { username: string }) {
             />
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* Activity */}
       <Card>
@@ -266,7 +205,9 @@ export default function UserProfile({ username }: { username: string }) {
           </CardHeader>
           <CardContent>
             <TabsContent className="mt-0" value="activity">
-              {user?.id && <UserActivityFeed userId={user.id} />}
+              <p className="py-8 text-center text-muted-foreground">
+                Activity feed coming soon
+              </p>
             </TabsContent>
             <TabsContent className="mt-0" value="bets">
               <p className="py-8 text-center text-muted-foreground">
@@ -276,47 +217,6 @@ export default function UserProfile({ username }: { username: string }) {
           </CardContent>
         </Tabs>
       </Card>
-    </div>
-  );
-}
-
-function UserActivityFeed({ userId }: { userId: UserId }) {
-  const { data, isLoading } = useUserActivity(userId, { limit: 20 });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {([0, 1, 2, 3, 4] as const).map((id) => (
-          <Skeleton className="h-12 w-full" key={id} />
-        ))}
-      </div>
-    );
-  }
-
-  if (!data?.visible) {
-    return (
-      <p className="py-8 text-center text-muted-foreground">
-        Activity is hidden
-      </p>
-    );
-  }
-
-  if (!data.activities?.length) {
-    return (
-      <p className="py-8 text-center text-muted-foreground">No activity yet</p>
-    );
-  }
-
-  return (
-    <div>
-      {data.activities.map((activity) => (
-        <ActivityItem
-          createdAt={activity.createdAt}
-          key={activity.id}
-          metadata={activity.metadata as Record<string, unknown> | null}
-          type={activity.type}
-        />
-      ))}
     </div>
   );
 }

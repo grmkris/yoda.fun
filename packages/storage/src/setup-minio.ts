@@ -39,7 +39,7 @@ async function checkBucketExists(
   logger: Logger
 ): Promise<boolean> {
   try {
-    const testKey = ".capbet-healthcheck";
+    const testKey = ".yoda.fun-healthcheck";
     await s3Client.write(testKey, "ok", { type: "text/plain" });
     logger.info({ bucket }, "Bucket already exists and is accessible");
     return true;
@@ -69,12 +69,11 @@ async function createBucket(bucket: string, logger: Logger): Promise<void> {
   logger.info({ bucket }, "Creating bucket...");
 
   try {
-    // Use docker exec to run mc command inside the MinIO container
     const proc = Bun.spawn(
       [
         "docker",
         "exec",
-        "capbet-minio",
+        "yoda.fun-minio",
         "mc",
         "mb",
         `/data/${bucket}`,
@@ -95,12 +94,11 @@ async function createBucket(bucket: string, logger: Logger): Promise<void> {
     }
 
     logger.info({ bucket }, "Successfully created bucket (or already exists)");
-  } catch (error) {
+  } catch {
     logger.warn(
-      { error },
-      "Failed to create bucket using docker exec, bucket may already exist"
+      { bucket },
+      "Bucket creation via docker exec failed, may already exist"
     );
-    // Don't throw - bucket might already exist or MinIO might be configured differently
   }
 }
 
@@ -113,7 +111,7 @@ async function verifyBucketAccess(
   logger: Logger
 ): Promise<void> {
   try {
-    const testKey = ".capbet-healthcheck";
+    const testKey = ".yoda.fun-healthcheck";
     await s3Client.write(testKey, "ok", { type: "text/plain" });
     logger.info({ bucket }, "Bucket verified and accessible");
   } catch (error) {
@@ -154,7 +152,6 @@ function logTroubleshooting(
   }
 }
 
-// TODO do this before createAPp i think...
 export async function setupMinIO(config: MinIOSetupConfig): Promise<void> {
   const { s3Client, endpoint, bucket, logger } = config;
 

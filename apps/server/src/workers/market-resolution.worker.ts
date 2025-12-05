@@ -1,8 +1,5 @@
 import type { AiClient } from "@yoda.fun/ai";
-import { createActivityService } from "@yoda.fun/api/services/activity-service";
-import { createFollowService } from "@yoda.fun/api/services/follow-service";
 import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
-import { createProfileService } from "@yoda.fun/api/services/profile-service";
 import { createSettlementService } from "@yoda.fun/api/services/settlement-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
@@ -33,10 +30,6 @@ const MarketResolutionSchema = z.object({
   ),
 });
 
-/**
- * Create and start the market resolution worker
- * Processes scheduled resolution jobs
- */
 export function createMarketResolutionWorker(
   config: MarketResolutionWorkerConfig
 ): {
@@ -46,15 +39,8 @@ export function createMarketResolutionWorker(
 
   // Create services for stats tracking
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
-  const profileService = createProfileService({ deps: { db, logger } });
-  const followService = createFollowService({
-    deps: { db, logger, profileService },
-  });
-  const activityService = createActivityService({
-    deps: { db, logger, followService },
-  });
   const settlementService = createSettlementService({
-    deps: { db, logger, leaderboardService, activityService },
+    deps: { db, logger, leaderboardService },
   });
 
   logger.info({ msg: "Starting market resolution worker" });
@@ -91,15 +77,13 @@ export function createMarketResolutionWorker(
       return { success: true, marketId };
     },
     {
-      onFailed: async (job: ResolveMarketJob, error: Error) => {
+      onFailed: (job: ResolveMarketJob, error: Error): Promise<void> => {
         logger.error({
           msg: "Market resolution failed after all retries",
           marketId: job.marketId,
           error: error.message,
         });
-
-        // Optionally mark market as failed or notify
-        await Promise.resolve();
+        return Promise.resolve();
       },
     }
   );

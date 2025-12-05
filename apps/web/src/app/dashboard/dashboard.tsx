@@ -29,9 +29,9 @@ function StatCard({
         ) : (
           <>
             <p className="font-bold text-2xl">{value}</p>
-            {subtitle && (
+            {subtitle ? (
               <p className="text-muted-foreground text-xs">{subtitle}</p>
-            )}
+            ) : null}
           </>
         )}
       </CardContent>
