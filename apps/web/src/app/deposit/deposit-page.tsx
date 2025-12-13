@@ -13,13 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBalance } from "@/hooks/use-balance";
 import {
   DEPOSIT_TIERS,
   type DepositTier,
-  useBalance,
   useCanDeposit,
   useDeposit,
-} from "@/hooks";
+} from "@/hooks/use-deposit";
 
 function TierCard({
   amount,

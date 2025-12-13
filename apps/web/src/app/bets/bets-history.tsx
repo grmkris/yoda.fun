@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBetHistory } from "@/hooks";
+import { useBetHistory } from "@/hooks/use-bet-history";
 
 type BetStatus = "ACTIVE" | "WON" | "LOST" | "REFUNDED" | undefined;
 

@@ -32,7 +32,6 @@
     "db:down": "docker compose down"
   },
   "devDependencies": {
-    "@types/pg": "^8.15.6",
     "dotenv": "catalog:",
     "drizzle-kit": "catalog:",
     "tsdown": "catalog:"

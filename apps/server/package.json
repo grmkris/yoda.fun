@@ -31,7 +31,7 @@
     "@yoda.fun/test-utils": "workspace:*",
     "better-auth": "catalog:",
     "hono": "catalog:",
-    "x402-hono": "^0.7.3",
+    "x402-hono": "^1.0.0",
     "zod": "catalog:"
   },
   "devDependencies": {

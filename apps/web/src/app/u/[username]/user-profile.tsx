@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsFollowing, useProfileByUsername, useToggleFollow } from "@/hooks";
+import { useIsFollowing, useToggleFollow } from "@/hooks/use-follow";
+import { useProfileByUsername } from "@/hooks/use-profile";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 

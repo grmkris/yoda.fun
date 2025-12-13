@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBalance, useBetHistory } from "@/hooks";
+import { useBalance } from "@/hooks/use-balance";
+import { useBetHistory } from "@/hooks/use-bet-history";
 
 function StatCard({
   title,

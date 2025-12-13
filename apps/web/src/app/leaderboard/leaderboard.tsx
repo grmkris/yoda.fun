@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLeaderboard, useMyRank } from "@/hooks";
+import { useLeaderboard, useMyRank } from "@/hooks/use-leaderboard";
 import { cn } from "@/lib/utils";
 
 type Period = "daily" | "weekly" | "monthly" | "allTime";

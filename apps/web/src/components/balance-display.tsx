@@ -3,7 +3,7 @@
 import { Wallet } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBalance } from "@/hooks";
+import { useBalance } from "@/hooks/use-balance";
 
 export function BalanceDisplay() {
   const { data, isLoading, error } = useBalance();
