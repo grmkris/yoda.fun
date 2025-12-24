@@ -5,19 +5,19 @@ import type { Logger } from "@yoda.fun/logger";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import type { LeaderboardService } from "./leaderboard-service";
 
-type SettlementServiceDeps = {
+interface SettlementServiceDeps {
   db: Database;
   logger: Logger;
   leaderboardService?: LeaderboardService;
-};
+}
 
 type MarketResult = "YES" | "NO" | "INVALID";
 
-type ResolutionMetadata = {
+interface ResolutionMetadata {
   sources?: Array<{ url: string; snippet: string; publishedAt?: string }>;
   confidence?: number;
   aiModelUsed?: string;
-};
+}
 
 export function createSettlementService({
   deps,

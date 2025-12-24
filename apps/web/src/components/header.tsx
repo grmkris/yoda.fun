@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { BalanceDisplay } from "./balance-display";
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
@@ -23,7 +22,6 @@ export default function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <BalanceDisplay />
           <ModeToggle />
           <UserMenu />
         </div>

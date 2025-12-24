@@ -5,10 +5,10 @@ import type { MarketId } from "@yoda.fun/shared/typeid";
 import { toast } from "sonner";
 import { client, orpc } from "@/utils/orpc";
 
-type PlaceBetInput = {
+interface PlaceBetInput {
   marketId: MarketId;
   vote: "YES" | "NO";
-};
+}
 
 /**
  * Place a bet on a market

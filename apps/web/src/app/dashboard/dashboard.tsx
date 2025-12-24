@@ -40,10 +40,10 @@ function StatCard({
   );
 }
 
-type BetWithMarket = {
+interface BetWithMarket {
   bet: { id: string; vote: string; amount: string; payout: string | null };
   market: { title: string; category: string | null };
-};
+}
 
 function ActiveBetsContent({
   bets,

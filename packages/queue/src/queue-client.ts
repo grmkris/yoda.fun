@@ -5,20 +5,20 @@ import { Redis } from "ioredis";
 import type { GenerateMarketJob } from "./jobs/generate-market-job";
 import type { ResolveMarketJob } from "./jobs/resolve-market-job";
 
-export type QueueConfig = {
+export interface QueueConfig {
   url: string;
   logger?: Logger;
-};
+}
 
-export type JobData = {
+export interface JobData {
   "resolve-market": ResolveMarketJob;
   "generate-market": GenerateMarketJob;
-};
+}
 
-export type JobResult = {
+export interface JobResult {
   "resolve-market": { success: boolean; marketId: string };
   "generate-market": { success: boolean; marketsCreated: number };
-};
+}
 
 const TIME_SECONDS = {
   ONE_DAY: 24 * 60 * 60,

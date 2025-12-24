@@ -13,10 +13,10 @@ const firstOrThrow = <T>(arr: T[], msg: string): T => {
   return first;
 };
 
-type BalanceServiceDeps = {
+interface BalanceServiceDeps {
   db: Database;
   logger: Logger;
-};
+}
 
 export type TransactionType =
   | "DEPOSIT"

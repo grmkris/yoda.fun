@@ -1,11 +1,11 @@
 import type { Logger } from "@yoda.fun/logger";
 import { PostHog } from "posthog-node";
 
-type CreatePostHogClientOptions = {
+interface CreatePostHogClientOptions {
   apiKey?: string;
   host?: string;
   logger?: Logger;
-};
+}
 
 let instance: PostHog | undefined;
 

@@ -150,7 +150,8 @@ const queue: QueueClient = createQueueClient({
 const aiClient = createAiClient({
   logger,
   environment: env.APP_ENV,
-  posthog,
+  // TODO: Re-enable when @posthog/ai supports AI SDK v6
+  // posthog,
   providerConfigs: {
     xaiApiKey: env.GOOGLE_GEMINI_API_KEY,
   },
@@ -205,4 +206,7 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
-export default app;
+export default {
+  port: 4200,
+  fetch: app.fetch,
+};

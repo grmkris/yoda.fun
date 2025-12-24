@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import UserProfile from "./user-profile";
 
-type Props = {
+interface Props {
   params: Promise<{ username: string }>;
-};
+}
 
 export async function generateMetadata({ params }: Props) {
   const { username } = await params;

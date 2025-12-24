@@ -11,14 +11,14 @@ import { createLeaderboardService } from "./services/leaderboard-service";
 import { createProfileService } from "./services/profile-service";
 import { createWithdrawalService } from "./services/withdrawal-service";
 
-export type CreateContextOptions = {
+export interface CreateContextOptions {
   context: HonoContext;
   auth: Auth;
   db: Database;
   logger: Logger;
   posthog?: PostHog;
   storage?: StorageClient;
-};
+}
 
 export async function createContext({
   context,

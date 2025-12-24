@@ -1,66 +1,79 @@
 "use client";
 
-import { type ComponentProps, useState } from "react";
-import { useAccount, useConnect, useConnectors, useDisconnect } from "wagmi";
+import type { ComponentProps } from "react";
+import { useConnect, useConnection, useConnectors, useDisconnect } from "wagmi";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { Skeleton } from "./ui/skeleton";
 
-const COPIED_TIMEOUT_MS = 2000;
-const ADDRESS_PREFIX_LENGTH = 6;
-const ADDRESS_SUFFIX_LENGTH = 4;
-
-type PortoConnectButtonProps = {
+interface PortoConnectButtonProps {
   size?: ComponentProps<typeof Button>["size"];
   className?: string;
-};
+}
 
 export function PortoConnectButton({
-  size = "sm",
+  size = "default",
   className,
 }: PortoConnectButtonProps) {
-  const { address, isConnected } = useAccount();
-  const { connect, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { isConnected, isConnecting, address } = useConnection();
+  const { mutate: connect, isPending } = useConnect();
+  const { mutate: disconnect } = useDisconnect();
   const connectors = useConnectors();
-  const [copied, setCopied] = useState(false);
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
 
-  const handleCopyAddress = async () => {
-    if (address) {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), COPIED_TIMEOUT_MS);
-    }
-  };
+  const porto = connectors?.find((c) => c.name === "Porto");
 
-  const formatAddress = (addr: string) =>
-    `${addr.slice(0, ADDRESS_PREFIX_LENGTH)}...${addr.slice(-ADDRESS_SUFFIX_LENGTH)}`;
+  // Loading state
+  if (isSessionPending) {
+    return <Skeleton className={cn("h-9 w-32", className)} />;
+  }
 
-  if (isConnected && address) {
+  // Connected + authenticated: show user name
+  if (isConnected) {
     return (
-      <div className="flex items-center gap-2">
-        <Button onClick={handleCopyAddress} size={size} variant="outline">
-          {copied ? "Copied!" : formatAddress(address)}
-        </Button>
-        <Button onClick={() => disconnect()} size={size} variant="ghost">
-          Disconnect
-        </Button>
-      </div>
+      <Button
+        className={className}
+        onClick={() => disconnect()}
+        size={size}
+        variant="outline"
+      >
+        Connected {address?.slice(0, 6)}...{address?.slice(-4)}
+      </Button>
     );
   }
 
-  const portoConnector = connectors.find((c) => c.name === "Porto");
+  if (isConnected && !session?.user) {
+    return (
+      <Button
+        className={className}
+        // TODO add siwe
+        size={size}
+        variant="outline"
+      >
+        Sign in
+      </Button>
+    );
+  }
 
-  if (!portoConnector) {
-    return <div>No connector found</div>;
+  // Not connected: show connect button
+  if (!porto) {
+    return (
+      <Button className={className} disabled size={size}>
+        Porto not available
+      </Button>
+    );
   }
 
   return (
     <Button
       className={className}
-      disabled={isPending}
-      onClick={() => connect({ connector: portoConnector })}
+      disabled={isPending || isConnecting}
+      onClick={() => connect({ connector: porto })}
       size={size}
     >
-      {isPending ? "Connecting..." : "⚡ Connect Wallet to Start"}
+      {isPending || isConnecting ? "Connecting..." : "Connect Wallet"}
     </Button>
   );
 }

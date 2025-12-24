@@ -6,10 +6,10 @@ import type { UserId, WithdrawalId } from "@yoda.fun/shared/typeid";
 
 const WALLET_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-type WithdrawalServiceDeps = {
+interface WithdrawalServiceDeps {
   db: Database;
   logger: Logger;
-};
+}
 
 export function createWithdrawalService({
   deps,

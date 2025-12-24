@@ -6,7 +6,8 @@
   "exports": {
     "./pg-lite": "./src/pg-lite.ts",
     "./s3-test-server": "./src/s3-test-server.ts",
-    "./redis-test-server": "./src/redis-test-server.ts"
+    "./redis-test-server": "./src/redis-test-server.ts",
+    "./test-utils": "./src/test-utils.ts"
   },
   "scripts": {
     "build": "tsdown",
@@ -20,7 +21,7 @@
     "@electric-sql/pglite": "catalog:",
     "@faker-js/faker": "catalog:",
     "@types/s3rver": "^3.7.4",
-    "redis-memory-server": "^0.14.0",
+    "redis-memory-server": "^0.14.1",
     "s3rver": "3.7.1",
     "zod": "catalog:"
   },

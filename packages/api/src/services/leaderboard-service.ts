@@ -7,16 +7,16 @@ import type { UserId } from "@yoda.fun/shared/typeid";
 export type LeaderboardPeriod = "daily" | "weekly" | "monthly" | "allTime";
 export type LeaderboardMetric = "profit" | "winRate" | "streak";
 
-type LeaderboardServiceDeps = {
+interface LeaderboardServiceDeps {
   db: Database;
   logger: Logger;
-};
+}
 
-type UserStatsForStreak = {
+interface UserStatsForStreak {
   currentStreak: number;
   longestStreak: number;
   lastStreakType: "WIN" | "LOSS" | null;
-};
+}
 
 function calculateStreak(stats: UserStatsForStreak, won: boolean) {
   const streakType = won ? ("WIN" as const) : ("LOSS" as const);

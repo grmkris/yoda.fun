@@ -6,10 +6,10 @@ import type { UserId } from "@yoda.fun/shared/typeid";
 
 const LEADING_AT_REGEX = /^@/;
 
-type ProfileServiceDeps = {
+interface ProfileServiceDeps {
   db: Database;
   logger: Logger;
-};
+}
 
 export function createProfileService({ deps }: { deps: ProfileServiceDeps }) {
   const { db, logger } = deps;

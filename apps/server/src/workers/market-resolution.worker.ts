@@ -10,12 +10,12 @@ import type { ResolveMarketJob } from "@yoda.fun/queue/jobs/resolve-market-job";
 import type { MarketId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 
-export type MarketResolutionWorkerConfig = {
+export interface MarketResolutionWorkerConfig {
   queue: QueueClient;
   db: Database;
   logger: Logger;
   aiClient: AiClient;
-};
+}
 
 const MarketResolutionSchema = z.object({
   result: z.enum(["YES", "NO", "INVALID"]),

@@ -1,6 +1,9 @@
 // Queue types (defined here to avoid circular deps with @yoda.fun/queue)
 export type JobType = "resolve-market" | "generate-market";
-export type RateLimitConfig = { max: number; duration: number };
+export interface RateLimitConfig {
+  max: number;
+  duration: number;
+}
 
 // Worker Configuration
 export const WORKER_CONFIG = {

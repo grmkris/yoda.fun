@@ -5,11 +5,11 @@ import { orpc } from "@/utils/orpc";
 
 type BetStatus = "ACTIVE" | "WON" | "LOST" | "REFUNDED";
 
-type UseBetHistoryOptions = {
+interface UseBetHistoryOptions {
   status?: BetStatus;
   limit?: number;
   offset?: number;
-};
+}
 
 /**
  * Fetch user's bet history with optional filters

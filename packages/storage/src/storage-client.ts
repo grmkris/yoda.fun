@@ -2,35 +2,35 @@ import type { Logger } from "@yoda.fun/logger";
 import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import type { S3Client } from "bun";
 
-export type StorageConfig = {
+export interface StorageConfig {
   s3Client: S3Client;
   env: Environment;
   logger?: Logger;
-};
+}
 
-export type UploadOptions = {
+export interface UploadOptions {
   key: string;
   data: Buffer | Uint8Array | string;
   contentType?: string;
-};
+}
 
-export type DownloadOptions = {
+export interface DownloadOptions {
   key: string;
-};
+}
 
-export type DeleteOptions = {
+export interface DeleteOptions {
   key: string;
-};
+}
 
-export type ListOptions = {
+export interface ListOptions {
   prefix?: string;
   maxKeys?: number;
-};
+}
 
-export type SignedUrlOptions = {
+export interface SignedUrlOptions {
   key: string;
   expiresIn?: number; // seconds
-};
+}
 
 /**
  * Storage client abstraction over S3

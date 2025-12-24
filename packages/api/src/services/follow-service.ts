@@ -5,11 +5,11 @@ import type { Logger } from "@yoda.fun/logger";
 import type { UserId } from "@yoda.fun/shared/typeid";
 import type { ProfileService } from "./profile-service";
 
-type FollowServiceDeps = {
+interface FollowServiceDeps {
   db: Database;
   logger: Logger;
   profileService: ProfileService;
-};
+}
 
 export function createFollowService({ deps }: { deps: FollowServiceDeps }) {
   const { db, logger, profileService } = deps;

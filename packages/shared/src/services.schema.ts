@@ -22,7 +22,7 @@ export const SERVICE_URLS: Record<
   dev: {
     auth: "http://localhost:4200",
     api: "http://localhost:4200",
-    web: "http://localhost:4201",
+    web: "https://localhost:4201",
     cookieDomain: "localhost",
     siweDomain: "localhost",
     storageUrl: "http://localhost:9100",

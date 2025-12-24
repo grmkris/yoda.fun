@@ -9,7 +9,7 @@ import {
 } from "react";
 import { SwipeCard, type SwipeDirection } from "./swipe-card";
 
-export type SwipeStackProps<T> = {
+export interface SwipeStackProps<T> {
   cards: T[];
   onSwipeLeft?: (data: T) => void;
   onSwipeRight?: (data: T) => void;
@@ -17,13 +17,13 @@ export type SwipeStackProps<T> = {
   renderCard: (data: T, index: number) => React.ReactNode;
   maxVisibleCards?: number;
   className?: string;
-};
+}
 
-export type SwipeStackRef = {
+export interface SwipeStackRef {
   swipeLeft: () => void;
   swipeRight: () => void;
   getCurrentCard: () => unknown | undefined;
-};
+}
 
 const DEFAULT_MAX_VISIBLE_CARDS = 3;
 

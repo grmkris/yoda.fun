@@ -1,8 +1,10 @@
-import { withTracing } from "@posthog/ai/vercel";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+// TODO: Re-enable when @posthog/ai supports AI SDK v6 (LanguageModelV3)
+// See: https://github.com/PostHog/posthog-js/issues/2522
+// import { withTracing } from "@posthog/ai/vercel";
 import type { Logger } from "@yoda.fun/logger";
 import type { Environment } from "@yoda.fun/shared/services";
-import { typeIdGenerator } from "@yoda.fun/shared/typeid";
-import type { LanguageModel as LanguageModelRetardio } from "ai";
+import type { LanguageModel as LanguageModelType } from "ai";
 
 import {
   experimental_generateImage,
@@ -10,16 +12,16 @@ import {
   generateText,
   streamObject,
   streamText,
+  wrapLanguageModel,
 } from "ai";
 
-import type { PostHog } from "posthog-node";
+// TODO: Re-enable @posthog/ai when it supports AI SDK v6
+// import type { PostHog } from "posthog-node";
 import { type AIModelConfig, getModel } from "./ai-providers";
 
-// type LanguageModel = string | LanguageModelV2;
-// extract the type of LanguageModelV2 from the LanguageModel type
-export type LanguageModel = Exclude<LanguageModelRetardio, string>;
+export type LanguageModel = Exclude<LanguageModelType, string>;
 
-export type AiClientConfig = {
+export interface AiClientConfig {
   logger: Logger;
   providerConfigs: {
     googleGeminiApiKey?: string;
@@ -27,9 +29,10 @@ export type AiClientConfig = {
     groqApiKey?: string;
     xaiApiKey: string;
   };
-  posthog?: PostHog;
+  // TODO: Re-enable when @posthog/ai supports AI SDK v6
+  // posthog?: PostHog;
   environment: Environment;
-};
+}
 
 // biome-ignore lint/performance/noBarrelFile: main package entry point
 export * from "ai";
@@ -85,15 +88,19 @@ export const createAiClient = (config: AiClientConfig): AiClient => ({
       },
     });
 
-    // Return wrapped or unwrapped model
-    return config.posthog
-      ? withTracing(baseModel, config.posthog, {
-          posthogTraceId: typeIdGenerator("aiGeneration"),
-          posthogProperties: {
-            environment: config.environment,
-          },
-        })
-      : baseModel;
+    // Wrap with devtools in dev environment
+    // TODO: PostHog tracing disabled until @posthog/ai supports AI SDK v6
+    // See: https://github.com/PostHog/posthog-js/issues/2522
+    if (config.environment === "dev") {
+      // Type assertion needed due to AI SDK v6 beta type mismatch
+      // between LanguageModelV2 (providers) and LanguageModelV3 (wrapLanguageModel)
+      return wrapLanguageModel({
+        model: baseModel as Parameters<typeof wrapLanguageModel>[0]["model"],
+        middleware: devToolsMiddleware(),
+      });
+    }
+
+    return baseModel;
   },
   generateObject,
   streamObject,
@@ -103,7 +110,7 @@ export const createAiClient = (config: AiClientConfig): AiClient => ({
   getProviderConfig: () => config.providerConfigs,
 });
 
-export type AiClient = {
+export interface AiClient {
   getProviderConfig: () => AiClientConfig["providerConfigs"];
   getModel: (aiConfig: AIModelConfig) => LanguageModel;
   generateObject: typeof generateObject;
@@ -111,4 +118,4 @@ export type AiClient = {
   generateText: typeof generateText;
   streamText: typeof streamText;
   generateImage: typeof experimental_generateImage;
-};
+}

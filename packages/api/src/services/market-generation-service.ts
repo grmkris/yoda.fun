@@ -11,11 +11,11 @@ import {
   type GenerateMarketsResult,
 } from "./market-generation-schemas";
 
-type MarketGenerationServiceDeps = {
+interface MarketGenerationServiceDeps {
   db: Database;
   logger: Logger;
   aiClient: AiClient;
-};
+}
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const RESOLUTION_BUFFER_HOURS = 6;

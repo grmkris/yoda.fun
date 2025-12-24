@@ -4,10 +4,10 @@ import { and, desc, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { MarketId, UserId } from "@yoda.fun/shared/typeid";
 
-type BetServiceDeps = {
+interface BetServiceDeps {
   db: Database;
   logger: Logger;
-};
+}
 
 export function createBetService({ deps }: { deps: BetServiceDeps }) {
   const { db, logger } = deps;

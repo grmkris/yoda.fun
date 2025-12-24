@@ -5,12 +5,12 @@ import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
 import type { GenerateMarketJob } from "@yoda.fun/queue/jobs/generate-market-job";
 
-export type MarketGenerationWorkerConfig = {
+export interface MarketGenerationWorkerConfig {
   queue: QueueClient;
   db: Database;
   logger: Logger;
   aiClient: AiClient;
-};
+}
 
 /**
  * Create and start the market generation worker

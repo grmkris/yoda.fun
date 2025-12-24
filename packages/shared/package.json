@@ -19,6 +19,10 @@
     "./constants": {
       "types": "./dist/constants.d.ts",
       "default": "./src/constants.ts"
+    },
+    "./result": {
+      "types": "./dist/result.d.ts",
+      "default": "./src/result.ts"
     }
   },
   "scripts": {
@@ -33,6 +37,7 @@
     "tsdown": "catalog:"
   },
   "dependencies": {
+    "neverthrow": "catalog:",
     "typeid-js": "catalog:",
     "zod": "catalog:"
   }

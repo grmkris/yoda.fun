@@ -23,12 +23,12 @@ declare const Bun: {
   };
 };
 
-export type MinIOSetupConfig = {
+export interface MinIOSetupConfig {
   s3Client: S3Client;
   endpoint: string;
   bucket: string;
   logger: Logger;
-};
+}
 
 /**
  * Checks if a bucket exists by attempting to write a test file

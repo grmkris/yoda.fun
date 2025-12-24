@@ -64,7 +64,7 @@ export function generateName(): string {
   return faker.person.fullName();
 }
 
-export type CreateTestMarketOptions = {
+export interface CreateTestMarketOptions {
   title?: string;
   description?: string;
   category?: string;
@@ -72,7 +72,7 @@ export type CreateTestMarketOptions = {
   votingEndsAt?: Date;
   resolutionDeadline?: Date;
   createdById?: UserId;
-};
+}
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * ONE_HOUR_MS;
@@ -130,13 +130,13 @@ export async function fundUserBalance(
   });
 }
 
-type CreateTestBetOptions = {
+interface CreateTestBetOptions {
   db: Database;
   userId: UserId;
   marketId: MarketId;
   vote: "YES" | "NO";
   amount?: string;
-};
+}
 
 export async function createTestBet(
   options: CreateTestBetOptions

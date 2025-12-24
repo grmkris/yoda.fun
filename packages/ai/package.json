@@ -34,11 +34,11 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "2.0.56",
-    "@ai-sdk/google": "2.0.46",
-    "@ai-sdk/groq": "2.0.33",
-    "@ai-sdk/xai": "2.0.40",
-    "@posthog/ai": "^7.2.1",
+    "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/google": "catalog:",
+    "@ai-sdk/groq": "catalog:",
+    "@ai-sdk/xai": "catalog:",
+    "@ai-sdk/devtools": "catalog:",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "ai": "catalog:",

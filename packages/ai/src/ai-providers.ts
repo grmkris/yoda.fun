@@ -43,11 +43,11 @@ export type AIModelConfig =
       modelId: XaiModelId;
     };
 
-export type AIProviderConfig = {
+export interface AIProviderConfig {
   provider: AiProvider;
   apiKey: string;
   url?: string;
-};
+}
 
 /**
  * Get a language model instance from a provider

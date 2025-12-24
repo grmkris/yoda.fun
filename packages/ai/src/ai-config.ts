@@ -25,22 +25,22 @@ export const MODELS = {
 /**
  * Context for market generation prompts
  */
-export type MarketGenerationContext = {
+export interface MarketGenerationContext {
   currentDate: string;
   categories?: string[];
   existingMarketTitles?: string[];
   targetCount: number;
-};
+}
 
 /**
  * Context for market resolution prompts
  */
-export type MarketResolutionContext = {
+export interface MarketResolutionContext {
   marketTitle: string;
   marketDescription: string;
   resolutionCriteria?: string;
   votingEndedAt: string;
-};
+}
 
 /**
  * Feature-specific AI configurations

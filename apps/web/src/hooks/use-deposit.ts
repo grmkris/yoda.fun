@@ -12,12 +12,12 @@ import { orpc } from "@/utils/orpc";
 export const DEPOSIT_TIERS = [10, 25, 50, 100] as const;
 export type DepositTier = (typeof DEPOSIT_TIERS)[number];
 
-type DepositResponse = {
+interface DepositResponse {
   success: boolean;
   amount: number;
   newBalance: number;
   transactionId: string;
-};
+}
 
 export function useDeposit() {
   const queryClient = useQueryClient();

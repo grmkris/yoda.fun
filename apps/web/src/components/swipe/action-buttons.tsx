@@ -3,12 +3,12 @@
 import { NUMERIC_CONSTANTS } from "@yoda.fun/shared/constants";
 import { Heart, X } from "lucide-react";
 
-export type ActionButtonsProps = {
+export interface ActionButtonsProps {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   disabled?: boolean;
   className?: string;
-};
+}
 
 export function ActionButtons({
   onSwipeLeft,

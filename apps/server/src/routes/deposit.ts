@@ -7,13 +7,13 @@ import { UserId } from "@yoda.fun/shared/typeid";
 import { Hono } from "hono";
 import { paymentMiddleware } from "x402-hono";
 
-type DepositRouteDeps = {
+interface DepositRouteDeps {
   db: Database;
   auth: Auth;
   logger: Logger;
   depositWalletAddress: `0x${string}`;
   network: Network;
-};
+}
 
 // Fixed deposit tiers in USD
 const DEPOSIT_TIERS = [10, 25, 50, 100] as const;

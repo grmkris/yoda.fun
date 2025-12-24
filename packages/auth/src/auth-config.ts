@@ -8,11 +8,11 @@ import { Porto } from "porto";
 import { RelayClient } from "porto/viem";
 import { generateSiweNonce, verifySiweMessage } from "viem/siwe";
 
-export type AuthConfig = {
+export interface AuthConfig {
   db: Database;
   appEnv: Environment;
   secret: string;
-};
+}
 
 export const createAuth = (config: AuthConfig) => {
   const baseURL = SERVICE_URLS[config.appEnv].auth;

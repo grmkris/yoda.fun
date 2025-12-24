@@ -8,18 +8,38 @@
       "outputs": ["dist/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "outputs": [],
+      "cache": true
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^typecheck"],
+      "outputs": [],
+      "cache": true
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"],
+      "outputs": [],
+      "cache": true
+    },
+    "fix": {
+      "outputs": [],
+      "cache": false
     },
     "fix:unsafe": {
-      "dependsOn": ["^fix:unsafe"]
+      "outputs": [],
+      "cache": false
     },
     "test": {
       "cache": false,
       "outputs": ["coverage/**"],
-      "env": ["APP_ENV", "DATABASE_URL"]
+      "env": [
+        "APP_ENV",
+        "DATABASE_URL",
+        "GOOGLE_GEMINI_API_KEY",
+        "XAI_API_KEY",
+        "POSTHOG_DEBUG"
+      ]
     },
     "test:watch": {
       "cache": false,

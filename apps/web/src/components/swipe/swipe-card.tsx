@@ -4,13 +4,13 @@ import { NUMERIC_CONSTANTS } from "@yoda.fun/shared/constants";
 import { motion } from "motion/react";
 import { useState } from "react";
 
-export type SwipeDirection = {
+export interface SwipeDirection {
   type: "left" | "right";
   velocity: number;
   offset: number;
-};
+}
 
-export type SwipeCardProps<T> = {
+export interface SwipeCardProps<T> {
   data: T;
   onSwipeLeft?: (data: T) => void;
   onSwipeRight?: (data: T) => void;
@@ -18,7 +18,7 @@ export type SwipeCardProps<T> = {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-};
+}
 
 const SWIPE_THRESHOLD = 150;
 const VELOCITY_THRESHOLD = 500;

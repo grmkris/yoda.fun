@@ -8,5 +8,6 @@ import { orpc } from "@/utils/orpc";
  * Returns available, pending, totalDeposited, totalWithdrawn
  */
 export function useBalance() {
+  console.log("useBalance");
   return useQuery(orpc.balance.get.queryOptions({}));
 }

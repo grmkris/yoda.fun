@@ -3,20 +3,20 @@ import type { LoggerOptions } from "pino";
 import { pino } from "pino";
 import pkg from "pino-std-serializers";
 
-export type LoggerConfig = {
+export interface LoggerConfig {
   level?: string;
   environment?: Environment;
   appName?: string;
-};
+}
 
-export type Logger = {
+export interface Logger {
   info: (obj: Record<string, unknown>, msg?: string) => void;
   error: (obj: Record<string, unknown>, msg?: string) => void;
   warn: (obj: Record<string, unknown>, msg?: string) => void;
   debug: (obj: Record<string, unknown>, msg?: string) => void;
   fatal: (obj: Record<string, unknown>, msg?: string) => void;
   trace: (obj: Record<string, unknown>, msg?: string) => void;
-};
+}
 
 /**
  * Create a Pino logger instance with the given configuration

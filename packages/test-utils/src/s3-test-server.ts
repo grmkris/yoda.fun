@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { S3Client as BunS3Client } from "bun";
 import S3rver from "s3rver";
 
@@ -9,25 +11,34 @@ const getRandomPort = (min = 10_000, max = 50_000) =>
   Math.floor(Math.random() * (max - min) + min);
 
 /**
+ * Create a unique temp directory for test isolation
+ */
+const createTempDir = () => {
+  const tmpDir = path.join(os.tmpdir(), `s3rver-test-${Date.now()}`);
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true });
+  }
+  return tmpDir;
+};
+
+/**
  * Initializes an S3rver server and returns a Bun S3 client connected to it
+ * Uses dynamic temp directories for test isolation
  */
 export async function createTestS3Setup(bucketName: string) {
-  // Set up the S3rver server
   const port = getRandomPort();
   const hostname = "localhost";
+  const directory = createTempDir();
 
-  // Create the S3rver instance
   const s3rver = new S3rver({
     port,
     silent: true,
-    directory: "/tmp/s3rver-test",
+    directory,
     configureBuckets: [{ name: bucketName, configs: [] }],
   });
 
-  // Start the server
   const server = await s3rver.run();
 
-  // Create a Bun S3 client configured for the S3rver endpoint & bucket
   const endpoint = `http://${hostname}:${port}`;
   const bunClient = new BunS3Client({
     accessKeyId: "S3RVER",
@@ -36,10 +47,9 @@ export async function createTestS3Setup(bucketName: string) {
     bucket: bucketName,
   });
 
-  // Create a method to shutdown the server
   const shutdown = async () => {
     await s3rver.close();
-    fs.rmSync("/tmp/s3rver-test", { recursive: true, force: true });
+    fs.rmSync(directory, { recursive: true, force: true });
   };
 
   return {
@@ -50,6 +60,8 @@ export async function createTestS3Setup(bucketName: string) {
     port,
     hostname,
     bucketName,
+    endpoint,
+    directory,
     shutdown,
   };
 }

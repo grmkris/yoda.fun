@@ -1,11 +1,11 @@
-export type GameCard = {
+export interface GameCard {
   id: string;
   title: string;
   description: string;
   image: string;
   category: string;
   tags: string[];
-};
+}
 
 export const mockGameCards: GameCard[] = [
   {

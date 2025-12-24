@@ -131,9 +131,9 @@ export type GenerateMarketsInput = z.infer<typeof GenerateMarketsInputSchema>;
 /**
  * Result from market generation service
  */
-export type GenerateMarketsResult = {
+export interface GenerateMarketsResult {
   markets: GeneratedMarket[];
   modelVersion: string;
   tokensUsed?: number;
   durationMs: number;
-};
+}

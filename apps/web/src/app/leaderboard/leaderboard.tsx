@@ -163,14 +163,14 @@ function LeaderboardSkeleton() {
   );
 }
 
-type LeaderboardEntry = {
+interface LeaderboardEntry {
   userId: string;
   username: string | null;
   image: string | null;
   rank: number;
   value: number;
   stats: { totalBets: number; winRate: number; currentStreak: number };
-};
+}
 
 function LeaderboardContent({
   isLoading,

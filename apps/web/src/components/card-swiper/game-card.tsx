@@ -1,7 +1,7 @@
 import type { MarketId } from "@yoda.fun/shared/typeid";
 import Image from "next/image";
 
-export type MarketCard = {
+export interface MarketCard {
   id: MarketId;
   title: string;
   description: string;
@@ -12,11 +12,11 @@ export type MarketCard = {
   totalYesVotes: number;
   totalNoVotes: number;
   votingEndsAt: Date;
-};
+}
 
-type GameCardProps = {
+interface GameCardProps {
   card: MarketCard;
-};
+}
 
 function formatTimeRemaining(date: Date): string {
   const now = new Date();

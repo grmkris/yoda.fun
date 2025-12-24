@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import type { MarketCard } from "./game-card";
 
-type BetConfirmationModalProps = {
+interface BetConfirmationModalProps {
   market: MarketCard | null;
   onConfirm: (vote: "YES" | "NO") => void;
   onCancel: () => void;
   isLoading: boolean;
-};
+}
 
 export function BetConfirmationModal({
   market,

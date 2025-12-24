@@ -19,15 +19,15 @@ import { env } from "@/env";
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
 
-export type TestUser = {
+export interface TestUser {
   id: string;
   email: string;
   name: string;
   token: string; // session token for cookies
   user: User;
-};
+}
 
-export type TestSetup = {
+export interface TestSetup {
   deps: {
     db: Database;
     pgLite: PGlite;
@@ -50,7 +50,7 @@ export type TestSetup = {
   };
   cleanup: () => Promise<void>;
   close: () => Promise<void>;
-};
+}
 
 async function createTestUser(
   authClient: Auth,
