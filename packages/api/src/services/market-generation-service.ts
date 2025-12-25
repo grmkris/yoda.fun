@@ -1,9 +1,11 @@
-import type { AiClient } from "@yoda.fun/ai";
+import { type AiClient, Output } from "@yoda.fun/ai";
 import { FEATURES } from "@yoda.fun/ai/ai-config";
+import { generateMarketImages } from "@yoda.fun/ai/image-generation";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
+import type { StorageClient } from "@yoda.fun/storage";
 import {
   type GeneratedMarket,
   GeneratedMarketsResponseSchema,
@@ -15,6 +17,7 @@ interface MarketGenerationServiceDeps {
   db: Database;
   logger: Logger;
   aiClient: AiClient;
+  storage?: StorageClient;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -25,7 +28,7 @@ export function createMarketGenerationService({
 }: {
   deps: MarketGenerationServiceDeps;
 }) {
-  const { db, logger, aiClient } = deps;
+  const { db, logger, aiClient, storage } = deps;
 
   return {
     /**
@@ -63,9 +66,9 @@ export function createMarketGenerationService({
       const systemPrompt = config.systemPrompt(promptContext);
       const model = aiClient.getModel(config.model);
 
-      const response = await aiClient.generateObject({
+      const response = await aiClient.generateText({
         model,
-        schema: GeneratedMarketsResponseSchema,
+        output: Output.object({ schema: GeneratedMarketsResponseSchema }),
         system: systemPrompt,
         prompt: `Generate ${input.count} unique betting markets based on current events and trends. Focus on engaging, fun topics that will attract bettors.`,
       });
@@ -74,7 +77,7 @@ export function createMarketGenerationService({
 
       logger.info(
         {
-          marketsGenerated: response.object.markets.length,
+          marketsGenerated: response.output.markets.length,
           durationMs,
           tokensUsed: response.usage?.totalTokens,
         },
@@ -82,7 +85,7 @@ export function createMarketGenerationService({
       );
 
       return {
-        markets: response.object.markets,
+        markets: response.output.markets,
         modelVersion: config.model.modelId,
         tokensUsed: response.usage?.totalTokens,
         durationMs,
@@ -91,13 +94,34 @@ export function createMarketGenerationService({
 
     /**
      * Insert generated markets into the database
-     * Also schedules resolution jobs if queue is provided
+     * Also generates images if storage is configured
      */
     async insertMarkets(
       markets: GeneratedMarket[]
     ): Promise<(typeof DB_SCHEMA.market.$inferSelect)[]> {
       const now = new Date();
       const insertedMarkets: (typeof DB_SCHEMA.market.$inferSelect)[] = [];
+
+      // Generate images for all markets if storage is configured
+      let imageUrls = new Map<string, string | null>();
+      if (storage) {
+        const googleApiKey = aiClient.getProviderConfig().googleGeminiApiKey;
+        if (googleApiKey) {
+          logger.info({ count: markets.length }, "Generating market images");
+          try {
+            imageUrls = await generateMarketImages(markets, {
+              googleApiKey,
+              storage,
+            });
+            logger.info(
+              { generated: [...imageUrls.values()].filter(Boolean).length },
+              "Market images generated"
+            );
+          } catch (error) {
+            logger.error({ error }, "Failed to generate market images");
+          }
+        }
+      }
 
       for (const market of markets) {
         const votingEndsAt = new Date(
@@ -107,6 +131,8 @@ export function createMarketGenerationService({
           votingEndsAt.getTime() + RESOLUTION_BUFFER_HOURS * 60 * 60 * 1000
         );
 
+        const imageUrl = imageUrls.get(market.title) ?? null;
+
         const inserted = await db
           .insert(DB_SCHEMA.market)
           .values({
@@ -115,6 +141,7 @@ export function createMarketGenerationService({
             category: market.category,
             resolutionCriteria: market.resolutionCriteria,
             betAmount: market.betAmount,
+            imageUrl,
             votingEndsAt,
             resolutionDeadline,
             status: "ACTIVE",
@@ -130,6 +157,7 @@ export function createMarketGenerationService({
             {
               marketId: record.id,
               title: record.title,
+              hasImage: !!imageUrl,
               votingEndsAt,
             },
             "Market inserted"

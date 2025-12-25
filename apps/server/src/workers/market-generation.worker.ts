@@ -4,12 +4,14 @@ import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
 import type { GenerateMarketJob } from "@yoda.fun/queue/jobs/generate-market-job";
+import type { StorageClient } from "@yoda.fun/storage";
 
 export interface MarketGenerationWorkerConfig {
   queue: QueueClient;
   db: Database;
   logger: Logger;
   aiClient: AiClient;
+  storage?: StorageClient;
 }
 
 /**
@@ -21,10 +23,10 @@ export function createMarketGenerationWorker(
 ): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, aiClient } = config;
+  const { queue, db, logger, aiClient, storage } = config;
 
   const marketGenerationService = createMarketGenerationService({
-    deps: { db, logger, aiClient },
+    deps: { db, logger, aiClient, storage },
   });
 
   logger.info({ msg: "Starting market generation worker" });

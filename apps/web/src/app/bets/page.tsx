@@ -16,13 +16,7 @@ export default async function BetsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-bold text-2xl">My Bets</h1>
-        <p className="text-muted-foreground">
-          Track your predictions and winnings
-        </p>
-      </div>
+    <div className="container mx-auto p-4 pb-8">
       <BetsHistory />
     </div>
   );

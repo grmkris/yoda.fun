@@ -72,3 +72,41 @@ export function useCanDeposit() {
   const { data: walletClient } = useWalletClient();
   return isConnected && !!walletClient;
 }
+
+// Dev-only deposit hook (bypasses x402 payment)
+export function useDevDeposit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (tier: DepositTier) => {
+      const apiUrl = SERVICE_URLS[env.NEXT_PUBLIC_ENV].api;
+      const response = await fetch(`${apiUrl}/api/deposit/dev/${tier}`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `Dev deposit failed: ${response.status}`);
+      }
+
+      return response.json() as Promise<DepositResponse>;
+    },
+    onSuccess: (data) => {
+      toast.success(
+        `[DEV] Deposited $${data.amount}! New balance: $${data.newBalance.toFixed(2)}`
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
+      });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Dev deposit failed";
+      toast.error(message);
+    },
+  });
+}

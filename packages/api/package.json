@@ -67,10 +67,11 @@
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
-    "@yoda.fun/storage": "workspace:*",
-    "posthog-node": "catalog:",
     "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/storage": "workspace:*",
     "hono": "catalog:",
+    "neverthrow": "^8.2.0",
+    "posthog-node": "catalog:",
     "zod": "catalog:"
   }
 }

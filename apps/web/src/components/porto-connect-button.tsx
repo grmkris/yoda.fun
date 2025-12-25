@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { useConnect, useConnection, useConnectors, useDisconnect } from "wagmi";
+import { useConnect, useConnection, useDisconnect } from "wagmi";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -17,47 +17,31 @@ export function PortoConnectButton({
   className,
 }: PortoConnectButtonProps) {
   const { isConnected, isConnecting, address } = useConnection();
-  const { mutate: connect, isPending } = useConnect();
   const { mutate: disconnect } = useDisconnect();
-  const connectors = useConnectors();
+  const { connectors, connect, isPending } = useConnect();
   const { data: session, isPending: isSessionPending } =
     authClient.useSession();
 
-  const porto = connectors?.find((c) => c.name === "Porto");
+  const porto = connectors?.find((c) => c.id === "xyz.ithaca.porto");
+
+  const handleConnect = () => {
+    if (!porto) {
+      return;
+    }
+    connect({ connector: porto });
+  };
+
+  const handleDisconnect = async () => {
+    await authClient.signOut();
+    disconnect();
+  };
 
   // Loading state
   if (isSessionPending) {
     return <Skeleton className={cn("h-9 w-32", className)} />;
   }
 
-  // Connected + authenticated: show user name
-  if (isConnected) {
-    return (
-      <Button
-        className={className}
-        onClick={() => disconnect()}
-        size={size}
-        variant="outline"
-      >
-        Connected {address?.slice(0, 6)}...{address?.slice(-4)}
-      </Button>
-    );
-  }
-
-  if (isConnected && !session?.user) {
-    return (
-      <Button
-        className={className}
-        // TODO add siwe
-        size={size}
-        variant="outline"
-      >
-        Sign in
-      </Button>
-    );
-  }
-
-  // Not connected: show connect button
+  // Porto not available
   if (!porto) {
     return (
       <Button className={className} disabled size={size}>
@@ -66,11 +50,41 @@ export function PortoConnectButton({
     );
   }
 
+  // Connected + authenticated
+  if (isConnected && session?.user) {
+    return (
+      <Button
+        className={className}
+        onClick={handleDisconnect}
+        size={size}
+        variant="outline"
+      >
+        {address?.slice(0, 6)}...{address?.slice(-4)}
+      </Button>
+    );
+  }
+
+  // Connected but no session (edge case - re-trigger SIWE)
+  if (isConnected && !session?.user) {
+    return (
+      <Button
+        className={className}
+        disabled={isPending}
+        onClick={handleConnect}
+        size={size}
+        variant="outline"
+      >
+        {isPending ? "Signing in..." : "Sign in"}
+      </Button>
+    );
+  }
+
+  // Not connected
   return (
     <Button
       className={className}
       disabled={isPending || isConnecting}
-      onClick={() => connect({ connector: porto })}
+      onClick={handleConnect}
       size={size}
     >
       {isPending || isConnecting ? "Connecting..." : "Connect Wallet"}

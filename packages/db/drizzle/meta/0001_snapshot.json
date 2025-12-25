@@ -1,9 +1,144 @@
 {
-  "id": "8b9913a2-9927-489b-bcb5-7b3e03cf76bb",
-  "prevId": "c2749dfd-661d-46fc-b8b5-fd409ccc6ef8",
+  "id": "ff03ca9c-257f-450b-9c29-b641b4ba03c2",
+  "prevId": "27c622de-e297-497d-ad26-00cf3c2b5f05",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "audit.record_version": {
+      "name": "record_version",
+      "schema": "audit",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "record_id": {
+          "name": "record_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "old_record_id": {
+          "name": "old_record_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "op": {
+          "name": "op",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ts": {
+          "name": "ts",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "table_oid": {
+          "name": "table_oid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "table_schema": {
+          "name": "table_schema",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "table_name": {
+          "name": "table_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "record": {
+          "name": "record",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "old_record": {
+          "name": "old_record",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "record_version_ts": {
+          "name": "record_version_ts",
+          "columns": [
+            {
+              "expression": "ts",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "brin",
+          "with": {}
+        },
+        "record_version_table_oid": {
+          "name": "record_version_table_oid",
+          "columns": [
+            {
+              "expression": "table_oid",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "record_version_record_id": {
+          "name": "record_version_record_id",
+          "columns": [
+            {
+              "expression": "record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "record_version_old_record_id": {
+          "name": "record_version_old_record_id",
+          "columns": [
+            {
+              "expression": "old_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.account": {
       "name": "account",
       "schema": "",
@@ -18,7 +153,7 @@
           "name": "account_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "provider_id": {
           "name": "provider_id",
@@ -89,14 +224,34 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "account_userId_idx": {
+          "name": "account_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -162,14 +317,34 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "session_userId_idx": {
+          "name": "session_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -179,7 +354,9 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -240,6 +417,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_anonymous": {
+          "name": "is_anonymous",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "display_username": {
           "name": "display_username",
           "type": "text",
@@ -254,12 +438,16 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         },
         "user_username_unique": {
           "name": "user_username_unique",
           "nullsNotDistinct": false,
-          "columns": ["username"]
+          "columns": [
+            "username"
+          ]
         }
       },
       "policies": {},
@@ -307,7 +495,23 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "verification_identifier_idx": {
+          "name": "verification_identifier_idx",
+          "columns": [
+            {
+              "expression": "identifier",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -364,14 +568,34 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "walletAddress_userId_idx": {
+          "name": "walletAddress_userId_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "wallet_address_user_id_user_id_fk": {
           "name": "wallet_address_user_id_user_id_fk",
           "tableFrom": "wallet_address",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -478,8 +702,12 @@
           "name": "bet_user_id_user_id_fk",
           "tableFrom": "bet",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -487,8 +715,12 @@
           "name": "bet_market_id_market_id_fk",
           "tableFrom": "bet",
           "tableTo": "market",
-          "columnsFrom": ["market_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "market_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -498,7 +730,10 @@
         "unique_user_market_bet": {
           "name": "unique_user_market_bet",
           "nullsNotDistinct": false,
-          "columns": ["user_id", "market_id"]
+          "columns": [
+            "user_id",
+            "market_id"
+          ]
         }
       },
       "policies": {},
@@ -676,8 +911,12 @@
           "name": "market_created_by_id_user_id_fk",
           "tableFrom": "market",
           "tableTo": "user",
-          "columnsFrom": ["created_by_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "created_by_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -753,8 +992,12 @@
           "name": "user_balance_user_id_user_id_fk",
           "tableFrom": "user_balance",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -764,7 +1007,9 @@
         "user_balance_user_id_unique": {
           "name": "user_balance_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       },
       "policies": {},
@@ -924,8 +1169,12 @@
           "name": "deposit_user_id_user_id_fk",
           "tableFrom": "deposit",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -933,8 +1182,12 @@
           "name": "deposit_transaction_id_transaction_id_fk",
           "tableFrom": "deposit",
           "tableTo": "transaction",
-          "columnsFrom": ["transaction_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1015,8 +1268,12 @@
           "name": "transaction_user_id_user_id_fk",
           "tableFrom": "transaction",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1127,8 +1384,12 @@
           "name": "withdrawal_user_id_user_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1136,8 +1397,12 @@
           "name": "withdrawal_transaction_id_transaction_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "transaction",
-          "columnsFrom": ["transaction_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1145,8 +1410,12 @@
           "name": "withdrawal_settlement_batch_id_settlement_batch_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "settlement_batch",
-          "columnsFrom": ["settlement_batch_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "settlement_batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1204,142 +1473,6 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.activity": {
-      "name": "activity",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "activity_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_public": {
-          "name": "is_public",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_activity_user": {
-          "name": "idx_activity_user",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_activity_type": {
-          "name": "idx_activity_type",
-          "columns": [
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_activity_created": {
-          "name": "idx_activity_created",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_activity_public": {
-          "name": "idx_activity_public",
-          "columns": [
-            {
-              "expression": "is_public",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "activity_user_id_user_id_fk": {
-          "name": "activity_user_id_user_id_fk",
-          "tableFrom": "activity",
-          "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1420,8 +1553,12 @@
           "name": "follow_follower_id_user_id_fk",
           "tableFrom": "follow",
           "tableTo": "user",
-          "columnsFrom": ["follower_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "follower_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1429,8 +1566,12 @@
           "name": "follow_following_id_user_id_fk",
           "tableFrom": "follow",
           "tableTo": "user",
-          "columnsFrom": ["following_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "following_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1440,7 +1581,10 @@
         "unique_follow_relationship": {
           "name": "unique_follow_relationship",
           "nullsNotDistinct": false,
-          "columns": ["follower_id", "following_id"]
+          "columns": [
+            "follower_id",
+            "following_id"
+          ]
         }
       },
       "policies": {},
@@ -1543,8 +1687,12 @@
           "name": "user_profile_user_id_user_id_fk",
           "tableFrom": "user_profile",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1554,7 +1702,9 @@
         "user_profile_user_id_unique": {
           "name": "user_profile_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       },
       "policies": {},
@@ -1798,8 +1948,12 @@
           "name": "user_stats_user_id_user_id_fk",
           "tableFrom": "user_stats",
           "tableTo": "user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1809,7 +1963,9 @@
         "user_stats_user_id_unique": {
           "name": "user_stats_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["user_id"]
+          "columns": [
+            "user_id"
+          ]
         }
       },
       "policies": {},
@@ -1821,78 +1977,120 @@
     "public.bet_status": {
       "name": "bet_status",
       "schema": "public",
-      "values": ["ACTIVE", "WON", "LOST", "REFUNDED"]
+      "values": [
+        "ACTIVE",
+        "WON",
+        "LOST",
+        "REFUNDED"
+      ]
     },
     "public.bet_vote": {
       "name": "bet_vote",
       "schema": "public",
-      "values": ["YES", "NO"]
+      "values": [
+        "YES",
+        "NO"
+      ]
     },
     "public.market_result": {
       "name": "market_result",
       "schema": "public",
-      "values": ["YES", "NO", "INVALID"]
+      "values": [
+        "YES",
+        "NO",
+        "INVALID"
+      ]
     },
     "public.market_status": {
       "name": "market_status",
       "schema": "public",
-      "values": ["ACTIVE", "CLOSED", "RESOLVED", "CANCELLED"]
+      "values": [
+        "ACTIVE",
+        "CLOSED",
+        "RESOLVED",
+        "CANCELLED"
+      ]
     },
     "public.settlement_status": {
       "name": "settlement_status",
       "schema": "public",
-      "values": ["PENDING", "SETTLED", "FAILED"]
+      "values": [
+        "PENDING",
+        "SETTLED",
+        "FAILED"
+      ]
     },
     "public.settlement_batch_status": {
       "name": "settlement_batch_status",
       "schema": "public",
-      "values": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
+      "values": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED"
+      ]
     },
     "public.deposit_status": {
       "name": "deposit_status",
       "schema": "public",
-      "values": ["PENDING", "CONFIRMED", "FAILED"]
+      "values": [
+        "PENDING",
+        "CONFIRMED",
+        "FAILED"
+      ]
     },
     "public.transaction_status": {
       "name": "transaction_status",
       "schema": "public",
-      "values": ["PENDING", "COMPLETED", "FAILED"]
+      "values": [
+        "PENDING",
+        "COMPLETED",
+        "FAILED"
+      ]
     },
     "public.transaction_type": {
       "name": "transaction_type",
       "schema": "public",
-      "values": ["DEPOSIT", "WITHDRAWAL", "BET_PLACED", "PAYOUT", "REFUND"]
+      "values": [
+        "DEPOSIT",
+        "WITHDRAWAL",
+        "BET_PLACED",
+        "PAYOUT",
+        "REFUND"
+      ]
     },
     "public.withdrawal_status": {
       "name": "withdrawal_status",
       "schema": "public",
-      "values": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
+      "values": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED"
+      ]
     },
     "public.network": {
       "name": "network",
       "schema": "public",
-      "values": ["BASE_MAINNET", "BASE_SEPOLIA"]
-    },
-    "public.activity_type": {
-      "name": "activity_type",
-      "schema": "public",
       "values": [
-        "BET_PLACED",
-        "BET_WON",
-        "BET_LOST",
-        "STREAK_MILESTONE",
-        "LEADERBOARD_RANK",
-        "FOLLOWED_USER",
-        "PROFILE_UPDATED"
+        "BASE_MAINNET",
+        "BASE_SEPOLIA"
       ]
     },
     "public.leaderboard_period": {
       "name": "leaderboard_period",
       "schema": "public",
-      "values": ["DAILY", "WEEKLY", "MONTHLY", "ALL_TIME"]
+      "values": [
+        "DAILY",
+        "WEEKLY",
+        "MONTHLY",
+        "ALL_TIME"
+      ]
     }
   },
-  "schemas": {},
+  "schemas": {
+    "audit": "audit"
+  },
   "sequences": {},
   "roles": {},
   "policies": {},

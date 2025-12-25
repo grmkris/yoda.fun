@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, Wallet } from "lucide-react";
-import Link from "next/link";
 import { useAccount } from "wagmi";
 import { PortoConnectButton } from "@/components/porto-connect-button";
 import { Button } from "@/components/ui/button";
@@ -14,11 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/use-balance";
+import { env } from "@/env";
 import {
   DEPOSIT_TIERS,
   type DepositTier,
   useCanDeposit,
   useDeposit,
+  useDevDeposit,
 } from "@/hooks/use-deposit";
 
 function TierCard({
@@ -121,22 +122,52 @@ function DepositTiers() {
   );
 }
 
+function DevDepositSection() {
+  const devDeposit = useDevDeposit();
+  const { isPending } = devDeposit;
+
+  if (env.NEXT_PUBLIC_ENV !== "dev") {
+    return null;
+  }
+
+  return (
+    <Card className="border-yellow-500/50 bg-yellow-500/5">
+      <CardHeader>
+        <CardTitle className="text-yellow-600">Dev Deposit (No Payment)</CardTitle>
+        <CardDescription>
+          Bypass x402 payment for testing - only available in development
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          {DEPOSIT_TIERS.map((tier) => (
+            <Button
+              key={tier}
+              variant="outline"
+              disabled={isPending}
+              onClick={() => devDeposit.mutate(tier)}
+              className="border-yellow-500/50"
+            >
+              {isPending ? <Loader2 className="animate-spin" /> : `+$${tier}`}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DepositPage() {
   const { isConnected } = useAccount();
   const canDeposit = useCanDeposit();
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-8 px-4 py-8">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="font-bold text-3xl">Deposit Funds</h1>
-        <p className="text-muted-foreground">
-          Add funds to your account using USDC on Base network
-        </p>
-      </div>
-
+    <div className="container mx-auto max-w-4xl space-y-6 px-4 py-4">
       {/* Current Balance */}
       <BalanceCard />
+
+      {/* Dev Deposit (only in development) */}
+      <DevDepositSection />
 
       {/* Deposit Options or Connect Prompt */}
       {isConnected === true && canDeposit === true ? (
@@ -151,15 +182,6 @@ export function DepositPage() {
         <ConnectWalletPrompt />
       )}
 
-      {/* Back Link */}
-      <div className="pt-4 text-center">
-        <Link
-          className="text-primary text-sm hover:underline"
-          href="/dashboard"
-        >
-          Back to Dashboard
-        </Link>
-      </div>
     </div>
   );
 }

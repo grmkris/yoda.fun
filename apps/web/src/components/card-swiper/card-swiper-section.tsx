@@ -6,66 +6,52 @@ import { SwipeStack } from "@/components/swipe/swipe-stack";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketStack } from "@/hooks/use-market-stack";
 import { usePlaceBet } from "@/hooks/use-place-bet";
-import { BetConfirmationModal } from "./bet-confirmation-modal";
 import { EmptyState } from "./empty-state";
 import { GameCard, type MarketCard } from "./game-card";
 
 export function CardSwiperSection() {
   const swipeRef = useRef<SwipeStackRef>(null);
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
-  const [pendingBet, setPendingBet] = useState<MarketCard | null>(null);
 
   const { data, isLoading, error, refetch } = useMarketStack(10);
   const placeBet = usePlaceBet();
 
-  // Filter out already swiped markets
   const markets = (data?.markets ?? []).filter((m) => !swipedIds.has(m.id));
 
   const handleSwipeLeft = (card: MarketCard) => {
-    // Card skipped (NO vote or skip)
-    setSwipedIds((prev) => new Set(prev).add(card.id));
-  };
-
-  const handleSwipeRight = (card: MarketCard) => {
-    // Card swiped right - show confirmation modal
-    setPendingBet(card);
-  };
-
-  const handleConfirmBet = (vote: "YES" | "NO") => {
-    if (!pendingBet) {
-      return;
-    }
-
     placeBet.mutate(
-      { marketId: pendingBet.id, vote },
+      { marketId: card.id, vote: "NO" },
       {
-        onSuccess: () => {
-          setSwipedIds((prev) => new Set(prev).add(pendingBet.id));
-          setPendingBet(null);
-        },
-        onError: () => {
-          // Keep card in stack on error
-          setPendingBet(null);
+        onSettled: () => {
+          setSwipedIds((prev) => new Set(prev).add(card.id));
         },
       }
     );
   };
 
-  const handleCancelBet = () => {
-    setPendingBet(null);
+  const handleSwipeRight = (card: MarketCard) => {
+    placeBet.mutate(
+      { marketId: card.id, vote: "YES" },
+      {
+        onSettled: () => {
+          setSwipedIds((prev) => new Set(prev).add(card.id));
+        },
+      }
+    );
   };
 
   // Loading state
   if (isLoading) {
     return (
-      <section className="rounded-lg border p-4">
-        <h2 className="mb-4 font-medium">Predict & Win</h2>
+      <section className="p-4">
         <div className="mx-auto max-w-md">
-          <Skeleton className="h-[500px] w-full rounded-2xl" />
-          <div className="mt-6 flex items-center justify-center gap-6">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <Skeleton className="h-14 w-14 rounded-full" />
-          </div>
+          <Skeleton
+            className="h-[500px] w-full rounded-3xl"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.15 0.03 280), oklch(0.12 0.02 290))",
+            }}
+          />
         </div>
       </section>
     );
@@ -74,13 +60,30 @@ export function CardSwiperSection() {
   // Error state
   if (error) {
     return (
-      <section className="rounded-lg border p-4">
-        <h2 className="mb-4 font-medium">Predict & Win</h2>
-        <div className="mx-auto max-w-md text-center">
-          <p className="mb-4 text-muted-foreground">Failed to load markets</p>
+      <section className="p-4">
+        <div
+          className="mx-auto max-w-md rounded-3xl p-8 text-center"
+          style={{
+            background:
+              "linear-gradient(135deg, oklch(0.15 0.03 280 / 60%), oklch(0.12 0.02 290 / 40%))",
+            border: "1px solid oklch(0.68 0.20 25 / 20%)",
+          }}
+        >
+          <p
+            className="mb-4 font-heading"
+            style={{ color: "oklch(0.70 0.04 280)" }}
+          >
+            Failed to load markets
+          </p>
           <button
-            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
+            className="rounded-xl px-6 py-2.5 font-heading font-medium transition-all duration-200 hover:scale-105"
             onClick={() => refetch()}
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.65 0.25 290), oklch(0.55 0.22 300))",
+              color: "oklch(0.98 0.01 280)",
+              boxShadow: "0 0 20px oklch(0.65 0.25 290 / 30%)",
+            }}
             type="button"
           >
             Try Again
@@ -93,53 +96,22 @@ export function CardSwiperSection() {
   const allSwiped = markets.length === 0;
 
   return (
-    <section className="rounded-lg border p-4">
-      <h2 className="mb-4 font-medium">Predict & Win</h2>
+    <section className="p-4">
       <div className="mx-auto max-w-md">
         {allSwiped ? (
           <EmptyState />
         ) : (
-          <>
-            <SwipeStack
-              cards={markets as MarketCard[]}
-              className="min-h-[500px]"
-              maxVisibleCards={3}
-              onSwipeLeft={handleSwipeLeft}
-              onSwipeRight={handleSwipeRight}
-              ref={swipeRef}
-              renderCard={(card) => <GameCard card={card as MarketCard} />}
-            />
-
-            {/* Action Buttons */}
-            <div className="mt-6 flex items-center justify-center gap-6">
-              <button
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-2xl text-white shadow-lg transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
-                disabled={placeBet.isPending}
-                onClick={() => swipeRef.current?.swipeLeft()}
-                type="button"
-              >
-                ✗
-              </button>
-              <button
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-2xl text-white shadow-lg transition-transform hover:scale-110 active:scale-95 disabled:opacity-50"
-                disabled={placeBet.isPending}
-                onClick={() => swipeRef.current?.swipeRight()}
-                type="button"
-              >
-                ✓
-              </button>
-            </div>
-          </>
+          <SwipeStack
+            cards={markets as MarketCard[]}
+            className="min-h-[500px]"
+            maxVisibleCards={3}
+            onSwipeLeft={handleSwipeLeft}
+            onSwipeRight={handleSwipeRight}
+            ref={swipeRef}
+            renderCard={(card) => <GameCard card={card as MarketCard} />}
+          />
         )}
       </div>
-
-      {/* Bet Confirmation Modal */}
-      <BetConfirmationModal
-        isLoading={placeBet.isPending}
-        market={pendingBet}
-        onCancel={handleCancelBet}
-        onConfirm={handleConfirmBet}
-      />
     </section>
   );
 }

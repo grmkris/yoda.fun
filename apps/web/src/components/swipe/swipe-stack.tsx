@@ -58,10 +58,8 @@ function SwipeStackComponent<T>(
       handler?.(cardData);
     }
 
-    // Mark card as removed
     setRemovedCards((prev) => new Set(prev).add(index));
 
-    // Move to next card after animation
     setTimeout(() => {
       setCurrentIndex((prev) => prev + 1);
       setRemovedCards((prev) => {
@@ -92,12 +90,13 @@ function SwipeStackComponent<T>(
     return (
       <div className={className}>
         <div
+          className="font-heading"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             minHeight: `${NUMERIC_CONSTANTS.swipe.emptyStateHeight}px`,
-            color: "var(--color-text-secondary, #888)",
+            color: "oklch(0.60 0.04 280)",
           }}
         >
           No more cards
@@ -128,6 +127,12 @@ function SwipeStackComponent<T>(
             const isTopCard = stackIndex === 0;
             const isRemoved = removedCards.has(index);
 
+            // Subtle cosmic tint for stacked cards
+            const cosmicTint =
+              stackIndex > 0
+                ? `linear-gradient(180deg, oklch(0.65 0.25 290 / ${stackIndex * 3}%) 0%, transparent 100%)`
+                : "none";
+
             return (
               <div
                 key={index}
@@ -144,6 +149,9 @@ function SwipeStackComponent<T>(
                     ? "none"
                     : `transform ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease, opacity ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease`,
                   pointerEvents: isTopCard ? "auto" : "none",
+                  filter: isTopCard
+                    ? "none"
+                    : `brightness(${1 - stackIndex * 0.08})`,
                 }}
               >
                 {isTopCard ? (
@@ -160,7 +168,19 @@ function SwipeStackComponent<T>(
                     {renderCard(card, index)}
                   </SwipeCard>
                 ) : (
-                  <div>{renderCard(card, index)}</div>
+                  <div style={{ position: "relative" }}>
+                    {renderCard(card, index)}
+                    {/* Cosmic overlay for depth */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: cosmicTint,
+                        borderRadius: "inherit",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             );
@@ -170,7 +190,6 @@ function SwipeStackComponent<T>(
   );
 }
 
-// Export with proper generic typing
 export const SwipeStack = forwardRef(SwipeStackComponent) as <T>(
   props: SwipeStackProps<T> & { ref?: ForwardedRef<SwipeStackRef> }
 ) => ReturnType<typeof SwipeStackComponent>;

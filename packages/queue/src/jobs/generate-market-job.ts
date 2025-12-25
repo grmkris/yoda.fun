@@ -15,8 +15,8 @@ export const GenerateMarketJobSchema = z.object({
   count: z.number().int().min(1).max(10).default(5),
   /** Optional categories to focus on */
   categories: z.array(z.enum(MARKET_CATEGORIES)).optional(),
-  /** Optional trigger source (scheduled, manual, etc.) */
-  trigger: z.enum(["scheduled", "manual"]).default("scheduled"),
+  /** Optional trigger source (scheduled, manual, seed, etc.) */
+  trigger: z.enum(["scheduled", "manual", "seed"]).default("scheduled"),
 });
 
 export type GenerateMarketJob = z.infer<typeof GenerateMarketJobSchema>;

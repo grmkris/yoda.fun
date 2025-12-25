@@ -3,6 +3,20 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, desc, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { MarketId, UserId } from "@yoda.fun/shared/typeid";
+import { err, ok, type Result } from "neverthrow";
+import type { SelectBet } from "../../../db/src/schema/market/market.zod";
+
+export type BetServiceError =
+  | { type: "MARKET_NOT_FOUND"; message: "Market not found" }
+  | { type: "MARKET_NOT_ACTIVE"; message: "Market is not active for betting" }
+  | { type: "VOTING_ENDED"; message: "Voting period has ended" }
+  | {
+      type: "ALREADY_BET";
+      message: "You have already placed a bet on this market";
+    }
+  | { type: "INSUFFICIENT_BALANCE"; message: string }
+  | { type: "INVALID_AMOUNT"; message: "Bet amount must be greater than 0" }
+  | { type: "BET_CREATION_FAILED"; message: "Failed to create bet record" };
 
 interface BetServiceDeps {
   db: Database;
@@ -18,9 +32,9 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
       input: {
         marketId: MarketId;
         vote: "YES" | "NO";
-        amount?: number; // If not provided, uses market's betAmount
+        amount?: number;
       }
-    ) {
+    ): Promise<Result<SelectBet, BetServiceError>> {
       // Get the market
       const marketRecords = await db
         .select()
@@ -30,17 +44,23 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
 
       const marketData = marketRecords[0];
       if (!marketData) {
-        throw new Error("Market not found");
+        return err({ type: "MARKET_NOT_FOUND", message: "Market not found" });
       }
 
       // Validate market is active
       if (marketData.status !== "ACTIVE") {
-        throw new Error("Market is not active for betting");
+        return err({
+          type: "MARKET_NOT_ACTIVE",
+          message: "Market is not active for betting",
+        });
       }
 
       // Validate voting period hasn't ended
       if (new Date() > new Date(marketData.votingEndsAt)) {
-        throw new Error("Voting period has ended");
+        return err({
+          type: "VOTING_ENDED",
+          message: "Voting period has ended",
+        });
       }
 
       // Check if user already has a bet on this market
@@ -56,13 +76,19 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         .limit(1);
 
       if (existingBet.length > 0) {
-        throw new Error("You have already placed a bet on this market");
+        return err({
+          type: "ALREADY_BET",
+          message: "You have already placed a bet on this market",
+        });
       }
 
       // Use provided amount or market's default bet amount
       const betAmount = input.amount ?? Number(marketData.betAmount);
       if (betAmount <= 0) {
-        throw new Error("Bet amount must be greater than 0");
+        return err({
+          type: "INVALID_AMOUNT",
+          message: "Bet amount must be greater than 0",
+        });
       }
 
       // Place bet in a transaction
@@ -78,9 +104,10 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         const availableBalance = balance ? Number(balance.availableBalance) : 0;
 
         if (availableBalance < betAmount) {
-          throw new Error(
-            `Insufficient balance: ${availableBalance.toFixed(2)} < ${betAmount.toFixed(2)}`
-          );
+          return err({
+            type: "INSUFFICIENT_BALANCE" as const,
+            message: `Insufficient balance: ${availableBalance.toFixed(2)} < ${betAmount.toFixed(2)}`,
+          });
         }
 
         // Deduct from user's balance
@@ -119,7 +146,10 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
 
         const betRecord = betRecords[0];
         if (!betRecord) {
-          throw new Error("Failed to create bet record");
+          return err({
+            type: "BET_CREATION_FAILED" as const,
+            message: "Failed to create bet record" as const,
+          });
         }
 
         // Update market vote counts and total pool
@@ -139,8 +169,12 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
           .set(updateData)
           .where(eq(DB_SCHEMA.market.id, input.marketId));
 
-        return betRecord;
+        return ok(betRecord);
       });
+
+      if (result.isErr()) {
+        return result;
+      }
 
       logger.info(
         {
@@ -148,7 +182,7 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
           marketId: input.marketId,
           vote: input.vote,
           amount: betAmount,
-          betId: result.id,
+          betId: result.value.id,
         },
         "Bet placed"
       );

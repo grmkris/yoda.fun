@@ -80,6 +80,9 @@
     "db:down": {
       "cache": false,
       "persistent": true
+    },
+    "db:clean": {
+      "cache": false
     }
   }
 }

@@ -25,13 +25,14 @@
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/queue": "workspace:*",
-    "posthog-node": "catalog:",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",
     "@yoda.fun/test-utils": "workspace:*",
     "better-auth": "catalog:",
     "hono": "catalog:",
-    "x402-hono": "^1.0.0",
+    "neverthrow": "^8.2.0",
+    "posthog-node": "catalog:",
+    "x402-hono": "^1.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {

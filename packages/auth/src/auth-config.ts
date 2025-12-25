@@ -3,10 +3,11 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { siwe } from "better-auth/plugins";
-import { Porto } from "porto";
+import { anonymous, siwe } from "better-auth/plugins";
+import { Porto, RelayActions } from "porto";
 import { RelayClient } from "porto/viem";
-import { generateSiweNonce, verifySiweMessage } from "viem/siwe";
+import { hashMessage } from "viem";
+import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
 
 export interface AuthConfig {
   db: Database;
@@ -33,25 +34,50 @@ export const createAuth = (config: AuthConfig) => {
       enabled: true,
     },
     plugins: [
+      anonymous(),
       siwe({
         domain: SERVICE_URLS[config.appEnv].siweDomain,
-        anonymous: false,
         getNonce: async () => generateSiweNonce(),
-        verifyMessage: async ({ message, signature, chainId }) => {
+        verifyMessage: async ({ message, signature }) => {
           try {
-            // Use Porto's RelayClient for verification
+            const { address, chainId } = parseSiweMessage(message);
+            if (!(address && chainId)) {
+              return false;
+            }
             const client = RelayClient.fromPorto(porto, { chainId });
-            const isValid = await verifySiweMessage(client, {
-              message,
+            const result = await RelayActions.verifySignature(client, {
+              address,
+              digest: hashMessage(message),
               signature: signature as `0x${string}`,
             });
-            return isValid;
+            return result.valid;
           } catch {
             return false;
           }
         },
       }),
     ],
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            await config.db.insert(DB_SCHEMA.userBalance).values({
+              userId: user.id,
+              availableBalance: "10.00",
+              totalDeposited: "10.00",
+            });
+
+            await config.db.insert(DB_SCHEMA.transaction).values({
+              userId: user.id,
+              type: "DEPOSIT",
+              amount: "10.00",
+              status: "COMPLETED",
+              metadata: { reason: "signup_bonus" },
+            });
+          },
+        },
+      },
+    },
     advanced: {
       database: {
         generateId: false,

@@ -6,19 +6,14 @@ import type { AIModelConfig } from "./ai-providers";
  */
 export const MODELS = {
   // xAI Grok models
-  XAI_GROK_3: {
+  XAI_GROK_4_LATEST: {
     provider: "xai",
-    modelId: "grok-3",
+    modelId: "grok-4-latest",
   } as const satisfies AIModelConfig,
 
-  XAI_GROK_3_MINI: {
+  XAI_GROK_4_1_FAST_REASONING: {
     provider: "xai",
-    modelId: "grok-3-mini",
-  } as const satisfies AIModelConfig,
-
-  XAI_GROK_3_FAST: {
-    provider: "xai",
-    modelId: "grok-3-fast",
+    modelId: "grok-4-1-fast-reasoning",
   } as const satisfies AIModelConfig,
 } as const;
 
@@ -51,7 +46,7 @@ export const FEATURES = {
    * Generate new betting markets from current events/trends
    */
   marketGeneration: {
-    model: MODELS.XAI_GROK_3,
+    model: MODELS.XAI_GROK_4_LATEST,
     systemPrompt: (ctx: MarketGenerationContext): string => {
       const sections: string[] = [];
 
@@ -116,7 +111,7 @@ For each market provide:
    * Resolve a market outcome based on available information
    */
   marketResolution: {
-    model: MODELS.XAI_GROK_3_MINI,
+    model: MODELS.XAI_GROK_4_1_FAST_REASONING,
     systemPrompt: (ctx: MarketResolutionContext): string => {
       const sections: string[] = [];
 

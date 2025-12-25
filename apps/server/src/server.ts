@@ -6,7 +6,8 @@ import { createAiClient } from "@yoda.fun/ai";
 import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers";
 import { createAuth } from "@yoda.fun/auth";
-import { createDb } from "@yoda.fun/db";
+import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
+import { count } from "@yoda.fun/db/drizzle";
 import { createLogger } from "@yoda.fun/logger";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
 import { ENV_CONFIG, MARKET_GENERATION } from "@yoda.fun/shared/constants";
@@ -26,18 +27,20 @@ import { createDepositRoutes } from "@/routes/deposit";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
 
-const app = new Hono();
-
-const db = createDb({ dbData: { type: "pg", databaseUrl: env.DATABASE_URL } });
-const auth = createAuth({
-  db,
-  appEnv: env.APP_ENV,
-  secret: env.BETTER_AUTH_SECRET,
-});
 const logger = createLogger({
   level: env.APP_ENV === "prod" ? "info" : "debug",
   environment: env.APP_ENV,
   appName: "yoda-server",
+});
+
+const app = new Hono();
+
+const db = createDb({ dbData: { type: "pg", databaseUrl: env.DATABASE_URL } });
+await runMigrations(db, logger);
+const auth = createAuth({
+  db,
+  appEnv: env.APP_ENV,
+  secret: env.BETTER_AUTH_SECRET,
 });
 
 const posthog = createPostHogClient({
@@ -63,7 +66,7 @@ app.use(honoLogger());
 app.use(
   "/*",
   cors({
-    origin: SERVICE_URLS[env.APP_ENV].web,
+    origin: [SERVICE_URLS[env.APP_ENV].web, "https://id.porto.sh"],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -93,6 +96,7 @@ if (envConfig.depositWalletAddress) {
     logger,
     depositWalletAddress: envConfig.depositWalletAddress,
     network: envConfig.network,
+    appEnv: env.APP_ENV,
   });
   app.route("/api", depositRoutes);
   logger.info({ network: envConfig.network }, "x402 deposit routes enabled");
@@ -153,7 +157,8 @@ const aiClient = createAiClient({
   // TODO: Re-enable when @posthog/ai supports AI SDK v6
   // posthog,
   providerConfigs: {
-    xaiApiKey: env.GOOGLE_GEMINI_API_KEY,
+    xaiApiKey: env.XAI_API_KEY,
+    googleGeminiApiKey: env.GOOGLE_GEMINI_API_KEY,
   },
 });
 
@@ -170,8 +175,22 @@ const generationWorker = createMarketGenerationWorker({
   db,
   logger,
   aiClient,
+  storage,
 });
 logger.info({ msg: "Market generation worker started" });
+
+// Seed initial markets if database is empty
+const marketCount = await db
+  .select({ count: count() })
+  .from(DB_SCHEMA.market);
+
+if (marketCount[0]?.count === 0) {
+  logger.info({ msg: "No markets found, seeding initial markets" });
+  await queue.addJob("generate-market", {
+    count: MARKET_GENERATION.COUNT,
+    trigger: "seed",
+  });
+}
 
 queue
   .addJob(

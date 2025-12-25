@@ -17,34 +17,23 @@ export const betRouter = {
     )
     .handler(async ({ context, input }) => {
       const userId = UserId.parse(context.session.user.id);
+      const result = await context.betService.placeBet(userId, input);
 
-      try {
-        const result = await context.betService.placeBet(userId, input);
-
-        return {
+      return result.match(
+        (bet) => ({
           success: true,
-          betId: result.id,
-          marketId: result.marketId,
-          vote: result.vote,
+          betId: bet.id,
+          marketId: bet.marketId,
+          vote: bet.vote,
           message: `Vote placed successfully! You voted ${input.vote}.`,
-        };
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.message.includes("not found")) {
-            throw new ORPCError("NOT_FOUND");
-          }
-          if (error.message.includes("not active")) {
-            throw new ORPCError("BAD_REQUEST");
-          }
-          if (error.message.includes("ended")) {
-            throw new ORPCError("BAD_REQUEST");
-          }
-          if (error.message.includes("already placed")) {
-            throw new ORPCError("BAD_REQUEST");
-          }
+        }),
+        (error) => {
+          throw new ORPCError(
+            error.type === "MARKET_NOT_FOUND" ? "NOT_FOUND" : "BAD_REQUEST",
+            { code: error.type, message: error.message }
+          );
         }
-        throw error;
-      }
+      );
     }),
 
   /**
