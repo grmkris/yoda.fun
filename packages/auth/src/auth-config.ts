@@ -14,6 +14,7 @@ export interface AuthConfig {
   db: Database;
   appEnv: Environment;
   secret: string;
+  signupBonusEnabled?: boolean;
 }
 
 export const createAuth = (config: AuthConfig) => {
@@ -62,19 +63,21 @@ export const createAuth = (config: AuthConfig) => {
       user: {
         create: {
           after: async (user) => {
-            await config.db.insert(DB_SCHEMA.userBalance).values({
-              userId: UserId.parse(user.id),
-              availableBalance: "10.00",
-              totalDeposited: "10.00",
-            });
+            if (config.signupBonusEnabled) {
+              await config.db.insert(DB_SCHEMA.userBalance).values({
+                userId: UserId.parse(user.id),
+                availableBalance: "10.00",
+                totalDeposited: "10.00",
+              });
 
-            await config.db.insert(DB_SCHEMA.transaction).values({
-              userId: UserId.parse(user.id),
-              type: "DEPOSIT",
-              amount: "10.00",
-              status: "COMPLETED",
-              metadata: { reason: "signup_bonus" },
-            });
+              await config.db.insert(DB_SCHEMA.transaction).values({
+                userId: UserId.parse(user.id),
+                type: "DEPOSIT",
+                amount: "10.00",
+                status: "COMPLETED",
+                metadata: { reason: "signup_bonus" },
+              });
+            }
           },
         },
       },

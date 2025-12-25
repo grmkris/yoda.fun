@@ -106,7 +106,7 @@ export async function generateMarketImages(
   const results = new Map<string, string | null>();
 
   // Generate in parallel with concurrency limit
-  const concurrency = 3;
+  const concurrency = 1;
   for (let i = 0; i < markets.length; i += concurrency) {
     const batch = markets.slice(i, i + concurrency);
     const batchResults = await Promise.all(

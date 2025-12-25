@@ -43,6 +43,7 @@ const auth = createAuth({
   db,
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
+  signupBonusEnabled: true,
 });
 
 const posthog = createPostHogClient({

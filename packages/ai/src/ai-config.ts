@@ -89,10 +89,12 @@ For each market provide:
 3. category: One of: sports, entertainment, tech, crypto, politics, memes, other
 4. resolutionCriteria: Clear, objective criteria for determining YES or NO
 5. resolutionMethod: HOW the market will be resolved (pick ONE type):
-   - PRICE: For crypto price targets
+   - PRICE: For crypto price targets (absolute USD values only, NOT percentages)
      { type: "PRICE", provider: "coingecko", coinId: "bitcoin", condition: { operator: ">=", threshold: 150000 } }
      coinId = CoinGecko coin ID (bitcoin, ethereum, solana, dogecoin, etc.)
      operator = ">=" for above, "<=" for below
+     threshold = absolute USD price (e.g., 150000 for $150k, 0.40 for $0.40)
+     IMPORTANT: Never use percentage changes like "pump 20%" - always use absolute prices
    - SPORTS: For sports outcomes
      { type: "SPORTS", provider: "thesportsdb", sport: "nba", teamName: "Lakers", outcome: "win" }
      sport = nba, nfl, mlb, nhl, soccer, mma, boxing, tennis, esports
@@ -122,7 +124,8 @@ For each market provide:
 ## BAD EXAMPLES (avoid these patterns)
 - "Will the economy improve?" (subjective, unverifiable)
 - "Will X be the best movie of the year?" (opinion-based)
-- "Will someone famous die?" (morbid, inappropriate)`);
+- "Will someone famous die?" (morbid, inappropriate)
+- "Will Dogecoin pump 20%?" (percentage-based - use absolute price like "hit $0.40" instead)`);
 
       return sections.join("\n\n");
     },

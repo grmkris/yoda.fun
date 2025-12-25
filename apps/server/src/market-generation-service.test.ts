@@ -23,18 +23,17 @@ describe("Market Generation Service", () => {
     await testEnv.close();
   });
 
-  describe("generateMarkets", () => {
-    test("generates requested number of markets with real AI", async () => {
-      const result = await marketGenerationService.generateMarkets({
+  describe("generateAndInsertMarkets", () => {
+    test("generates and inserts markets with correct structure", async () => {
+      const result = await marketGenerationService.generateAndInsertMarkets({
         count: 2,
       });
 
-      expect(result.markets.length).toBeGreaterThanOrEqual(1);
-      expect(result.modelVersion).toBeTruthy();
-      expect(result.durationMs).toBeGreaterThan(0);
+      expect(result.generated.markets.length).toBeGreaterThanOrEqual(1);
+      expect(result.generated.modelVersion).toBeTruthy();
+      expect(result.generated.durationMs).toBeGreaterThan(0);
 
-      // Each market should have required fields
-      for (const market of result.markets) {
+      for (const market of result.generated.markets) {
         expect(market.title).toBeTruthy();
         expect(market.description).toBeTruthy();
         expect(market.category).toBeTruthy();
@@ -45,112 +44,64 @@ describe("Market Generation Service", () => {
         expect(market.resolutionMethod).toBeDefined();
         expect(market.resolutionMethod.type).toBeTruthy();
       }
-    }, 90_000);
+
+      expect(result.inserted.length).toBeGreaterThanOrEqual(1);
+    }, 120_000);
 
     test("returns model version and token usage", async () => {
-      const result = await marketGenerationService.generateMarkets({
-        count: 1,
-      });
-
-      expect(result.modelVersion).toBeTruthy();
-      expect(typeof result.durationMs).toBe("number");
-    }, 90_000);
-  });
-
-  describe("insertMarkets", () => {
-    test("inserts markets into database with correct fields", async () => {
-      const inserted = await marketGenerationService.insertMarkets([
-        {
-          title: `Test market insert ${Date.now()}`,
-          description: "Test description",
-          category: "other",
-          betAmount: "1.00",
-          duration: { value: 24, unit: "hours" as const },
-          resolutionMethod: {
-            type: "WEB_SEARCH" as const,
-            searchQuery: "test search query",
-            successIndicators: ["success"],
-          },
-          resolutionCriteria: "Test criteria",
-        },
-      ]);
-
-      expect(inserted).toHaveLength(1);
-
-      const market = inserted[0];
-      expect(market).toBeDefined();
-      if (market) {
-        expect(market.id).toBeTruthy();
-        expect(market.title).toBe(`Test market insert ${Date.now()}`);
-        expect(market.status).toBe("ACTIVE");
-        expect(market.resolutionType).toBeDefined();
-        expect(market.votingEndsAt).toBeInstanceOf(Date);
-        expect(market.resolutionDeadline).toBeInstanceOf(Date);
-
-        // Resolution deadline should be after voting ends
-        expect(market.resolutionDeadline.getTime()).toBeGreaterThan(
-          market.votingEndsAt.getTime()
-        );
-      }
-    }, 30_000);
-
-    test("calculates votingEndsAt and resolution buffer correctly", async () => {
-      const now = Date.now();
-
-      const inserted = await marketGenerationService.insertMarkets([
-        {
-          title: `Test market timing ${Date.now()}`,
-          description: "Test description",
-          category: "other",
-          betAmount: "1.00",
-          duration: { value: 24, unit: "hours" as const },
-          resolutionMethod: {
-            type: "WEB_SEARCH" as const,
-            searchQuery: "test timing query",
-            successIndicators: ["success"],
-          },
-          resolutionCriteria: "Test criteria",
-        },
-      ]);
-
-      const market = inserted[0];
-      expect(market).toBeDefined();
-      if (market) {
-        // Should be ~24 hours from now
-        const expectedEnd = now + 24 * 60 * 60 * 1000;
-        const actualEnd = market.votingEndsAt.getTime();
-
-        // Allow 10 second tolerance
-        expect(Math.abs(actualEnd - expectedEnd)).toBeLessThan(10_000);
-
-        // Buffer should be 6 hours
-        const bufferMs =
-          market.resolutionDeadline.getTime() - market.votingEndsAt.getTime();
-        const expectedBufferMs = 6 * 60 * 60 * 1000;
-
-        expect(bufferMs).toBe(expectedBufferMs);
-      }
-    }, 30_000);
-  });
-
-  describe("generateAndInsertMarkets", () => {
-    test("generates and inserts markets end-to-end", async () => {
       const result = await marketGenerationService.generateAndInsertMarkets({
         count: 1,
       });
 
-      expect(result.generated.markets.length).toBeGreaterThanOrEqual(1);
+      expect(result.generated.modelVersion).toBeTruthy();
+      expect(typeof result.generated.durationMs).toBe("number");
+    }, 120_000);
+
+    test("inserts markets into database with correct fields", async () => {
+      const result = await marketGenerationService.generateAndInsertMarkets({
+        count: 1,
+      });
+
       expect(result.inserted.length).toBeGreaterThanOrEqual(1);
 
-      // Verify inserted in DB
       const market = result.inserted[0];
+      expect(market).toBeDefined();
       if (market) {
+        expect(market.id).toBeTruthy();
+        expect(market.title).toBeTruthy();
+        expect(market.status).toBe("ACTIVE");
+        expect(market.resolutionType).toBeDefined();
+        expect(market.votingEndsAt).toBeInstanceOf(Date);
+        expect(market.resolutionDeadline).toBeInstanceOf(Date);
+        expect(market.resolutionDeadline.getTime()).toBeGreaterThan(
+          market.votingEndsAt.getTime()
+        );
+
         const dbMarket = await testEnv.deps.db
           .select()
           .from(DB_SCHEMA.market)
           .where(eq(DB_SCHEMA.market.id, market.id));
 
         expect(dbMarket).toHaveLength(1);
+      }
+    }, 120_000);
+
+    test("calculates resolution buffer correctly", async () => {
+      const now = Date.now();
+
+      const result = await marketGenerationService.generateAndInsertMarkets({
+        count: 1,
+      });
+
+      const market = result.inserted[0];
+      expect(market).toBeDefined();
+      if (market) {
+        const bufferMs =
+          market.resolutionDeadline.getTime() - market.votingEndsAt.getTime();
+        const expectedBufferMs = 6 * 60 * 60 * 1000;
+
+        expect(bufferMs).toBe(expectedBufferMs);
+        expect(market.votingEndsAt.getTime()).toBeGreaterThan(now);
       }
     }, 120_000);
   });

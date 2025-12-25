@@ -67,82 +67,84 @@ export function createMarketGenerationService(
     return result;
   }
 
-  return {
-    async generateMarkets(
-      input: GenerateMarketsInput
-    ): Promise<GenerateMarketsResult> {
-      const startTime = Date.now();
-      const config = FEATURES.marketGeneration;
+  const generateMarkets = async (
+    input: GenerateMarketsInput
+  ): Promise<GenerateMarketsResult> => {
+    const startTime = Date.now();
+    const config = FEATURES.marketGeneration;
 
-      logger.info(
-        { count: input.count, categories: input.categories },
-        "Generating markets with AI"
-      );
+    logger.info(
+      { count: input.count, categories: input.categories },
+      "Generating markets with AI"
+    );
 
-      const existingMarkets = await db
-        .select({ title: DB_SCHEMA.market.title })
-        .from(DB_SCHEMA.market)
-        .orderBy(desc(DB_SCHEMA.market.createdAt))
-        .limit(50);
+    const existingMarkets = await db
+      .select({ title: DB_SCHEMA.market.title })
+      .from(DB_SCHEMA.market)
+      .orderBy(desc(DB_SCHEMA.market.createdAt))
+      .limit(50);
 
-      const existingTitles = existingMarkets.map((m) => m.title);
+    const existingTitles = existingMarkets.map((m) => m.title);
 
-      const promptContext = {
-        currentDate: new Date().toISOString().split("T")[0] ?? "",
-        categories: input.categories,
-        existingMarketTitles: existingTitles,
-        targetCount: input.count,
-      };
+    const promptContext = {
+      currentDate: new Date().toISOString().split("T")[0] ?? "",
+      categories: input.categories,
+      existingMarketTitles: existingTitles,
+      targetCount: input.count,
+    };
 
-      const systemPrompt = config.systemPrompt(promptContext);
-      const model = aiClient.getModel(config.model);
+    const systemPrompt = config.systemPrompt(promptContext);
+    const model = aiClient.getModel(config.model);
 
-      const response = await aiClient.generateText({
-        model,
-        output: Output.object({ schema: GeneratedMarketsResponseSchema }),
-        system: systemPrompt,
-        prompt: `Generate ${input.count} unique betting markets based on current events and trends. Focus on engaging, fun topics that will attract bettors.`,
-      });
+    const response = await aiClient.generateText({
+      model,
+      output: Output.object({ schema: GeneratedMarketsResponseSchema }),
+      system: systemPrompt,
+      prompt: `Generate ${input.count} unique betting markets based on current events and trends. Focus on engaging, fun topics that will attract bettors.`,
+    });
 
-      const durationMs = Date.now() - startTime;
+    const durationMs = Date.now() - startTime;
 
-      logger.info(
-        {
-          marketsGenerated: response.output.markets.length,
-          durationMs,
-          tokensUsed: response.usage?.totalTokens,
-        },
-        "Markets generated successfully"
-      );
-
-      return {
-        markets: response.output.markets,
-        modelVersion: config.model.modelId,
-        tokensUsed: response.usage?.totalTokens,
+    logger.info(
+      {
+        marketsGenerated: response.output.markets.length,
         durationMs,
-      };
-    },
+        tokensUsed: response.usage?.totalTokens,
+      },
+      "Markets generated successfully"
+    );
 
-    async insertMarkets(markets: GeneratedMarket[]): Promise<SelectMarket[]> {
-      const imageUrls = await generateImages(markets);
-      const prepared = await Promise.all(
-        markets.map((market) =>
-          prepareMarket({
-            market,
-            imageUrl: imageUrls.get(market.title),
-            logger,
-          })
-        )
-      );
-      return insertToDatabase(prepared);
-    },
+    return {
+      markets: response.output.markets,
+      modelVersion: config.model.modelId,
+      tokensUsed: response.usage?.totalTokens,
+      durationMs,
+    };
+  };
 
+  const insertMarkets = async (
+    markets: GeneratedMarket[]
+  ): Promise<SelectMarket[]> => {
+    const imageUrls = await generateImages(markets);
+    const prepared = await Promise.all(
+      markets.map((market) =>
+        prepareMarket({
+          market,
+          imageUrl: imageUrls.get(market.title),
+          logger,
+        })
+      )
+    );
+    return insertToDatabase(prepared);
+  };
+
+  return {
     async generateAndInsertMarkets(input: GenerateMarketsInput): Promise<{
       generated: GenerateMarketsResult;
       inserted: SelectMarket[];
     }> {
-      const generated = await this.generateMarkets(input);
-      const inserted = await this.insertMarkets(generated.markets);
+      const generated = await generateMarkets(input);
+      const inserted = await insertMarkets(generated.markets);
 
       logger.info(
         {

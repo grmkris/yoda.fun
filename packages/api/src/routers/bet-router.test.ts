@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { call } from "@orpc/server";
+import { ok } from "neverthrow";
 import type { Context } from "../context";
 import { betRouter } from "./bet-router";
+
+const TEST_MARKET_ID = "mkt_01kdbjw6mreneb77650wvn94d7";
+const TEST_USER_ID = "usr_01kdbjw6mreneb776cc1febvam";
+const TEST_BET_ID = "bet_01kdbjw6mreneb776qnge1fx74";
 
 describe("Bet Router", () => {
   describe("place", () => {
@@ -13,7 +18,7 @@ describe("Bet Router", () => {
       await expect(
         call(
           betRouter.place,
-          { marketId: "mkt_test123456789012345", vote: "YES" },
+          { marketId: TEST_MARKET_ID, vote: "YES" },
           { context: mockContext }
         )
       ).rejects.toThrow();
@@ -21,7 +26,7 @@ describe("Bet Router", () => {
 
     test("should validate market ID format", async () => {
       const mockContext = {
-        session: { user: { id: "user_test123456789012" } },
+        session: { user: { id: TEST_USER_ID } },
         betService: {
           placeBet: () => {
             throw new Error("Market not found");
@@ -32,7 +37,7 @@ describe("Bet Router", () => {
       await expect(
         call(
           betRouter.place,
-          { marketId: "mkt_test123456789012345", vote: "YES" },
+          { marketId: "invalid_market_id", vote: "YES" },
           { context: mockContext }
         )
       ).rejects.toThrow();
@@ -40,24 +45,24 @@ describe("Bet Router", () => {
 
     test("should accept YES vote", async () => {
       const mockBet = {
-        id: "bet_test123456789012345",
-        marketId: "mkt_test123456789012345",
-        userId: "user_test123456789012",
+        id: TEST_BET_ID,
+        marketId: TEST_MARKET_ID,
+        userId: TEST_USER_ID,
         vote: "YES",
         amount: "10.00",
         status: "ACTIVE",
       };
 
       const mockContext = {
-        session: { user: { id: "user_test123456789012" } },
+        session: { user: { id: TEST_USER_ID } },
         betService: {
-          placeBet: () => Promise.resolve(mockBet),
+          placeBet: () => Promise.resolve(ok(mockBet)),
         },
       } as unknown as Context;
 
       const result = await call(
         betRouter.place,
-        { marketId: "mkt_test123456789012345", vote: "YES" },
+        { marketId: TEST_MARKET_ID, vote: "YES" },
         { context: mockContext }
       );
 
@@ -67,24 +72,24 @@ describe("Bet Router", () => {
 
     test("should accept NO vote", async () => {
       const mockBet = {
-        id: "bet_test123456789012345",
-        marketId: "mkt_test123456789012345",
-        userId: "user_test123456789012",
+        id: TEST_BET_ID,
+        marketId: TEST_MARKET_ID,
+        userId: TEST_USER_ID,
         vote: "NO",
         amount: "10.00",
         status: "ACTIVE",
       };
 
       const mockContext = {
-        session: { user: { id: "user_test123456789012" } },
+        session: { user: { id: TEST_USER_ID } },
         betService: {
-          placeBet: () => Promise.resolve(mockBet),
+          placeBet: () => Promise.resolve(ok(mockBet)),
         },
       } as unknown as Context;
 
       const result = await call(
         betRouter.place,
-        { marketId: "mkt_test123456789012345", vote: "NO" },
+        { marketId: TEST_MARKET_ID, vote: "NO" },
         { context: mockContext }
       );
 
@@ -111,15 +116,15 @@ describe("Bet Router", () => {
     test("should return bet history with default pagination", async () => {
       const mockBets = [
         {
-          id: "bet_1",
-          marketId: "mkt_1",
+          id: TEST_BET_ID,
+          marketId: TEST_MARKET_ID,
           vote: "YES",
           status: "ACTIVE",
         },
       ];
 
       const mockContext = {
-        session: { user: { id: "user_test123456789012" } },
+        session: { user: { id: TEST_USER_ID } },
         betService: {
           getBetHistory: () => Promise.resolve(mockBets),
         },
@@ -138,7 +143,7 @@ describe("Bet Router", () => {
 
     test("should filter by status", async () => {
       const mockContext = {
-        session: { user: { id: "user_test123456789012" } },
+        session: { user: { id: TEST_USER_ID } },
         betService: {
           getBetHistory: (_userId: string, opts: { status?: string }) => {
             expect(opts.status).toBe("WON");
