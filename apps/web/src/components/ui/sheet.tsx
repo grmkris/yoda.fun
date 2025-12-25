@@ -1,8 +1,8 @@
 "use client";
 
+import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
-import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ function SheetOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 data-[state=closed]:animate-out data-[state=open]:animate-in",
         className
       )}
       data-slot="sheet-overlay"
@@ -66,11 +66,11 @@ function SheetContent({
       <SheetOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed z-50 flex h-full flex-col gap-4 shadow-2xl duration-300 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "fixed z-50 flex h-full flex-col gap-4 shadow-2xl duration-300 ease-out data-[state=closed]:animate-out data-[state=open]:animate-in",
           side === "left" &&
-            "left-0 top-0 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left top-0 left-0",
           side === "right" &&
-            "right-0 top-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right top-0 right-0",
           className
         )}
         data-slot="sheet-content"
@@ -95,7 +95,7 @@ function SheetContent({
       >
         {children}
         <DialogPrimitive.Close
-          className="absolute right-4 top-4 rounded-full p-1.5 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-sidebar-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="absolute top-4 right-4 rounded-full p-1.5 opacity-70 ring-offset-background transition-all hover:bg-sidebar-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           style={{
             color: "oklch(0.65 0.04 280)",
           }}

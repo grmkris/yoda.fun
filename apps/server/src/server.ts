@@ -17,12 +17,14 @@ import { S3Client } from "bun";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
+import { setupBullBoard } from "@/admin/bull-board";
 import { env } from "@/env";
 import {
   captureException,
   createPostHogClient,
   shutdownPostHog,
 } from "@/lib/posthog";
+import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
@@ -102,6 +104,10 @@ if (envConfig.depositWalletAddress) {
   logger.info({ network: envConfig.network }, "x402 deposit routes enabled");
 }
 
+// MCP endpoint for AI agents (proper SDK pattern)
+app.all("/mcp", (c) => handleMcpRequest(c, { db, logger }));
+logger.info({ msg: "MCP endpoint enabled at /mcp" });
+
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
@@ -151,6 +157,11 @@ const queue: QueueClient = createQueueClient({
   logger,
 });
 
+// Bull-Board admin UI for queue monitoring
+const { serverAdapter: bullBoardAdapter } = setupBullBoard(queue);
+app.route("/admin/queues", bullBoardAdapter.registerPlugin());
+logger.info({ msg: "Bull-Board UI available at /admin/queues" });
+
 const aiClient = createAiClient({
   logger,
   environment: env.APP_ENV,
@@ -180,9 +191,7 @@ const generationWorker = createMarketGenerationWorker({
 logger.info({ msg: "Market generation worker started" });
 
 // Seed initial markets if database is empty
-const marketCount = await db
-  .select({ count: count() })
-  .from(DB_SCHEMA.market);
+const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
 
 if (marketCount[0]?.count === 0) {
   logger.info({ msg: "No markets found, seeding initial markets" });

@@ -1,5 +1,8 @@
-import type { AiClient } from "@yoda.fun/ai";
+import { type AiClient, Output } from "@yoda.fun/ai";
 import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
+import { resolvePriceMarket } from "@yoda.fun/api/services/resolvers/price-resolver";
+import { resolveSportsMarket } from "@yoda.fun/api/services/resolvers/sports-resolver";
+import { resolveWebSearchMarket } from "@yoda.fun/api/services/resolvers/web-search-resolver";
 import { createSettlementService } from "@yoda.fun/api/services/settlement-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
@@ -7,6 +10,13 @@ import { eq } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
 import type { ResolveMarketJob } from "@yoda.fun/queue/jobs/resolve-market-job";
+import type {
+  PriceStrategy,
+  ResolutionMethodType,
+  ResolutionStrategy,
+  SportsStrategy,
+  WebSearchStrategy,
+} from "@yoda.fun/shared/resolution-types";
 import type { MarketId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 
@@ -37,7 +47,6 @@ export function createMarketResolutionWorker(
 } {
   const { queue, db, logger, aiClient } = config;
 
-  // Create services for stats tracking
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const settlementService = createSettlementService({
     deps: { db, logger, leaderboardService },
@@ -52,7 +61,6 @@ export function createMarketResolutionWorker(
 
       logger.info({ marketId }, "Processing market resolution job");
 
-      // Get market details
       const marketRecords = await db
         .select()
         .from(DB_SCHEMA.market)
@@ -65,14 +73,12 @@ export function createMarketResolutionWorker(
         return { success: false, marketId };
       }
 
-      // Skip if already resolved
       if (market.result) {
         logger.info({ marketId }, "Market already resolved, skipping");
         return { success: true, marketId };
       }
 
-      // Resolve with AI
-      await resolveMarketWithAI(market);
+      await dispatchResolution(market);
 
       return { success: true, marketId };
     },
@@ -88,34 +94,151 @@ export function createMarketResolutionWorker(
     }
   );
 
-  async function resolveMarketWithAI(market: {
+  interface MarketForResolution {
     id: MarketId;
     title: string;
     description: string;
+    category: string | null;
     resolutionCriteria: string | null;
-    sourceUrls: string[] | null;
-  }) {
+    resolutionType: ResolutionMethodType | null;
+    resolutionStrategy: ResolutionStrategy | null;
+  }
+
+  async function handlePriceResolution(
+    market: MarketForResolution,
+    strategy: PriceStrategy
+  ) {
+    try {
+      const resolution = await resolvePriceMarket(strategy);
+      await settlementService.resolveMarket(market.id, resolution.result, {
+        sources: resolution.sources,
+        confidence: resolution.confidence,
+      });
+      logger.info(
+        { marketId: market.id, result: resolution.result },
+        "Price market resolved"
+      );
+    } catch (error) {
+      logger.error({ marketId: market.id, error }, "Price resolution failed");
+      return resolveWithAI(market);
+    }
+  }
+
+  async function handleSportsResolution(
+    market: MarketForResolution,
+    strategy: SportsStrategy
+  ) {
+    try {
+      const resolution = await resolveSportsMarket(strategy);
+      if (resolution.result === "INVALID") {
+        return resolveWithAI(market);
+      }
+      await settlementService.resolveMarket(market.id, resolution.result, {
+        sources: resolution.sources,
+        confidence: resolution.confidence,
+      });
+      logger.info(
+        { marketId: market.id, result: resolution.result },
+        "Sports market resolved"
+      );
+    } catch (error) {
+      logger.error({ marketId: market.id, error }, "Sports resolution failed");
+      return resolveWithAI(market);
+    }
+  }
+
+  async function handleWebSearchResolution(
+    market: MarketForResolution,
+    strategy: WebSearchStrategy
+  ) {
+    try {
+      const resolution = await resolveWebSearchMarket(
+        aiClient,
+        {
+          title: market.title,
+          description: market.description,
+          category: market.category,
+          resolutionCriteria: market.resolutionCriteria,
+        },
+        strategy
+      );
+      await settlementService.resolveMarket(market.id, resolution.result, {
+        sources: resolution.sources,
+        confidence: resolution.confidence,
+      });
+      logger.info(
+        { marketId: market.id, result: resolution.result },
+        "Web search market resolved"
+      );
+    } catch (error) {
+      logger.error({ marketId: market.id, error }, "Web search failed");
+      return resolveWithAI(
+        market,
+        strategy.searchQuery,
+        strategy.successIndicators
+      );
+    }
+  }
+
+  function dispatchResolution(market: MarketForResolution) {
+    const strategy = market.resolutionStrategy;
+
+    if (!strategy) {
+      logger.info(
+        { marketId: market.id },
+        "No resolution strategy, using AI fallback"
+      );
+      return resolveWithAI(market);
+    }
+
+    logger.info(
+      { marketId: market.id, strategyType: strategy.type },
+      "Executing resolution strategy"
+    );
+
+    switch (strategy.type) {
+      case "PRICE":
+        return handlePriceResolution(market, strategy);
+      case "SPORTS":
+        return handleSportsResolution(market, strategy);
+      case "WEB_SEARCH":
+        return handleWebSearchResolution(market, strategy);
+      default:
+        logger.warn(
+          {
+            marketId: market.id,
+            strategyType: (strategy as { type: string }).type,
+          },
+          "Unknown strategy type, falling back to AI"
+        );
+        return resolveWithAI(market);
+    }
+  }
+
+  async function resolveWithAI(
+    market: MarketForResolution,
+    searchHint?: string,
+    successIndicators?: string[]
+  ) {
     logger.info(
       { marketId: market.id, title: market.title },
       "Resolving market with AI"
     );
 
-    // Build context for AI
-    const sourcesContext = market.sourceUrls?.length
-      ? `Source URLs to check: ${market.sourceUrls.join(", ")}`
-      : "No specific sources provided.";
-
     const criteriaContext = market.resolutionCriteria
       ? `Resolution criteria: ${market.resolutionCriteria}`
       : "Use the market description to determine the outcome.";
+
+    const searchContext = searchHint
+      ? `\nSearch for: "${searchHint}"\nLook for these indicators of YES outcome: ${successIndicators?.join(", ") ?? "confirmation of the event"}`
+      : "";
 
     const prompt = `You are resolving a prediction market. Analyze the available information and determine the outcome.
 
 Market Title: ${market.title}
 Market Description: ${market.description}
 
-${criteriaContext}
-${sourcesContext}
+${criteriaContext}${searchContext}
 
 Based on the current date and available information, determine if the market outcome is:
 - YES: The predicted event happened/is true
@@ -129,13 +252,13 @@ Provide your analysis with confidence level (0-100) and reasoning.`;
       modelId: "gemini-2.5-flash",
     });
 
-    const response = await aiClient.generateObject({
+    const response = await aiClient.generateText({
       model,
-      schema: MarketResolutionSchema,
+      output: Output.object({ schema: MarketResolutionSchema }),
       prompt,
     });
 
-    const { result, confidence, reasoning, sources } = response.object;
+    const { result, confidence, reasoning, sources } = response.output;
 
     logger.info(
       {
@@ -147,14 +270,9 @@ Provide your analysis with confidence level (0-100) and reasoning.`;
       "AI resolution complete"
     );
 
-    // Resolve and settle the market
     await settlementService.resolveMarket(market.id, result, {
-      sources: sources.map((s) => ({
-        url: s.url,
-        snippet: s.snippet,
-      })),
+      sources: sources.map((s) => ({ url: s.url, snippet: s.snippet })),
       confidence,
-      aiModelUsed: "grok-3-mini",
     });
 
     logger.info({ marketId: market.id, result }, "Market resolved and settled");

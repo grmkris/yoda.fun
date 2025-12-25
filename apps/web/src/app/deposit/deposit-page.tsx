@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBalance } from "@/hooks/use-balance";
 import { env } from "@/env";
+import { useBalance } from "@/hooks/use-balance";
 import {
   DEPOSIT_TIERS,
   type DepositTier,
@@ -133,7 +133,9 @@ function DevDepositSection() {
   return (
     <Card className="border-yellow-500/50 bg-yellow-500/5">
       <CardHeader>
-        <CardTitle className="text-yellow-600">Dev Deposit (No Payment)</CardTitle>
+        <CardTitle className="text-yellow-600">
+          Dev Deposit (No Payment)
+        </CardTitle>
         <CardDescription>
           Bypass x402 payment for testing - only available in development
         </CardDescription>
@@ -142,11 +144,11 @@ function DevDepositSection() {
         <div className="flex flex-wrap gap-2">
           {DEPOSIT_TIERS.map((tier) => (
             <Button
-              key={tier}
-              variant="outline"
-              disabled={isPending}
-              onClick={() => devDeposit.mutate(tier)}
               className="border-yellow-500/50"
+              disabled={isPending}
+              key={tier}
+              onClick={() => devDeposit.mutate(tier)}
+              variant="outline"
             >
               {isPending ? <Loader2 className="animate-spin" /> : `+$${tier}`}
             </Button>
@@ -181,7 +183,6 @@ export function DepositPage() {
       ) : (
         <ConnectWalletPrompt />
       )}
-
     </div>
   );
 }

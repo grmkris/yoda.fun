@@ -1,9 +1,8 @@
 import type { AiClient } from "@yoda.fun/ai";
-import { createMarketGenerationService } from "@yoda.fun/api/services/market-generation-service";
+import { createMarketGenerationService } from "@yoda.fun/api/services/market-generation/market-generation-service";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
-import type { GenerateMarketJob } from "@yoda.fun/queue/jobs/generate-market-job";
 import type { StorageClient } from "@yoda.fun/storage";
 
 export interface MarketGenerationWorkerConfig {
@@ -26,14 +25,17 @@ export function createMarketGenerationWorker(
   const { queue, db, logger, aiClient, storage } = config;
 
   const marketGenerationService = createMarketGenerationService({
-    deps: { db, logger, aiClient, storage },
+    db,
+    logger,
+    aiClient,
+    storage,
   });
 
   logger.info({ msg: "Starting market generation worker" });
 
   const worker = queue.createWorker<"generate-market">(
     "generate-market",
-    async (job: GenerateMarketJob) => {
+    async (job) => {
       const { count, categories, trigger } = job;
 
       logger.info(

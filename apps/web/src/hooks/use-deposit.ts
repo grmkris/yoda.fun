@@ -90,7 +90,9 @@ export function useDevDeposit() {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || `Dev deposit failed: ${response.status}`);
+        throw new Error(
+          error.error || `Dev deposit failed: ${response.status}`
+        );
       }
 
       return response.json() as Promise<DepositResponse>;
@@ -105,7 +107,8 @@ export function useDevDeposit() {
       });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Dev deposit failed";
+      const message =
+        error instanceof Error ? error.message : "Dev deposit failed";
       toast.error(message);
     },
   });

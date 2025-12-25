@@ -1,3 +1,4 @@
+import { MarketId } from "@yoda.fun/shared/typeid";
 import { createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
 import { bet, market, userBalance } from "./market.db";
@@ -8,7 +9,9 @@ import {
 } from "./transaction.db";
 
 // Market schemas
-export const selectMarketSchema = createSelectSchema(market);
+export const selectMarketSchema = createSelectSchema(market, {
+  id: MarketId,
+});
 export const insertMarketSchema = createSelectSchema(market).omit({
   id: true,
   totalYesVotes: true,

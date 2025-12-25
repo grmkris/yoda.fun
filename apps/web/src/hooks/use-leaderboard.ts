@@ -1,10 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { LeaderboardMetric, LeaderboardPeriod } from "@/lib/orpc-types";
 import { orpc } from "@/utils/orpc";
-
-type LeaderboardPeriod = "daily" | "weekly" | "monthly" | "allTime";
-type LeaderboardMetric = "profit" | "winRate" | "streak";
 
 /**
  * Fetch leaderboard data

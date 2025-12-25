@@ -16,12 +16,17 @@
     "auth:generate": "cli generate"
   },
   "dependencies": {
+    "@bull-board/api": "^6.16.1",
+    "@bull-board/hono": "^6.16.1",
+    "@hono/mcp": "^0.2.2",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "@yoda.fun/ai": "workspace:*",
     "@yoda.fun/api": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
+    "@yoda.fun/blockchain": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/queue": "workspace:*",

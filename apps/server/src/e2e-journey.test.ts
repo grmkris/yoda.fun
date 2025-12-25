@@ -342,7 +342,6 @@ describe("E2E: Complete User Journey", () => {
 
     await settlementService.resolveMarket(market.id, "YES", {
       confidence: 100,
-      aiModelUsed: "test",
     });
 
     // Check payouts
@@ -440,7 +439,6 @@ describe("E2E: Complete User Journey", () => {
 
     await settlementService.resolveMarket(market.id, "INVALID", {
       confidence: 50,
-      aiModelUsed: "test",
     });
 
     // Both should be refunded

@@ -15,7 +15,7 @@ function AutoAnonymousAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Auto sign-in anonymously if no session exists
-    if (!isPending && !session) {
+    if (!(isPending || session)) {
       authClient.signIn.anonymous();
     }
   }, [session, isPending]);

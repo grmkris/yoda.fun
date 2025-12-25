@@ -27,6 +27,42 @@ export interface SwipeStackRef {
 
 const DEFAULT_MAX_VISIBLE_CARDS = 3;
 
+interface CardStyleParams {
+  isTopCard: boolean;
+  isRemoved: boolean;
+  yOffset: number;
+  scale: number;
+  opacity: number;
+  zIndex: number;
+  stackIndex: number;
+}
+
+function getCardStyles({
+  isTopCard,
+  isRemoved,
+  yOffset,
+  scale,
+  opacity,
+  zIndex,
+  stackIndex,
+}: CardStyleParams): React.CSSProperties {
+  return {
+    position: isTopCard ? "relative" : "absolute",
+    top: isTopCard ? 0 : yOffset,
+    left: 0,
+    right: 0,
+    zIndex,
+    transform: `scale(${scale})`,
+    opacity: isRemoved ? 0 : opacity,
+    transformOrigin: "top center",
+    transition: isTopCard
+      ? "none"
+      : `transform ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease, opacity ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease`,
+    pointerEvents: isTopCard ? "auto" : "none",
+    filter: isTopCard ? "none" : `brightness(${1 - stackIndex * 0.08})`,
+  };
+}
+
 function SwipeStackComponent<T>(
   {
     cards,
@@ -127,33 +163,23 @@ function SwipeStackComponent<T>(
             const isTopCard = stackIndex === 0;
             const isRemoved = removedCards.has(index);
 
-            // Subtle cosmic tint for stacked cards
             const cosmicTint =
               stackIndex > 0
                 ? `linear-gradient(180deg, oklch(0.65 0.25 290 / ${stackIndex * 3}%) 0%, transparent 100%)`
                 : "none";
 
+            const cardStyles = getCardStyles({
+              isTopCard,
+              isRemoved,
+              yOffset,
+              scale,
+              opacity,
+              zIndex: visibleCards.length - stackIndex,
+              stackIndex,
+            });
+
             return (
-              <div
-                key={index}
-                style={{
-                  position: isTopCard ? "relative" : "absolute",
-                  top: isTopCard ? 0 : Number(yOffset),
-                  left: 0,
-                  right: 0,
-                  zIndex: visibleCards.length - stackIndex,
-                  transform: `scale(${scale})`,
-                  opacity: isRemoved ? 0 : Number(opacity),
-                  transformOrigin: "top center",
-                  transition: isTopCard
-                    ? "none"
-                    : `transform ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease, opacity ${NUMERIC_CONSTANTS.swipe.transitionDuration}s ease`,
-                  pointerEvents: isTopCard ? "auto" : "none",
-                  filter: isTopCard
-                    ? "none"
-                    : `brightness(${1 - stackIndex * 0.08})`,
-                }}
-              >
+              <div key={index} style={cardStyles}>
                 {isTopCard ? (
                   <SwipeCard
                     data={card}
@@ -170,7 +196,6 @@ function SwipeStackComponent<T>(
                 ) : (
                   <div style={{ position: "relative" }}>
                     {renderCard(card, index)}
-                    {/* Cosmic overlay for depth */}
                     <div
                       style={{
                         position: "absolute",

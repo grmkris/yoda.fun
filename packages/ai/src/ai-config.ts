@@ -58,7 +58,6 @@ Your job is to generate engaging, binary YES/NO betting markets based on current
       sections.push(`## CRITICAL RULES
 - Markets MUST be binary (YES or NO outcome only)
 - Markets MUST have objective, verifiable resolution criteria
-- Markets MUST resolve within 1-30 days (prefer 3-14 days)
 - Markets should be engaging and fun, not boring corporate stuff
 - NO markets about death, serious illness, or tragedy
 - NO markets that could be manipulated by bettors
@@ -89,14 +88,36 @@ For each market provide:
 2. description: 1-2 sentences explaining the market context
 3. category: One of: sports, entertainment, tech, crypto, politics, memes, other
 4. resolutionCriteria: Clear, objective criteria for determining YES or NO
-5. votingDays: How many days until voting ends (1-30)
-6. betAmount: Suggested bet amount in USD (0.10, 0.25, 0.50, 1.00, or 5.00)`);
+5. resolutionMethod: HOW the market will be resolved (pick ONE type):
+   - PRICE: For crypto price targets
+     { type: "PRICE", provider: "coingecko", coinId: "bitcoin", condition: { operator: ">=", threshold: 150000 } }
+     coinId = CoinGecko coin ID (bitcoin, ethereum, solana, dogecoin, etc.)
+     operator = ">=" for above, "<=" for below
+   - SPORTS: For sports outcomes
+     { type: "SPORTS", provider: "thesportsdb", sport: "nba", teamName: "Lakers", outcome: "win" }
+     sport = nba, nfl, mlb, nhl, soccer, mma, boxing, tennis, esports
+     outcome = win or lose (binary only)
+   - WEB_SEARCH: For news/announcements/events (use this for complex cases too)
+     { type: "WEB_SEARCH", searchQuery: "Apple iPhone announcement 2025", successIndicators: ["announced", "unveiled", "released"] }
+6. duration: How long until voting ends
+   { value: 2, unit: "hours" } - for live events, breaking news (1-24 hours)
+   { value: 7, unit: "days" } - for near-term events (1-30 days, prefer 3-14)
+   { value: 1, unit: "months" } - for longer predictions (1-6 months)
+7. betAmount: Suggested bet amount in USD (0.10, 0.25, 0.50, 1.00, or 5.00)`);
 
       // Examples
       sections.push(`## GOOD EXAMPLES
-- "Will Bitcoin hit $150k before January 2025?" (clear price target, date)
-- "Will the next iPhone have a foldable screen?" (verifiable announcement)
-- "Will Taylor Swift announce a new album this month?" (public announcement)
+- "Will Bitcoin hit $150k before January 2025?"
+  → resolutionMethod: { type: "PRICE", provider: "coingecko", coinId: "bitcoin", condition: { operator: ">=", threshold: 150000 } }
+  → duration: { value: 7, unit: "days" }
+
+- "Will the Lakers win tonight?"
+  → resolutionMethod: { type: "SPORTS", provider: "thesportsdb", sport: "nba", teamName: "Lakers", outcome: "win" }
+  → duration: { value: 4, unit: "hours" }
+
+- "Will Taylor Swift announce a new album this month?"
+  → resolutionMethod: { type: "WEB_SEARCH", searchQuery: "Taylor Swift new album announcement", successIndicators: ["announced", "new album", "release date"] }
+  → duration: { value: 14, unit: "days" }
 
 ## BAD EXAMPLES (avoid these patterns)
 - "Will the economy improve?" (subjective, unverifiable)

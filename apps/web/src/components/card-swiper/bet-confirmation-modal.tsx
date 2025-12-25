@@ -94,7 +94,7 @@ export function BetConfirmationModal({
           <div className="grid grid-cols-2 gap-4">
             {/* YES Button */}
             <button
-              className="group relative h-16 overflow-hidden rounded-2xl font-heading font-bold text-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+              className="group relative h-16 overflow-hidden rounded-2xl font-bold font-heading text-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
               disabled={isLoading}
               onClick={() => onConfirm("YES")}
               style={{
@@ -105,9 +105,7 @@ export function BetConfirmationModal({
               }}
               type="button"
             >
-              <span className="relative z-10">
-                {isLoading ? "..." : "YES"}
-              </span>
+              <span className="relative z-10">{isLoading ? "..." : "YES"}</span>
               {/* Hover glow */}
               <div
                 className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -121,7 +119,7 @@ export function BetConfirmationModal({
 
             {/* NO Button */}
             <button
-              className="group relative h-16 overflow-hidden rounded-2xl font-heading font-bold text-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
+              className="group relative h-16 overflow-hidden rounded-2xl font-bold font-heading text-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100"
               disabled={isLoading}
               onClick={() => onConfirm("NO")}
               style={{
@@ -132,9 +130,7 @@ export function BetConfirmationModal({
               }}
               type="button"
             >
-              <span className="relative z-10">
-                {isLoading ? "..." : "NO"}
-              </span>
+              <span className="relative z-10">{isLoading ? "..." : "NO"}</span>
               {/* Hover glow */}
               <div
                 className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -153,10 +149,10 @@ export function BetConfirmationModal({
             className="w-full rounded-xl font-heading"
             disabled={isLoading}
             onClick={onCancel}
-            variant="ghost"
             style={{
               color: "oklch(0.60 0.04 280)",
             }}
+            variant="ghost"
           >
             Skip this market
           </Button>

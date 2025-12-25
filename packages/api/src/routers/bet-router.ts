@@ -30,7 +30,7 @@ export const betRouter = {
         (error) => {
           throw new ORPCError(
             error.type === "MARKET_NOT_FOUND" ? "NOT_FOUND" : "BAD_REQUEST",
-            { code: error.type, message: error.message }
+            { message: error.message }
           );
         }
       );

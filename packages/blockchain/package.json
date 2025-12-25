@@ -1,0 +1,31 @@
+{
+  "name": "@yoda.fun/blockchain",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./usdc-client": {
+      "types": "./dist/usdc-client.d.ts",
+      "default": "./src/usdc-client.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "tsdown": "catalog:"
+  },
+  "dependencies": {
+    "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/shared": "workspace:*",
+    "viem": "catalog:"
+  }
+}

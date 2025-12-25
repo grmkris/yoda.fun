@@ -21,7 +21,7 @@ export function EmptyState() {
 
       <div>
         <h3
-          className="mb-3 font-heading text-2xl font-bold"
+          className="mb-3 font-bold font-heading text-2xl"
           style={{
             background:
               "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",

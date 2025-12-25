@@ -1,18 +1,7 @@
-import type { MarketId } from "@yoda.fun/shared/typeid";
 import Image from "next/image";
+import type { StackMarket } from "@/lib/orpc-types";
 
-export interface MarketCard {
-  id: MarketId;
-  title: string;
-  description: string;
-  imageUrl: string | null;
-  category: string | null;
-  tags: string[] | null;
-  betAmount: string;
-  totalYesVotes: number;
-  totalNoVotes: number;
-  votingEndsAt: Date;
-}
+export type MarketCard = StackMarket;
 
 interface GameCardProps {
   card: MarketCard;
@@ -38,7 +27,9 @@ export function GameCard({ card }: GameCardProps) {
             alt={card.title}
             className="h-full w-full object-cover"
             fill
-            src={card.imageUrl || `https://picsum.photos/seed/${card.id}/400/600`}
+            src={
+              card.imageUrl || `https://picsum.photos/seed/${card.id}/400/600`
+            }
           />
           {/* Cosmic gradient overlay */}
           <div
@@ -94,7 +85,7 @@ export function GameCard({ card }: GameCardProps) {
 
           {/* Title */}
           <h3
-            className="mb-2 font-heading font-bold text-2xl leading-tight"
+            className="mb-2 font-bold font-heading text-2xl leading-tight"
             style={{ color: "oklch(0.98 0.01 280)" }}
           >
             {card.title}

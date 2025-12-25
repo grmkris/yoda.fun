@@ -1,6 +1,17 @@
 import { ORPCError } from "@orpc/server";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import { and, desc, eq, gt, notInArray, type SQL } from "@yoda.fun/db/drizzle";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  isNotNull,
+  notInArray,
+  type SQL,
+  sql,
+} from "@yoda.fun/db/drizzle";
 import { MarketId, UserId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
@@ -28,6 +39,8 @@ export const marketRouter = {
           .default(DEFAULT_MARKETS_PER_PAGE),
         offset: z.number().min(0).optional().default(0),
         category: z.string().optional(),
+        resolved: z.boolean().optional(),
+        resolutionType: z.enum(["PRICE", "SPORTS", "WEB_SEARCH"]).optional(),
       })
     )
     .handler(async ({ context, input }) => {
@@ -39,6 +52,20 @@ export const marketRouter = {
 
       if (input.category) {
         conditions.push(eq(DB_SCHEMA.market.category, input.category));
+      }
+
+      if (input.resolved !== undefined) {
+        if (input.resolved) {
+          conditions.push(eq(DB_SCHEMA.market.status, "RESOLVED"));
+        } else {
+          conditions.push(notInArray(DB_SCHEMA.market.status, ["RESOLVED"]));
+        }
+      }
+
+      if (input.resolutionType) {
+        conditions.push(
+          eq(DB_SCHEMA.market.resolutionType, input.resolutionType)
+        );
       }
 
       const markets = await context.db
@@ -125,6 +152,103 @@ export const marketRouter = {
 
       return {
         markets,
+      };
+    }),
+
+  /**
+   * Get resolution statistics for dashboard
+   */
+  resolutionStats: publicProcedure
+    .input(
+      z.object({
+        period: z.enum(["day", "week", "month"]).default("week"),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (input.period) {
+        case "day":
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case "week":
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "month":
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+      }
+
+      // Get total resolved count
+      const totalResult = await context.db
+        .select({ count: count() })
+        .from(DB_SCHEMA.market)
+        .where(
+          and(
+            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            gte(DB_SCHEMA.market.resolvedAt, startDate)
+          )
+        );
+
+      const totalResolved = totalResult[0]?.count ?? 0;
+
+      // Get average confidence
+      const avgResult = await context.db
+        .select({
+          avg: sql<number>`COALESCE(AVG(${DB_SCHEMA.market.resolutionConfidence}), 0)`,
+        })
+        .from(DB_SCHEMA.market)
+        .where(
+          and(
+            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            gte(DB_SCHEMA.market.resolvedAt, startDate)
+          )
+        );
+
+      const avgConfidence = Math.round(avgResult[0]?.avg ?? 0);
+
+      // Get method breakdown
+      const methodBreakdown = await context.db
+        .select({
+          method: DB_SCHEMA.market.resolutionType,
+          count: count(),
+        })
+        .from(DB_SCHEMA.market)
+        .where(
+          and(
+            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            gte(DB_SCHEMA.market.resolvedAt, startDate),
+            isNotNull(DB_SCHEMA.market.resolutionType)
+          )
+        )
+        .groupBy(DB_SCHEMA.market.resolutionType);
+
+      // Get recent resolutions
+      const recentResolutions = await context.db
+        .select({
+          id: DB_SCHEMA.market.id,
+          title: DB_SCHEMA.market.title,
+          result: DB_SCHEMA.market.result,
+          resolutionConfidence: DB_SCHEMA.market.resolutionConfidence,
+          resolvedAt: DB_SCHEMA.market.resolvedAt,
+        })
+        .from(DB_SCHEMA.market)
+        .where(eq(DB_SCHEMA.market.status, "RESOLVED"))
+        .orderBy(desc(DB_SCHEMA.market.resolvedAt))
+        .limit(10);
+
+      return {
+        totalResolved,
+        avgConfidence,
+        methodBreakdown: methodBreakdown.map((m) => ({
+          method: m.method,
+          count: m.count,
+        })),
+        recentResolutions,
       };
     }),
 };

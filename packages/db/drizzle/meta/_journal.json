@@ -15,6 +15,13 @@
       "when": 1766616545340,
       "tag": "0001_simple_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766678923412,
+      "tag": "0002_productive_onslaught",
+      "breakpoints": true
     }
   ]
 }

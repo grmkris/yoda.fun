@@ -3,6 +3,7 @@ import { type JobType, WORKER_CONFIG } from "@yoda.fun/shared/constants";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import type { GenerateMarketJob } from "./jobs/generate-market-job";
+import type { ProcessWithdrawalJob } from "./jobs/process-withdrawal-job";
 import type { ResolveMarketJob } from "./jobs/resolve-market-job";
 
 export interface QueueConfig {
@@ -13,11 +14,17 @@ export interface QueueConfig {
 export interface JobData {
   "resolve-market": ResolveMarketJob;
   "generate-market": GenerateMarketJob;
+  "process-withdrawal": ProcessWithdrawalJob;
 }
 
 export interface JobResult {
   "resolve-market": { success: boolean; marketId: string };
   "generate-market": { success: boolean; marketsCreated: number };
+  "process-withdrawal": {
+    success: boolean;
+    withdrawalId: string;
+    txHash?: string;
+  };
 }
 
 const TIME_SECONDS = {
@@ -68,6 +75,13 @@ export function createQueueClient(config: QueueConfig) {
       connection,
       defaultJobOptions,
     }),
+    "process-withdrawal": new Queue<ProcessWithdrawalJob>(
+      "process-withdrawal",
+      {
+        connection,
+        defaultJobOptions,
+      }
+    ),
   };
 
   /**
@@ -106,6 +120,13 @@ export function createQueueClient(config: QueueConfig) {
         const job = await queues["generate-market"].add(
           queueName,
           data as GenerateMarketJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else if (queueName === "process-withdrawal") {
+        const job = await queues["process-withdrawal"].add(
+          queueName,
+          data as ProcessWithdrawalJob,
           jobOptions
         );
         jobId = job.id;

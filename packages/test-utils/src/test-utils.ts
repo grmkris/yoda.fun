@@ -110,6 +110,3 @@ export function pastDate(offsetMs: number): Date {
 export function futureDate(offsetMs: number): Date {
   return new Date(Date.now() + offsetMs);
 }
-
-// Re-export faker for advanced usage
-export { faker };

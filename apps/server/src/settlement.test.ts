@@ -35,7 +35,6 @@ describe("Settlement Service", () => {
 
       const result = await settlementService.resolveMarket(market.id, "YES", {
         confidence: 95,
-        aiModelUsed: "test-model",
       });
 
       expect(result.marketId).toBe(market.id);

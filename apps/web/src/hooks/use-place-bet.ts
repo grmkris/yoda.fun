@@ -1,14 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { MarketId } from "@yoda.fun/shared/typeid";
 import { toast } from "sonner";
+import type { PlaceBetInput } from "@/lib/orpc-types";
 import { client, orpc } from "@/utils/orpc";
-
-interface PlaceBetInput {
-  marketId: MarketId;
-  vote: "YES" | "NO";
-}
 
 interface ORPCErrorData {
   code?: string;
@@ -47,7 +42,8 @@ export function usePlaceBet() {
     },
     onError: (error) => {
       const { code, message } = getErrorData(error);
-      const fallbackMessage = error instanceof Error ? error.message : "Failed to place bet";
+      const fallbackMessage =
+        error instanceof Error ? error.message : "Failed to place bet";
 
       switch (code) {
         case "INSUFFICIENT_BALANCE":

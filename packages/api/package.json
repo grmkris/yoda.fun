@@ -29,9 +29,17 @@
       "types": "./dist/services/withdrawal-service.d.ts",
       "default": "./src/services/withdrawal-service.ts"
     },
-    "./services/market-generation-service": {
-      "types": "./dist/services/market-generation-service.d.ts",
-      "default": "./src/services/market-generation-service.ts"
+    "./services/market-generation/market-generation-service": {
+      "types": "./dist/services/market-generation/market-generation-service.d.ts",
+      "default": "./src/services/market-generation/market-generation-service.ts"
+    },
+    "./services/market-generation/market-preparer": {
+      "types": "./dist/services/market-generation/market-preparer.d.ts",
+      "default": "./src/services/market-generation/market-preparer.ts"
+    },
+    "./services/market-generation/duration-utils": {
+      "types": "./dist/services/market-generation/duration-utils.d.ts",
+      "default": "./src/services/market-generation/duration-utils.ts"
     },
     "./services/follow-service": {
       "types": "./dist/services/follow-service.d.ts",
@@ -44,6 +52,26 @@
     "./services/profile-service": {
       "types": "./dist/services/profile-service.d.ts",
       "default": "./src/services/profile-service.ts"
+    },
+    "./services/market-generation-schemas": {
+      "types": "./dist/services/market-generation-schemas.d.ts",
+      "default": "./src/services/market-generation-schemas.ts"
+    },
+    "./services/resolvers/price-resolver": {
+      "types": "./dist/services/resolvers/price-resolver.d.ts",
+      "default": "./src/services/resolvers/price-resolver.ts"
+    },
+    "./services/resolvers/sports-resolver": {
+      "types": "./dist/services/resolvers/sports-resolver.d.ts",
+      "default": "./src/services/resolvers/sports-resolver.ts"
+    },
+    "./services/resolvers/web-search-resolver": {
+      "types": "./dist/services/resolvers/web-search-resolver.d.ts",
+      "default": "./src/services/resolvers/web-search-resolver.ts"
+    },
+    "./services/resolvers/validation": {
+      "types": "./dist/services/resolvers/validation.d.ts",
+      "default": "./src/services/resolvers/validation.ts"
     }
   },
   "type": "module",
@@ -67,6 +95,7 @@
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
+    "@yoda.fun/queue": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",
     "hono": "catalog:",

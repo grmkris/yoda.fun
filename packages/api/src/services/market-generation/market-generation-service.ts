@@ -4,6 +4,7 @@ import { generateMarketImages } from "@yoda.fun/ai/image-generation";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
+import type { SelectMarket } from "@yoda.fun/db/schema";
 import type { Logger } from "@yoda.fun/logger";
 import type { StorageClient } from "@yoda.fun/storage";
 import {
@@ -11,7 +12,8 @@ import {
   GeneratedMarketsResponseSchema,
   type GenerateMarketsInput,
   type GenerateMarketsResult,
-} from "./market-generation-schemas";
+} from "../market-generation-schemas";
+import { type PreparedMarket, prepareMarket } from "./market-preparer";
 
 interface MarketGenerationServiceDeps {
   db: Database;
@@ -20,21 +22,52 @@ interface MarketGenerationServiceDeps {
   storage?: StorageClient;
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const RESOLUTION_BUFFER_HOURS = 6;
-
-export function createMarketGenerationService({
-  deps,
-}: {
-  deps: MarketGenerationServiceDeps;
-}) {
+export function createMarketGenerationService(
+  deps: MarketGenerationServiceDeps
+) {
   const { db, logger, aiClient, storage } = deps;
 
+  async function generateImages(
+    markets: GeneratedMarket[]
+  ): Promise<Map<string, string | null>> {
+    if (!storage) {
+      return new Map();
+    }
+
+    const googleApiKey = aiClient.getProviderConfig().googleGeminiApiKey;
+    if (!googleApiKey) {
+      return new Map();
+    }
+
+    logger.info({ count: markets.length }, "Generating market images");
+    try {
+      const imageUrls = await generateMarketImages(markets, {
+        googleApiKey,
+        storage,
+      });
+      logger.info(
+        { generated: [...imageUrls.values()].filter(Boolean).length },
+        "Market images generated"
+      );
+      return imageUrls;
+    } catch (error) {
+      logger.error({ error }, "Failed to generate market images");
+      return new Map();
+    }
+  }
+
+  async function insertToDatabase(
+    markets: PreparedMarket[]
+  ): Promise<SelectMarket[]> {
+    const result = await db
+      .insert(DB_SCHEMA.market)
+      .values(markets)
+      .returning();
+
+    return result;
+  }
+
   return {
-    /**
-     * Generate new markets using AI
-     * Returns validated market data ready for DB insertion
-     */
     async generateMarkets(
       input: GenerateMarketsInput
     ): Promise<GenerateMarketsResult> {
@@ -46,7 +79,6 @@ export function createMarketGenerationService({
         "Generating markets with AI"
       );
 
-      // Get existing market titles to avoid duplicates
       const existingMarkets = await db
         .select({ title: DB_SCHEMA.market.title })
         .from(DB_SCHEMA.market)
@@ -55,7 +87,6 @@ export function createMarketGenerationService({
 
       const existingTitles = existingMarkets.map((m) => m.title);
 
-      // Build prompt context
       const promptContext = {
         currentDate: new Date().toISOString().split("T")[0] ?? "",
         categories: input.categories,
@@ -92,88 +123,23 @@ export function createMarketGenerationService({
       };
     },
 
-    /**
-     * Insert generated markets into the database
-     * Also generates images if storage is configured
-     */
-    async insertMarkets(
-      markets: GeneratedMarket[]
-    ): Promise<(typeof DB_SCHEMA.market.$inferSelect)[]> {
-      const now = new Date();
-      const insertedMarkets: (typeof DB_SCHEMA.market.$inferSelect)[] = [];
-
-      // Generate images for all markets if storage is configured
-      let imageUrls = new Map<string, string | null>();
-      if (storage) {
-        const googleApiKey = aiClient.getProviderConfig().googleGeminiApiKey;
-        if (googleApiKey) {
-          logger.info({ count: markets.length }, "Generating market images");
-          try {
-            imageUrls = await generateMarketImages(markets, {
-              googleApiKey,
-              storage,
-            });
-            logger.info(
-              { generated: [...imageUrls.values()].filter(Boolean).length },
-              "Market images generated"
-            );
-          } catch (error) {
-            logger.error({ error }, "Failed to generate market images");
-          }
-        }
-      }
-
-      for (const market of markets) {
-        const votingEndsAt = new Date(
-          now.getTime() + market.votingDays * MS_PER_DAY
-        );
-        const resolutionDeadline = new Date(
-          votingEndsAt.getTime() + RESOLUTION_BUFFER_HOURS * 60 * 60 * 1000
-        );
-
-        const imageUrl = imageUrls.get(market.title) ?? null;
-
-        const inserted = await db
-          .insert(DB_SCHEMA.market)
-          .values({
-            title: market.title,
-            description: market.description,
-            category: market.category,
-            resolutionCriteria: market.resolutionCriteria,
-            betAmount: market.betAmount,
-            imageUrl,
-            votingEndsAt,
-            resolutionDeadline,
-            status: "ACTIVE",
-            autoGenerated: true,
+    async insertMarkets(markets: GeneratedMarket[]): Promise<SelectMarket[]> {
+      const imageUrls = await generateImages(markets);
+      const prepared = await Promise.all(
+        markets.map((market) =>
+          prepareMarket({
+            market,
+            imageUrl: imageUrls.get(market.title),
+            logger,
           })
-          .returning();
-
-        const record = inserted[0];
-        if (record) {
-          insertedMarkets.push(record);
-
-          logger.info(
-            {
-              marketId: record.id,
-              title: record.title,
-              hasImage: !!imageUrl,
-              votingEndsAt,
-            },
-            "Market inserted"
-          );
-        }
-      }
-
-      return insertedMarkets;
+        )
+      );
+      return insertToDatabase(prepared);
     },
 
-    /**
-     * Full generation flow: generate + insert + schedule resolution
-     */
     async generateAndInsertMarkets(input: GenerateMarketsInput): Promise<{
       generated: GenerateMarketsResult;
-      inserted: (typeof DB_SCHEMA.market.$inferSelect)[];
+      inserted: SelectMarket[];
     }> {
       const generated = await this.generateMarkets(input);
       const inserted = await this.insertMarkets(generated.markets);

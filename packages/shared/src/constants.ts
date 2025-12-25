@@ -1,5 +1,8 @@
 // Queue types (defined here to avoid circular deps with @yoda.fun/queue)
-export type JobType = "resolve-market" | "generate-market";
+export type JobType =
+  | "resolve-market"
+  | "generate-market"
+  | "process-withdrawal";
 export interface RateLimitConfig {
   max: number;
   duration: number;
@@ -11,11 +14,13 @@ export const WORKER_CONFIG = {
   CONCURRENCY: {
     "resolve-market": 2, // Keep low - AI calls are expensive
     "generate-market": 1, // Single market generation at a time
+    "process-withdrawal": 1, // Process withdrawals one at a time
   } satisfies Record<JobType, number>,
   // Per-queue rate limits
   RATE_LIMITS: {
     "resolve-market": { max: 10, duration: 60_000 }, // 10/min
     "generate-market": { max: 5, duration: 60_000 }, // 5/min - don't spam AI
+    "process-withdrawal": { max: 30, duration: 60_000 }, // 30/min - on-chain txs
   } satisfies Record<JobType, RateLimitConfig>,
 } as const;
 

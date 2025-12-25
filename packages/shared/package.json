@@ -19,6 +19,10 @@
     "./constants": {
       "types": "./dist/constants.d.ts",
       "default": "./src/constants.ts"
+    },
+    "./resolution-types": {
+      "types": "./dist/resolution-types.d.ts",
+      "default": "./src/resolution-types.ts"
     }
   },
   "scripts": {

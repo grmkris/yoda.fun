@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { MarketStats } from "@/components/dashboard/market-stats";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
@@ -380,12 +381,13 @@ function LeaderboardBadge({
         </div>
 
         <div className="flex-1">
-          {isLoading ? (
+          {isLoading && (
             <>
               <Skeleton className="mb-1 h-6 w-24" />
               <Skeleton className="h-4 w-32" />
             </>
-          ) : rank ? (
+          )}
+          {!isLoading && rank && (
             <>
               <div className="flex items-baseline gap-1">
                 <span
@@ -414,7 +416,8 @@ function LeaderboardBadge({
                 Top {percentile}%
               </div>
             </>
-          ) : (
+          )}
+          {!(isLoading || rank) && (
             <div className="text-sm" style={{ color: "oklch(0.60 0.04 280)" }}>
               Place a bet to join the leaderboard
             </div>
@@ -440,6 +443,21 @@ function LeaderboardBadge({
 // ═══════════════════════════════════════════════════════════════
 // ACTIVITY FEED - Star log
 // ═══════════════════════════════════════════════════════════════
+const ACTIVITY_STYLES = {
+  win: {
+    bg: "oklch(0.72 0.18 175)",
+    shadow: "0 0 8px oklch(0.72 0.18 175)",
+  },
+  loss: {
+    bg: "oklch(0.68 0.20 25)",
+    shadow: "0 0 8px oklch(0.68 0.20 25)",
+  },
+  bet: {
+    bg: "oklch(0.65 0.25 290)",
+    shadow: "0 0 8px oklch(0.65 0.25 290)",
+  },
+} as const;
+
 interface ActivityItem {
   id: string;
   type: "win" | "loss" | "bet";
@@ -475,20 +493,22 @@ function ActivityFeed({
         Recent Activity
       </h3>
 
-      {isLoading ? (
+      {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <Skeleton className="h-12 w-full" key={i} />
           ))}
         </div>
-      ) : activities.length === 0 ? (
+      )}
+      {!isLoading && activities.length === 0 && (
         <div
           className="py-8 text-center text-sm"
           style={{ color: "oklch(0.60 0.04 280)" }}
         >
           No recent activity. Start predicting!
         </div>
-      ) : (
+      )}
+      {!isLoading && activities.length > 0 && (
         <div className="space-y-2">
           {activities.map((activity, i) => (
             <motion.div
@@ -506,18 +526,8 @@ function ActivityFeed({
               <div
                 className="h-2 w-2 rounded-full"
                 style={{
-                  background:
-                    activity.type === "win"
-                      ? "oklch(0.72 0.18 175)"
-                      : activity.type === "loss"
-                        ? "oklch(0.68 0.20 25)"
-                        : "oklch(0.65 0.25 290)",
-                  boxShadow:
-                    activity.type === "win"
-                      ? "0 0 8px oklch(0.72 0.18 175)"
-                      : activity.type === "loss"
-                        ? "0 0 8px oklch(0.68 0.20 25)"
-                        : "0 0 8px oklch(0.65 0.25 290)",
+                  background: ACTIVITY_STYLES[activity.type].bg,
+                  boxShadow: ACTIVITY_STYLES[activity.type].shadow,
                 }}
               />
 
@@ -530,16 +540,7 @@ function ActivityFeed({
                   {activity.type === "win" && "Won "}
                   {activity.type === "loss" && "Lost "}
                   {activity.type === "bet" && "Bet "}
-                  <span
-                    style={{
-                      color:
-                        activity.type === "win"
-                          ? "oklch(0.72 0.18 175)"
-                          : activity.type === "loss"
-                            ? "oklch(0.68 0.20 25)"
-                            : "oklch(0.65 0.25 290)",
-                    }}
-                  >
+                  <span style={{ color: ACTIVITY_STYLES[activity.type].bg }}>
                     ${activity.amount}
                   </span>
                   {" on "}
@@ -569,16 +570,37 @@ function formatTimeAgo(date: Date): string {
   const hours = Math.floor(diff / 3_600_000);
   const days = Math.floor(diff / 86_400_000);
 
-  if (minutes < 1) return "now";
-  if (minutes < 60) return `${minutes}m`;
-  if (hours < 24) return `${hours}h`;
-  if (days < 7) return `${days}d`;
+  if (minutes < 1) {
+    return "now";
+  }
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  if (days < 7) {
+    return `${days}d`;
+  }
   return date.toLocaleDateString();
 }
 
 // ═══════════════════════════════════════════════════════════════
 // ACTIVE BETS - Cosmic styled
 // ═══════════════════════════════════════════════════════════════
+const VOTE_STYLES = {
+  YES: {
+    color: "oklch(0.72 0.18 175)",
+    bg: "oklch(0.72 0.18 175 / 15%)",
+    border: "oklch(0.72 0.18 175 / 20%)",
+  },
+  NO: {
+    color: "oklch(0.68 0.20 25)",
+    bg: "oklch(0.68 0.20 25 / 15%)",
+    border: "oklch(0.68 0.20 25 / 20%)",
+  },
+} as const;
+
 interface BetWithMarket {
   bet: { id: string; vote: string; amount: string; payout: string | null };
   market: { title: string; category: string | null };
@@ -623,84 +645,89 @@ function ActiveBets({
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton className="h-16 w-full" key={i} />
-          ))}
-        </div>
-      ) : bets?.length ? (
-        <div className="space-y-2">
-          {bets.map(({ bet, market }, i) => (
-            <motion.div
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center justify-between rounded-xl p-3"
-              initial={{ opacity: 0, x: -10 }}
-              key={bet.id}
-              style={{
-                background: "oklch(0.08 0.02 270 / 50%)",
-                border: `1px solid ${bet.vote === "YES" ? "oklch(0.72 0.18 175 / 20%)" : "oklch(0.68 0.20 25 / 20%)"}`,
-              }}
-              transition={{ delay: 0.5 + i * 0.05, duration: 0.3 }}
+      {(() => {
+        if (isLoading) {
+          return (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton className="h-16 w-full" key={i} />
+              ))}
+            </div>
+          );
+        }
+        if (!bets?.length) {
+          return (
+            <div
+              className="py-8 text-center text-sm"
+              style={{ color: "oklch(0.60 0.04 280)" }}
             >
-              <div className="min-w-0 flex-1">
-                <p
-                  className="line-clamp-1 font-medium text-sm"
-                  style={{ color: "oklch(0.90 0.02 280)" }}
-                >
-                  {market.title}
-                </p>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span
-                    className="font-semibold text-xs"
-                    style={{
-                      color:
-                        bet.vote === "YES"
-                          ? "oklch(0.72 0.18 175)"
-                          : "oklch(0.68 0.20 25)",
-                    }}
-                  >
-                    {bet.vote}
-                  </span>
-                  {market.category && (
-                    <>
-                      <span style={{ color: "oklch(0.40 0.04 280)" }}>•</span>
-                      <span
-                        className="text-xs"
-                        style={{ color: "oklch(0.50 0.04 280)" }}
-                      >
-                        {market.category}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div
-                className="shrink-0 rounded-lg px-2.5 py-1 font-heading font-semibold text-sm"
+              No active bets. Start predicting!
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-2">
+            {bets.map(({ bet, market }, i) => (
+              <motion.div
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center justify-between rounded-xl p-3"
+                initial={{ opacity: 0, x: -10 }}
+                key={bet.id}
                 style={{
-                  background:
-                    bet.vote === "YES"
-                      ? "oklch(0.72 0.18 175 / 15%)"
-                      : "oklch(0.68 0.20 25 / 15%)",
-                  color:
-                    bet.vote === "YES"
-                      ? "oklch(0.72 0.18 175)"
-                      : "oklch(0.68 0.20 25)",
+                  background: "oklch(0.08 0.02 270 / 50%)",
+                  border: `1px solid ${VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]?.border ?? VOTE_STYLES.NO.border}`,
                 }}
+                transition={{ delay: 0.5 + i * 0.05, duration: 0.3 }}
               >
-                ${bet.amount}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div
-          className="py-8 text-center text-sm"
-          style={{ color: "oklch(0.60 0.04 280)" }}
-        >
-          No active bets. Start predicting!
-        </div>
-      )}
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="line-clamp-1 font-medium text-sm"
+                    style={{ color: "oklch(0.90 0.02 280)" }}
+                  >
+                    {market.title}
+                  </p>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span
+                      className="font-semibold text-xs"
+                      style={{
+                        color:
+                          VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]
+                            ?.color ?? VOTE_STYLES.NO.color,
+                      }}
+                    >
+                      {bet.vote}
+                    </span>
+                    {market.category && (
+                      <>
+                        <span style={{ color: "oklch(0.40 0.04 280)" }}>•</span>
+                        <span
+                          className="text-xs"
+                          style={{ color: "oklch(0.50 0.04 280)" }}
+                        >
+                          {market.category}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div
+                  className="shrink-0 rounded-lg px-2.5 py-1 font-heading font-semibold text-sm"
+                  style={{
+                    background:
+                      VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]?.bg ??
+                      VOTE_STYLES.NO.bg,
+                    color:
+                      VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]
+                        ?.color ?? VOTE_STYLES.NO.color,
+                  }}
+                >
+                  ${bet.amount}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        );
+      })()}
     </motion.div>
   );
 }
@@ -803,6 +830,9 @@ export default function Dashboard() {
         {/* Active Bets */}
         <ActiveBets bets={activeBets?.bets} isLoading={betsLoading} />
       </div>
+
+      {/* Market Resolution Stats */}
+      <MarketStats />
     </div>
   );
 }

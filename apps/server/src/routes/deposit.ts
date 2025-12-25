@@ -41,53 +41,54 @@ export function createDepositRoutes(deps: DepositRouteDeps) {
       `/deposit/${tier}`,
       paymentMiddleware(depositWalletAddress, routeConfig),
       async (c) => {
-      // Get authenticated user
-      const session = await auth.api.getSession({
-        headers: c.req.raw.headers,
-      });
-
-      if (!session?.user) {
-        return c.json({ error: "Unauthorized" }, 401);
-      }
-
-      const userId = UserId.parse(session.user.id);
-
-      // Get payment response from x402 header
-      const paymentResponse = c.req.header("X-PAYMENT-RESPONSE");
-
-      try {
-        // Credit the user's balance
-        const result = await balanceService.creditBalance(
-          userId,
-          tier,
-          "DEPOSIT",
-          {
-            x402PaymentResponse: paymentResponse,
-            tier,
-            network,
-          }
-        );
-
-        logger.info(
-          {
-            userId,
-            amount: tier,
-            transactionId: result.transaction?.id,
-          },
-          "Deposit completed"
-        );
-
-        return c.json({
-          success: true,
-          amount: tier,
-          newBalance: Number(result.balance?.availableBalance),
-          transactionId: result.transaction?.id,
+        // Get authenticated user
+        const session = await auth.api.getSession({
+          headers: c.req.raw.headers,
         });
-      } catch (error) {
-        logger.error({ error, userId, tier }, "Deposit failed");
-        return c.json({ error: "Deposit failed" }, 500);
+
+        if (!session?.user) {
+          return c.json({ error: "Unauthorized" }, 401);
+        }
+
+        const userId = UserId.parse(session.user.id);
+
+        // Get payment response from x402 header
+        const paymentResponse = c.req.header("X-PAYMENT-RESPONSE");
+
+        try {
+          // Credit the user's balance
+          const result = await balanceService.creditBalance(
+            userId,
+            tier,
+            "DEPOSIT",
+            {
+              x402PaymentResponse: paymentResponse,
+              tier,
+              network,
+            }
+          );
+
+          logger.info(
+            {
+              userId,
+              amount: tier,
+              transactionId: result.transaction?.id,
+            },
+            "Deposit completed"
+          );
+
+          return c.json({
+            success: true,
+            amount: tier,
+            newBalance: Number(result.balance?.availableBalance),
+            transactionId: result.transaction?.id,
+          });
+        } catch (error) {
+          logger.error({ error, userId, tier }, "Deposit failed");
+          return c.json({ error: "Deposit failed" }, 500);
+        }
       }
-    });
+    );
   }
 
   // List available deposit tiers
@@ -121,9 +122,14 @@ export function createDepositRoutes(deps: DepositRouteDeps) {
 
       const userId = UserId.parse(session.user.id);
 
-      const result = await balanceService.creditBalance(userId, tier, "DEPOSIT", {
-        reason: "dev_deposit",
-      });
+      const result = await balanceService.creditBalance(
+        userId,
+        tier,
+        "DEPOSIT",
+        {
+          reason: "dev_deposit",
+        }
+      );
 
       logger.info({ userId, amount: tier }, "Dev deposit completed");
 

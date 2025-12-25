@@ -3,7 +3,8 @@ import { Fredoka, Nunito, Righteous } from "next/font/google";
 import "../index.css";
 import Header from "@/components/header";
 import Providers from "@/components/providers";
-import { SidebarProvider, AppSidebar } from "@/components/sidebar";
+import { AppSidebar } from "@/components/sidebar/sidebar";
+import { SidebarProvider } from "@/components/sidebar/sidebar-context";
 
 const fredoka = Fredoka({
   variable: "--font-heading",

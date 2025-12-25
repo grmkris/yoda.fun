@@ -39,36 +39,36 @@ body {
   --popover-foreground: oklch(0.15 0.03 280);
 
   /* Primary - Rich Purple */
-  --primary: oklch(0.50 0.25 290);
+  --primary: oklch(0.5 0.25 290);
   --primary-foreground: oklch(0.98 0.01 280);
 
   /* Secondary */
   --secondary: oklch(0.95 0.02 280);
-  --secondary-foreground: oklch(0.20 0.03 280);
+  --secondary-foreground: oklch(0.2 0.03 280);
 
   /* Muted */
   --muted: oklch(0.95 0.02 280);
   --muted-foreground: oklch(0.45 0.03 280);
 
   /* Accent - Ethereal Cyan */
-  --accent: oklch(0.60 0.15 200);
-  --accent-foreground: oklch(0.10 0.02 200);
+  --accent: oklch(0.6 0.15 200);
+  --accent-foreground: oklch(0.1 0.02 200);
 
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
 
   /* Border & Input */
-  --border: oklch(0.90 0.02 280);
-  --input: oklch(0.90 0.02 280);
-  --ring: oklch(0.50 0.25 290);
+  --border: oklch(0.9 0.02 280);
+  --input: oklch(0.9 0.02 280);
+  --ring: oklch(0.5 0.25 290);
 
   /* YES/NO - Light mode */
   --yes: oklch(0.55 0.18 175);
   --yes-glow: oklch(0.55 0.18 175 / 30%);
-  --yes-muted: oklch(0.90 0.08 175);
+  --yes-muted: oklch(0.9 0.08 175);
 
-  --no: oklch(0.55 0.20 25);
-  --no-glow: oklch(0.55 0.20 25 / 30%);
+  --no: oklch(0.55 0.2 25);
+  --no-glow: oklch(0.55 0.2 25 / 30%);
   --no-muted: oklch(0.92 0.08 25);
 
   /* Charts */
@@ -81,12 +81,12 @@ body {
   /* Sidebar */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.50 0.25 290);
+  --sidebar-primary: oklch(0.5 0.25 290);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.95 0.02 280);
-  --sidebar-accent-foreground: oklch(0.20 0.03 280);
-  --sidebar-border: oklch(0.90 0.02 280);
-  --sidebar-ring: oklch(0.50 0.25 290);
+  --sidebar-accent-foreground: oklch(0.2 0.03 280);
+  --sidebar-border: oklch(0.9 0.02 280);
+  --sidebar-ring: oklch(0.5 0.25 290);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -110,41 +110,41 @@ body {
   --primary-foreground: oklch(0.98 0.01 280);
 
   /* Stardust Secondary */
-  --secondary: oklch(0.20 0.04 280);
-  --secondary-foreground: oklch(0.90 0.03 280);
+  --secondary: oklch(0.2 0.04 280);
+  --secondary-foreground: oklch(0.9 0.03 280);
 
   /* Distant Stars Muted */
   --muted: oklch(0.18 0.03 280);
-  --muted-foreground: oklch(0.60 0.04 280);
+  --muted-foreground: oklch(0.6 0.04 280);
 
   /* Ethereal Cyan Accent */
-  --accent: oklch(0.70 0.15 200);
-  --accent-foreground: oklch(0.10 0.02 200);
+  --accent: oklch(0.7 0.15 200);
+  --accent-foreground: oklch(0.1 0.02 200);
 
   /* Destructive */
   --destructive: oklch(0.704 0.191 22.216);
 
   /* Constellation Lines */
-  --border: oklch(0.30 0.06 290 / 40%);
+  --border: oklch(0.3 0.06 290 / 40%);
   --input: oklch(0.25 0.04 280);
   --ring: oklch(0.65 0.25 290);
 
   /* ═══ Celestial YES (Magical Teal) ═══ */
   --yes: oklch(0.72 0.18 175);
   --yes-glow: oklch(0.72 0.18 175 / 40%);
-  --yes-muted: oklch(0.25 0.10 175);
-  --yes-bright: oklch(0.80 0.16 175);
+  --yes-muted: oklch(0.25 0.1 175);
+  --yes-bright: oklch(0.8 0.16 175);
 
   /* ═══ Astral NO (Warm Coral) ═══ */
-  --no: oklch(0.68 0.20 25);
-  --no-glow: oklch(0.68 0.20 25 / 40%);
+  --no: oklch(0.68 0.2 25);
+  --no-glow: oklch(0.68 0.2 25 / 40%);
   --no-muted: oklch(0.22 0.12 25);
   --no-bright: oklch(0.75 0.18 25);
 
   /* ═══ Nebula Gradients ═══ */
   --nebula-purple: oklch(0.45 0.25 300);
-  --nebula-blue: oklch(0.50 0.22 250);
-  --nebula-pink: oklch(0.55 0.20 320);
+  --nebula-blue: oklch(0.5 0.22 250);
+  --nebula-pink: oklch(0.55 0.2 320);
   --nebula-cyan: oklch(0.55 0.18 200);
 
   /* Charts */
@@ -155,13 +155,13 @@ body {
   --chart-5: oklch(0.645 0.246 16.439);
 
   /* Sidebar */
-  --sidebar: oklch(0.10 0.02 280);
+  --sidebar: oklch(0.1 0.02 280);
   --sidebar-foreground: oklch(0.95 0.02 280);
   --sidebar-primary: oklch(0.65 0.25 290);
   --sidebar-primary-foreground: oklch(0.98 0.01 280);
-  --sidebar-accent: oklch(0.20 0.04 280);
-  --sidebar-accent-foreground: oklch(0.90 0.03 280);
-  --sidebar-border: oklch(0.30 0.06 290 / 40%);
+  --sidebar-accent: oklch(0.2 0.04 280);
+  --sidebar-accent-foreground: oklch(0.9 0.03 280);
+  --sidebar-border: oklch(0.3 0.06 290 / 40%);
   --sidebar-ring: oklch(0.65 0.25 290);
 }
 
@@ -221,7 +221,8 @@ body {
    COSMIC KEYFRAMES
    ═══════════════════════════════════════════════════════════════ */
 @keyframes cosmic-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
   33% {
@@ -233,7 +234,8 @@ body {
 }
 
 @keyframes cosmic-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.6;
     transform: scale(1);
   }
@@ -244,7 +246,8 @@ body {
 }
 
 @keyframes star-twinkle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
@@ -255,7 +258,8 @@ body {
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px var(--yes-glow);
   }
   50% {
@@ -286,7 +290,12 @@ body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
   }
 }
@@ -298,18 +307,36 @@ body {
   /* Cosmic Background Mesh */
   .bg-cosmic {
     background:
-      radial-gradient(ellipse at 20% 20%, var(--nebula-purple) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, var(--nebula-blue) 0%, transparent 50%),
-      radial-gradient(ellipse at 60% 40%, var(--nebula-pink) 0%, transparent 40%),
-      var(--background);
+      radial-gradient(
+        ellipse at 20% 20%,
+        var(--nebula-purple) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 80%,
+        var(--nebula-blue) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 60% 40%,
+        var(--nebula-pink) 0%,
+        transparent 40%
+      ), var(--background);
     background-attachment: fixed;
   }
 
   .bg-cosmic-subtle {
     background:
-      radial-gradient(ellipse at 20% 20%, oklch(0.45 0.25 300 / 8%) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, oklch(0.50 0.22 250 / 6%) 0%, transparent 50%),
-      var(--background);
+      radial-gradient(
+        ellipse at 20% 20%,
+        oklch(0.45 0.25 300 / 8%) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 80%,
+        oklch(0.5 0.22 250 / 6%) 0%,
+        transparent 50%
+      ), var(--background);
   }
 
   /* Glass Effects */
@@ -325,11 +352,15 @@ body {
 
   /* Glow Effects */
   .glow-yes {
-    box-shadow: 0 0 20px var(--yes-glow), 0 0 40px var(--yes-glow);
+    box-shadow:
+      0 0 20px var(--yes-glow),
+      0 0 40px var(--yes-glow);
   }
 
   .glow-no {
-    box-shadow: 0 0 20px var(--no-glow), 0 0 40px var(--no-glow);
+    box-shadow:
+      0 0 20px var(--no-glow),
+      0 0 40px var(--no-glow);
   }
 
   .glow-primary {
@@ -337,7 +368,7 @@ body {
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px oklch(0.70 0.15 200 / 40%);
+    box-shadow: 0 0 20px oklch(0.7 0.15 200 / 40%);
   }
 
   /* Border Glows */

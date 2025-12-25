@@ -1,6 +1,7 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
+import { UserId } from "@yoda.fun/shared/typeid";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous, siwe } from "better-auth/plugins";
@@ -62,13 +63,13 @@ export const createAuth = (config: AuthConfig) => {
         create: {
           after: async (user) => {
             await config.db.insert(DB_SCHEMA.userBalance).values({
-              userId: user.id,
+              userId: UserId.parse(user.id),
               availableBalance: "10.00",
               totalDeposited: "10.00",
             });
 
             await config.db.insert(DB_SCHEMA.transaction).values({
-              userId: user.id,
+              userId: UserId.parse(user.id),
               type: "DEPOSIT",
               amount: "10.00",
               status: "COMPLETED",

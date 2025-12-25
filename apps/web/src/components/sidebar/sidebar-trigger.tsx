@@ -8,9 +8,9 @@ export function SidebarTrigger({ className }: { className?: string }) {
 
   return (
     <button
-      onClick={() => setOpen(true)}
-      type="button"
+      aria-label="Open menu"
       className={className}
+      onClick={() => setOpen(true)}
       style={{
         display: "flex",
         alignItems: "center",
@@ -22,7 +22,7 @@ export function SidebarTrigger({ className }: { className?: string }) {
         background: "transparent",
         transition: "all 0.2s",
       }}
-      aria-label="Open menu"
+      type="button"
     >
       <Menu className="h-5 w-5" />
     </button>

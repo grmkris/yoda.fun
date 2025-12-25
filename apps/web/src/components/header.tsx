@@ -1,6 +1,6 @@
 "use client";
 
-import { SidebarTrigger } from "./sidebar";
+import { SidebarTrigger } from "./sidebar/sidebar-trigger";
 
 export default function Header() {
   return (
@@ -18,7 +18,7 @@ export default function Header() {
 
         {/* Logo */}
         <div
-          className="font-heading font-bold text-xl tracking-tight"
+          className="font-bold font-heading text-xl tracking-tight"
           style={{
             background:
               "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",

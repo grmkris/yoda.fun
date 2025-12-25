@@ -14,7 +14,7 @@ export type BetServiceError =
       type: "ALREADY_BET";
       message: "You have already placed a bet on this market";
     }
-  | { type: "INSUFFICIENT_BALANCE"; message: string }
+  | { type: "INSUFFICIENT_BALANCE"; message: "Insufficient balance" }
   | { type: "INVALID_AMOUNT"; message: "Bet amount must be greater than 0" }
   | { type: "BET_CREATION_FAILED"; message: "Failed to create bet record" };
 
@@ -106,7 +106,7 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         if (availableBalance < betAmount) {
           return err({
             type: "INSUFFICIENT_BALANCE" as const,
-            message: `Insufficient balance: ${availableBalance.toFixed(2)} < ${betAmount.toFixed(2)}`,
+            message: "Insufficient balance" as const,
           });
         }
 

@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/queue-client.ts",
     "./jobs/resolve-market-job": "./src/jobs/resolve-market-job.ts",
-    "./jobs/generate-market-job": "./src/jobs/generate-market-job.ts"
+    "./jobs/generate-market-job": "./src/jobs/generate-market-job.ts",
+    "./jobs/process-withdrawal-job": "./src/jobs/process-withdrawal-job.ts"
   },
   "scripts": {
     "build": "tsdown",

@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
+import { useState } from "react";
+import { ResolutionDetails } from "@/components/resolution/resolution-details";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBetHistory } from "@/hooks/use-bet-history";
+import type { BetStatus } from "@/lib/orpc-types";
 
-type BetStatus = "ACTIVE" | "WON" | "LOST" | "REFUNDED" | undefined;
-
-const STATUS_FILTERS: { label: string; value: BetStatus }[] = [
+const STATUS_FILTERS: { label: string; value: BetStatus | undefined }[] = [
   { label: "All", value: undefined },
   { label: "Active", value: "ACTIVE" },
   { label: "Won", value: "WON" },
@@ -16,7 +16,10 @@ const STATUS_FILTERS: { label: string; value: BetStatus }[] = [
   { label: "Refunded", value: "REFUNDED" },
 ];
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
+const STATUS_COLORS: Record<
+  string,
+  { bg: string; text: string; glow: string }
+> = {
   ACTIVE: {
     bg: "oklch(0.65 0.25 290 / 15%)",
     text: "oklch(0.65 0.25 290)",
@@ -48,7 +51,9 @@ function formatDate(date: Date | string) {
 }
 
 export function BetsHistory() {
-  const [statusFilter, setStatusFilter] = useState<BetStatus>(undefined);
+  const [statusFilter, setStatusFilter] = useState<BetStatus | undefined>(
+    undefined
+  );
   const [page, setPage] = useState(0);
   const limit = 20;
 
@@ -78,22 +83,22 @@ export function BetsHistory() {
 
           return (
             <button
+              className="rounded-lg px-4 py-2 font-heading font-medium text-sm transition-all"
               key={filter.label}
               onClick={() => {
                 setStatusFilter(filter.value);
                 setPage(0);
               }}
-              type="button"
-              className="rounded-lg px-4 py-2 font-heading text-sm font-medium transition-all"
               style={{
                 background: isActive
-                  ? colors?.bg ?? "oklch(0.65 0.25 290 / 15%)"
+                  ? (colors?.bg ?? "oklch(0.65 0.25 290 / 15%)")
                   : "transparent",
                 color: isActive
-                  ? colors?.text ?? "oklch(0.95 0.02 280)"
+                  ? (colors?.text ?? "oklch(0.95 0.02 280)")
                   : "oklch(0.60 0.04 280)",
-                boxShadow: isActive ? colors?.glow ?? "none" : "none",
+                boxShadow: isActive ? (colors?.glow ?? "none") : "none",
               }}
+              type="button"
             >
               {filter.label}
             </button>
@@ -105,7 +110,7 @@ export function BetsHistory() {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" key={i} />
           ))}
         </div>
       )}
@@ -148,24 +153,26 @@ export function BetsHistory() {
           {bets.map(({ bet, market }, index) => {
             const colors = STATUS_COLORS[bet.status] ?? STATUS_COLORS.ACTIVE;
             const voteColor =
-              bet.vote === "YES" ? "oklch(0.72 0.18 175)" : "oklch(0.68 0.20 25)";
+              bet.vote === "YES"
+                ? "oklch(0.72 0.18 175)"
+                : "oklch(0.68 0.20 25)";
 
             return (
               <motion.div
-                key={bet.id}
-                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03, duration: 0.3 }}
                 className="relative overflow-hidden rounded-xl p-4"
+                initial={{ opacity: 0, y: 10 }}
+                key={bet.id}
                 style={{
                   background: "oklch(0.10 0.03 280 / 60%)",
                   backdropFilter: "blur(20px)",
                   border: `1px solid ${colors.text}20`,
                 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
               >
                 {/* Status indicator bar */}
                 <div
-                  className="absolute left-0 top-0 h-full w-1"
+                  className="absolute top-0 left-0 h-full w-1"
                   style={{ background: colors.text }}
                 />
 
@@ -194,9 +201,15 @@ export function BetsHistory() {
                       </span>
 
                       {/* Vote */}
-                      <span className="text-sm" style={{ color: "oklch(0.60 0.04 280)" }}>
+                      <span
+                        className="text-sm"
+                        style={{ color: "oklch(0.60 0.04 280)" }}
+                      >
                         Vote:{" "}
-                        <span className="font-semibold" style={{ color: voteColor }}>
+                        <span
+                          className="font-semibold"
+                          style={{ color: voteColor }}
+                        >
                           {bet.vote}
                         </span>
                       </span>
@@ -204,8 +217,13 @@ export function BetsHistory() {
                       {/* Category */}
                       {market.category && (
                         <>
-                          <span style={{ color: "oklch(0.40 0.04 280)" }}>•</span>
-                          <span className="text-sm" style={{ color: "oklch(0.50 0.04 280)" }}>
+                          <span style={{ color: "oklch(0.40 0.04 280)" }}>
+                            •
+                          </span>
+                          <span
+                            className="text-sm"
+                            style={{ color: "oklch(0.50 0.04 280)" }}
+                          >
                             {market.category}
                           </span>
                         </>
@@ -213,7 +231,10 @@ export function BetsHistory() {
                     </div>
 
                     {/* Date */}
-                    <p className="text-xs" style={{ color: "oklch(0.50 0.04 280)" }}>
+                    <p
+                      className="text-xs"
+                      style={{ color: "oklch(0.50 0.04 280)" }}
+                    >
                       Placed on {formatDate(bet.createdAt)}
                     </p>
                   </div>
@@ -221,7 +242,7 @@ export function BetsHistory() {
                   {/* Amount */}
                   <div className="shrink-0 text-right">
                     <p
-                      className="font-heading font-bold text-lg"
+                      className="font-bold font-heading text-lg"
                       style={{ color: "oklch(0.95 0.02 280)" }}
                     >
                       ${bet.amount}
@@ -234,13 +255,20 @@ export function BetsHistory() {
                         Won ${bet.payout}
                       </p>
                     )}
-                    {market.result && (
-                      <p className="text-xs" style={{ color: "oklch(0.50 0.04 280)" }}>
-                        Result: {market.result}
-                      </p>
-                    )}
                   </div>
                 </div>
+
+                {/* Resolution details for resolved markets */}
+                {market.result && (
+                  <div className="mt-3 pl-3">
+                    <ResolutionDetails
+                      confidence={market.resolutionConfidence}
+                      resolutionType={market.resolutionType}
+                      result={market.result}
+                      sources={market.resolutionSources}
+                    />
+                  </div>
+                )}
               </motion.div>
             );
           })}
@@ -251,29 +279,29 @@ export function BetsHistory() {
       {!(isLoading || error) && (hasPrevious || hasMore) && (
         <div className="flex justify-center gap-3 pt-2">
           <button
+            className="flex items-center gap-1 rounded-lg px-4 py-2 font-heading font-medium text-sm transition-all disabled:opacity-40"
             disabled={!hasPrevious}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            type="button"
-            className="flex items-center gap-1 rounded-lg px-4 py-2 font-heading text-sm font-medium transition-all disabled:opacity-40"
             style={{
               background: "oklch(0.10 0.03 280 / 60%)",
               border: "1px solid oklch(0.65 0.25 290 / 20%)",
               color: "oklch(0.80 0.04 280)",
             }}
+            type="button"
           >
             <ChevronLeft className="h-4 w-4" />
             Previous
           </button>
           <button
+            className="flex items-center gap-1 rounded-lg px-4 py-2 font-heading font-medium text-sm transition-all disabled:opacity-40"
             disabled={!hasMore}
             onClick={() => setPage((p) => p + 1)}
-            type="button"
-            className="flex items-center gap-1 rounded-lg px-4 py-2 font-heading text-sm font-medium transition-all disabled:opacity-40"
             style={{
               background: "oklch(0.10 0.03 280 / 60%)",
               border: "1px solid oklch(0.65 0.25 290 / 20%)",
               color: "oklch(0.80 0.04 280)",
             }}
+            type="button"
           >
             Next
             <ChevronRight className="h-4 w-4" />

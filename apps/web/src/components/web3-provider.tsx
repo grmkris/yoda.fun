@@ -4,8 +4,8 @@ import type { Network } from "@yoda.fun/shared/constants";
 import { ENV_CONFIG } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { porto } from "porto/wagmi";
-import { createConfig, http, WagmiProvider } from "wagmi";
 import type { Chain } from "viem";
+import { createConfig, http, WagmiProvider } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 import { env } from "@/env";
 

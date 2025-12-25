@@ -14,9 +14,8 @@ interface SettlementServiceDeps {
 type MarketResult = "YES" | "NO" | "INVALID";
 
 interface ResolutionMetadata {
-  sources?: Array<{ url: string; snippet: string; publishedAt?: string }>;
+  sources?: Array<{ url: string; snippet: string }>;
   confidence?: number;
-  aiModelUsed?: string;
 }
 
 export function createSettlementService({
@@ -121,7 +120,6 @@ export function createSettlementService({
           resolvedAt: new Date(),
           resolutionSources: metadata?.sources,
           resolutionConfidence: metadata?.confidence,
-          aiModelUsed: metadata?.aiModelUsed,
         })
         .where(eq(DB_SCHEMA.market.id, marketId));
 

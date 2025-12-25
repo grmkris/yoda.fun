@@ -2,10 +2,10 @@
 
 import { NUMERIC_CONSTANTS } from "@yoda.fun/shared/constants";
 import {
+  type MotionValue,
   motion,
   useMotionValue,
   useTransform,
-  type MotionValue,
 } from "motion/react";
 import { useState } from "react";
 

@@ -73,6 +73,7 @@ export function SidebarProvider({
 
   const setCollapsed = useCallback((collapsed: boolean) => {
     setCollapsedState(collapsed);
+    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API is experimental/async, document.cookie is appropriate here
     document.cookie = `${SIDEBAR_COOKIE_NAME}=${collapsed}; path=/; max-age=${60 * 60 * 24 * 365}`;
   }, []);
 

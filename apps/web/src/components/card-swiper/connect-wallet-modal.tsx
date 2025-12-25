@@ -1,5 +1,6 @@
 "use client";
 
+import { PortoConnectButton } from "@/components/porto-connect-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PortoConnectButton } from "@/components/porto-connect-button";
 import type { MarketCard } from "./game-card";
 
 interface ConnectWalletModalProps {
@@ -71,13 +71,13 @@ export function ConnectWalletModal({
             }}
           >
             <p
-              className="mb-2 font-heading text-sm font-medium"
+              className="mb-2 font-heading font-medium text-sm"
               style={{ color: "oklch(0.65 0.04 280)" }}
             >
               You're interested in:
             </p>
             <p
-              className="line-clamp-2 text-sm font-medium leading-relaxed"
+              className="line-clamp-2 font-medium text-sm leading-relaxed"
               style={{ color: "oklch(0.90 0.02 280)" }}
             >
               {market.title}
@@ -86,7 +86,7 @@ export function ConnectWalletModal({
 
           {/* Connect button */}
           <PortoConnectButton
-            className="h-14 w-full rounded-2xl font-heading font-bold text-lg"
+            className="h-14 w-full rounded-2xl font-bold font-heading text-lg"
             size="lg"
           />
         </div>
@@ -95,10 +95,10 @@ export function ConnectWalletModal({
           <Button
             className="w-full rounded-xl font-heading"
             onClick={onCancel}
-            variant="ghost"
             style={{
               color: "oklch(0.60 0.04 280)",
             }}
+            variant="ghost"
           >
             Keep browsing
           </Button>

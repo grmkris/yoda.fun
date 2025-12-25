@@ -1,29 +1,28 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
 import {
   Home,
   LayoutDashboard,
-  Ticket,
-  Wallet,
-  Trophy,
   LogOut,
-  PanelLeftClose,
-  PanelLeft,
-  Sun,
   Moon,
-  User,
+  PanelLeft,
+  PanelLeftClose,
   Sparkles,
+  Sun,
+  Ticket,
+  Trophy,
+  User,
+  Wallet,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-
-import { useSidebar, SidebarProvider } from "./sidebar-context";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "./sidebar-context";
 
 // ─────────────────────────────────────────────────────────────
 // Navigation Items
@@ -42,7 +41,10 @@ const navItems = [
 interface NavItemProps {
   to: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
   isCollapsed: boolean;
   onClick?: () => void;
 }
@@ -59,12 +61,12 @@ function SidebarNavItem({
 
   return (
     <Link
-      href={to}
-      onClick={onClick}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-heading text-sm font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-heading font-medium text-sm transition-all duration-200",
         isCollapsed && "justify-center px-2"
       )}
+      href={to as "/"}
+      onClick={onClick}
       style={{
         color: isActive ? "oklch(0.95 0.02 280)" : "oklch(0.65 0.04 280)",
         background: isActive ? "oklch(0.65 0.25 290 / 15%)" : "transparent",
@@ -73,8 +75,8 @@ function SidebarNavItem({
       {/* Active indicator glow */}
       {isActive && (
         <motion.span
-          layoutId="sidebar-active-indicator"
           className="absolute inset-0 rounded-xl"
+          layoutId="sidebar-active-indicator"
           style={{
             background:
               "linear-gradient(135deg, oklch(0.72 0.18 175 / 10%), oklch(0.65 0.25 290 / 10%))",
@@ -97,11 +99,11 @@ function SidebarNavItem({
       <AnimatePresence mode="wait">
         {!isCollapsed && (
           <motion.span
-            initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.15 }}
             className="relative z-10 truncate"
+            exit={{ opacity: 0, width: 0 }}
+            initial={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.15 }}
           >
             {label}
           </motion.span>
@@ -127,15 +129,15 @@ function SidebarThemeToggle({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      type="button"
       className={cn(
-        "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-heading text-sm font-medium transition-all duration-200",
+        "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-heading font-medium text-sm transition-all duration-200",
         isCollapsed && "justify-center px-2"
       )}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       style={{
         color: "oklch(0.65 0.04 280)",
       }}
+      type="button"
     >
       <div className="relative z-10 h-5 w-5 shrink-0">
         <Sun className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -145,11 +147,11 @@ function SidebarThemeToggle({ isCollapsed }: { isCollapsed: boolean }) {
       <AnimatePresence mode="wait">
         {!isCollapsed && (
           <motion.span
-            initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.15 }}
             className="relative z-10 truncate"
+            exit={{ opacity: 0, width: 0 }}
+            initial={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.15 }}
           >
             Theme
           </motion.span>
@@ -173,7 +175,9 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
 
   if (isPending) {
     return (
-      <div className={cn("flex items-center gap-3 px-3", isCollapsed && "px-2")}>
+      <div
+        className={cn("flex items-center gap-3 px-3", isCollapsed && "px-2")}
+      >
         <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
         {!isCollapsed && <Skeleton className="h-4 w-20" />}
       </div>
@@ -183,11 +187,11 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   if (!session) {
     return (
       <Link
-        href="/login"
         className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-heading text-sm font-medium transition-all duration-200",
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-heading font-medium text-sm transition-all duration-200",
           isCollapsed && "justify-center px-2"
         )}
+        href="/login"
         style={{
           color: "oklch(0.72 0.18 175)",
           background: "oklch(0.72 0.18 175 / 10%)",
@@ -197,11 +201,11 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.span
-              initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
               className="relative z-10 truncate"
+              exit={{ opacity: 0, width: 0 }}
+              initial={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
             >
               Sign In
             </motion.span>
@@ -234,14 +238,14 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.div
-              initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
               className="flex flex-col truncate"
+              exit={{ opacity: 0, width: 0 }}
+              initial={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
             >
               <span
-                className="truncate font-heading text-sm font-medium"
+                className="truncate font-heading font-medium text-sm"
                 style={{ color: "oklch(0.95 0.02 280)" }}
               >
                 {session.user.name || "User"}
@@ -259,6 +263,10 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
 
       {/* Sign out button */}
       <button
+        className={cn(
+          "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-heading font-medium text-sm transition-all duration-200",
+          isCollapsed && "justify-center px-2"
+        )}
         onClick={() => {
           authClient.signOut({
             fetchOptions: {
@@ -266,24 +274,20 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
             },
           });
         }}
-        type="button"
-        className={cn(
-          "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-heading text-sm font-medium transition-all duration-200",
-          isCollapsed && "justify-center px-2"
-        )}
         style={{
           color: "oklch(0.68 0.20 25)",
         }}
+        type="button"
       >
         <LogOut className="relative z-10 h-5 w-5 shrink-0" />
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.span
-              initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
               className="relative z-10 truncate"
+              exit={{ opacity: 0, width: 0 }}
+              initial={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.15 }}
             >
               Sign Out
             </motion.span>
@@ -306,13 +310,13 @@ function SidebarCollapseToggle() {
 
   return (
     <button
-      onClick={() => setCollapsed(!isCollapsed)}
-      type="button"
+      aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       className="group relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200"
+      onClick={() => setCollapsed(!isCollapsed)}
       style={{
         color: "oklch(0.65 0.04 280)",
       }}
-      aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      type="button"
     >
       {isCollapsed ? (
         <PanelLeft className="h-4 w-4" />
@@ -335,17 +339,17 @@ function DesktopSidebar({ className }: { className?: string }) {
 
   return (
     <motion.aside
+      animate={{ width: isCollapsed ? collapsedWidth : expandedWidth }}
       className={cn(
         "relative flex h-full shrink-0 flex-col overflow-hidden",
         className
       )}
-      animate={{ width: isCollapsed ? collapsedWidth : expandedWidth }}
-      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
       style={{
         background: "oklch(0.08 0.02 270 / 80%)",
         backdropFilter: "blur(20px)",
         borderRight: "1px solid oklch(0.65 0.25 290 / 15%)",
       }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
       {/* Header with logo */}
       <div
@@ -360,11 +364,10 @@ function DesktopSidebar({ className }: { className?: string }) {
         <AnimatePresence mode="wait">
           {!isCollapsed && (
             <motion.div
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              className="font-bold font-heading text-xl tracking-tight"
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="font-heading font-bold text-xl tracking-tight"
+              initial={{ opacity: 0 }}
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
@@ -372,6 +375,7 @@ function DesktopSidebar({ className }: { className?: string }) {
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
+              transition={{ duration: 0.15 }}
             >
               yoda.fun
             </motion.div>
@@ -384,11 +388,7 @@ function DesktopSidebar({ className }: { className?: string }) {
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
         {navItems.map((item) => (
-          <SidebarNavItem
-            key={item.to}
-            {...item}
-            isCollapsed={isCollapsed}
-          />
+          <SidebarNavItem key={item.to} {...item} isCollapsed={isCollapsed} />
         ))}
       </nav>
 
@@ -405,7 +405,7 @@ function DesktopSidebar({ className }: { className?: string }) {
 
       {/* Decorative glow */}
       <div
-        className="pointer-events-none absolute -left-20 top-1/3 h-40 w-40 rounded-full blur-3xl"
+        className="pointer-events-none absolute top-1/3 -left-20 h-40 w-40 rounded-full blur-3xl"
         style={{
           background: "oklch(0.65 0.25 290 / 8%)",
         }}
@@ -421,8 +421,8 @@ function MobileSidebar() {
   const { isOpen, setOpen } = useSidebar();
 
   return (
-    <Sheet open={isOpen} onOpenChange={setOpen}>
-      <SheetContent side="left" className="p-0">
+    <Sheet onOpenChange={setOpen} open={isOpen}>
+      <SheetContent className="p-0" side="left">
         {/* Header with logo */}
         <div
           className="flex h-14 shrink-0 items-center px-4"
@@ -431,7 +431,7 @@ function MobileSidebar() {
           }}
         >
           <div
-            className="font-heading font-bold text-xl tracking-tight"
+            className="font-bold font-heading text-xl tracking-tight"
             style={{
               background:
                 "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
@@ -483,10 +483,4 @@ function AppSidebar() {
   );
 }
 
-export {
-  SidebarProvider,
-  useSidebar,
-  AppSidebar,
-  DesktopSidebar,
-  MobileSidebar,
-};
+export { AppSidebar, DesktopSidebar, MobileSidebar };

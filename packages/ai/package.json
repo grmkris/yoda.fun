@@ -34,14 +34,15 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@yoda.fun/storage": "workspace:*",
     "@ai-sdk/anthropic": "catalog:",
+    "@ai-sdk/devtools": "catalog:",
     "@ai-sdk/google": "catalog:",
     "@ai-sdk/groq": "catalog:",
     "@ai-sdk/xai": "catalog:",
-    "@ai-sdk/devtools": "catalog:",
+    "@exalabs/ai-sdk": "^1.0.5",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/storage": "workspace:*",
     "ai": "catalog:",
     "posthog-node": "catalog:",
     "zod": "catalog:"
