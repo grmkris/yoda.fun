@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766616249023,
-      "tag": "0000_amazing_menace",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766616545340,
-      "tag": "0001_simple_newton_destine",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1766678923412,
-      "tag": "0002_productive_onslaught",
+      "when": 1766690184298,
+      "tag": "0000_friendly_supernaut",
       "breakpoints": true
     }
   ]

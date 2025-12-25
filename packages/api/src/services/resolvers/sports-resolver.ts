@@ -1,8 +1,8 @@
 import type { SportsStrategy } from "@yoda.fun/shared/resolution-types";
-import type {
-  SportsResolutionResult,
-  TheSportsDBEvent,
-  TheSportsDBResponse,
+import {
+  TheSportsDBResponseSchema,
+  type SportsResolutionResult,
+  type TheSportsDBEvent,
 } from "../market-generation-schemas";
 
 const THESPORTSDB_API_URL = "https://www.thesportsdb.com/api/v1/json/3";
@@ -42,7 +42,7 @@ export async function fetchRecentEvents(
     );
   }
 
-  const data = (await response.json()) as TheSportsDBResponse;
+  const data = TheSportsDBResponseSchema.parse(await response.json());
 
   if (!data.events) {
     return [];

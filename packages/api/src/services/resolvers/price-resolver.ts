@@ -1,7 +1,7 @@
 import type { PriceStrategy } from "@yoda.fun/shared/resolution-types";
-import type {
-  CoinGeckoPriceResponse,
-  PriceResolutionResult,
+import {
+  CoinGeckoPriceResponseSchema,
+  type PriceResolutionResult,
 } from "../market-generation-schemas";
 
 const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
@@ -21,7 +21,7 @@ export async function fetchCoinGeckoPrice(symbol: string): Promise<number> {
     );
   }
 
-  const data = (await response.json()) as CoinGeckoPriceResponse;
+  const data = CoinGeckoPriceResponseSchema.parse(await response.json());
   const coinData = data[symbol.toLowerCase()];
 
   if (!coinData?.usd) {

@@ -1,1 +1,0 @@
-ALTER TABLE "market" ADD COLUMN "resolution_method" jsonb;

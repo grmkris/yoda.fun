@@ -4,6 +4,7 @@ CREATE TYPE "public"."bet_status" AS ENUM('ACTIVE', 'WON', 'LOST', 'REFUNDED');-
 CREATE TYPE "public"."bet_vote" AS ENUM('YES', 'NO');--> statement-breakpoint
 CREATE TYPE "public"."market_result" AS ENUM('YES', 'NO', 'INVALID');--> statement-breakpoint
 CREATE TYPE "public"."market_status" AS ENUM('ACTIVE', 'CLOSED', 'RESOLVED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."resolution_type" AS ENUM('PRICE', 'SPORTS', 'WEB_SEARCH');--> statement-breakpoint
 CREATE TYPE "public"."settlement_status" AS ENUM('PENDING', 'SETTLED', 'FAILED');--> statement-breakpoint
 CREATE TYPE "public"."settlement_batch_status" AS ENUM('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');--> statement-breakpoint
 CREATE TYPE "public"."deposit_status" AS ENUM('PENDING', 'CONFIRMED', 'FAILED');--> statement-breakpoint
@@ -62,6 +63,7 @@ CREATE TABLE "user" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"username" text,
+	"is_anonymous" boolean DEFAULT false NOT NULL,
 	"display_username" text,
 	CONSTRAINT "user_email_unique" UNIQUE("email"),
 	CONSTRAINT "user_username_unique" UNIQUE("username")
@@ -118,15 +120,13 @@ CREATE TABLE "market" (
 	"total_no_votes" integer DEFAULT 0 NOT NULL,
 	"total_pool" numeric(12, 2) DEFAULT '0.00' NOT NULL,
 	"result" "market_result",
-	"sources" jsonb,
 	"created_by_id" uuid,
 	"resolved_at" timestamp with time zone,
-	"source_urls" text[],
 	"resolution_criteria" text,
+	"resolution_type" "resolution_type",
+	"resolution_strategy" jsonb,
 	"resolution_sources" jsonb,
 	"resolution_confidence" integer,
-	"auto_generated" boolean DEFAULT true NOT NULL,
-	"ai_model_used" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
