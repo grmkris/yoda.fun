@@ -66,13 +66,10 @@ export async function runMigrations(
 ): Promise<void> {
   logger?.info({}, "Running database migrations");
 
-  // Resolve migrations folder
-  // In development: import.meta.dir is packages/db/src, use relative path
-  // In production/Docker: code is bundled, use process.cwd() (must be workspace root)
-  const migrationsFolder =
-    process.env.NODE_ENV === "production"
-      ? join(process.cwd(), "packages/db/drizzle")
-      : join(import.meta.dir, "../drizzle");
+  // Resolve migrations folder using import.meta.dir (Bun's __dirname equivalent)
+  // This works in both development and production because it resolves relative to
+  // the source file location, not process.cwd() which depends on WORKDIR
+  const migrationsFolder = join(import.meta.dir, "../drizzle");
 
   if (db instanceof BunSQLDatabase) {
     await migrateBunSql(db, { migrationsFolder });

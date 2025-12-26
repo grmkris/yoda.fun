@@ -83,7 +83,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/apps/web/public ./apps/web/public
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
-ENV PORT=4201
+ENV PORT=3001
 
 # Preserve public environment variables
 ARG NEXT_PUBLIC_SERVER_URL
@@ -98,9 +98,9 @@ USER nodejs
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:4201/ || exit 1
+    CMD curl -f http://localhost:3001/ || exit 1
 
-EXPOSE 4201
+EXPOSE 3001
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
