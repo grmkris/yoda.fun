@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/server.ts --outfile server",
     "dev": "bun run --hot src/server.ts 2>&1 | tee server.log",
     "start": "bun run dist/server.js",
     "lint": "ultracite check",

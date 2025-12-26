@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-# ============================================
+# =============================================================================
 # Stage 1: Builder
-# ============================================
+# =============================================================================
 FROM oven/bun:1.3.5-slim AS builder
 
-# Install build dependencies for native modules
+# Install build dependencies (required for native modules)
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
@@ -17,8 +17,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy workspace configuration files
-COPY package.json bun.lock turbo.json ./
-COPY tsconfig.json tsconfig.base.json ./
+COPY package.json bun.lock turbo.json tsconfig.base.json tsconfig.json ./
 
 # Copy all package.json files for dependency resolution
 COPY apps/web/package.json ./apps/web/
@@ -44,13 +43,9 @@ RUN bun install --filter=server --frozen-lockfile
 COPY apps/server ./apps/server
 COPY packages ./packages
 
-# Build the server
-WORKDIR /app/apps/server
-RUN bun run build
-
-# ============================================
+# =============================================================================
 # Stage 2: Runner
-# ============================================
+# =============================================================================
 FROM oven/bun:1.3.5-slim AS runner
 
 # Install runtime dependencies
@@ -59,37 +54,37 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN groupadd --gid 1001 nodejs && \
-    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs
-
 WORKDIR /app
 
-# Copy built artifacts from builder
-COPY --from=builder --chown=nodejs:nodejs /app/apps/server/dist ./apps/server/dist
-COPY --from=builder --chown=nodejs:nodejs /app/apps/server/package.json ./apps/server/
+# Create non-root user
+RUN groupadd --gid 1001 nodejs \
+    && useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs -m -d /home/nodejs
+
+# Copy application and dependencies from builder
+COPY --from=builder --chown=nodejs:nodejs /app/apps/server ./apps/server
 COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
-COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.base.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/tsconfig.json ./
 
-# Set environment variables
+# Switch to non-root user
+USER nodejs
+
+# Set runtime environment
 ENV NODE_ENV=production
 ENV HOME=/home/nodejs
 ENV PORT=4200
 
-# Switch to non-root user
-USER nodejs
+EXPOSE 4200
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:4200/health || exit 1
 
-EXPOSE 4200
-
-WORKDIR /app/apps/server
-
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["bun", "run", "dist/server.js"]
+
+# Run directly from TypeScript (Bun handles it natively)
+WORKDIR /app/apps/server
+CMD ["bun", "run", "src/server.ts"]
