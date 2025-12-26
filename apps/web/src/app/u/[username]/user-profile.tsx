@@ -35,7 +35,7 @@ function StatCard({
 }
 
 function FollowButton({ userId }: { userId: UserId }) {
-  const { session } = useSession();
+  const { data: session } = useSession();
   const { data: followStatus, isLoading } = useIsFollowing(userId);
   const toggleFollow = useToggleFollow();
 

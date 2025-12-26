@@ -7,6 +7,7 @@ import Header from "@/components/header";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
 import { SidebarProvider } from "@/components/sidebar/sidebar-context";
+import { authClient } from "@/lib/auth-client";
 
 const fredoka = Fredoka({
   variable: "--font-heading",
@@ -51,13 +52,21 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const reqHeaders = await headers();
   const response = await authClient
     .getSession({
-      fetchOptions: { headers: await headers() },
+      fetchOptions: { headers: reqHeaders },
     })
     .catch(() => null);
 
-  const session = response?.data ?? null;
+  // Create anonymous session if none exists
+  if (!response?.data) {
+    await authClient.signIn
+      .anonymous({
+        fetchOptions: { headers: reqHeaders },
+      })
+      .catch(() => null);
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -73,19 +82,17 @@ export default async function RootLayout({
       <body
         className={`${fredoka.variable} ${nunito.variable} ${righteous.variable} antialiased`}
       >
-        <SessionProvider initialSession={session}>
-          <Providers>
-            <SidebarProvider>
-              <div className="flex h-svh bg-cosmic-subtle">
-                <AppSidebar />
-                <div className="flex flex-1 flex-col overflow-hidden">
-                  <Header />
-                  <main className="flex-1 overflow-auto">{children}</main>
-                </div>
+        <Providers>
+          <SidebarProvider>
+            <div className="flex h-svh bg-cosmic-subtle">
+              <AppSidebar />
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-auto">{children}</main>
               </div>
-            </SidebarProvider>
-          </Providers>
-        </SessionProvider>
+            </div>
+          </SidebarProvider>
+        </Providers>
       </body>
     </html>
   );

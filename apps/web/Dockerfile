@@ -23,12 +23,14 @@ COPY tsconfig.json tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
 COPY packages/auth/package.json ./packages/auth/
+COPY packages/blockchain/package.json ./packages/blockchain/
 COPY packages/db/package.json ./packages/db/
 COPY packages/logger/package.json ./packages/logger/
+COPY packages/markets/package.json ./packages/markets/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install --filter=web --frozen-lockfile
 
 # Copy source code
 COPY apps/web ./apps/web

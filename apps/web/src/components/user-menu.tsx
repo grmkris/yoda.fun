@@ -15,7 +15,7 @@ import { Skeleton } from "./ui/skeleton";
 
 export default function UserMenu() {
   const router = useRouter();
-  const { session, isPending } = useSession();
+  const { data: session, isPending } = useSession();
 
   if (isPending) {
     return <Skeleton className="h-9 w-24" />;

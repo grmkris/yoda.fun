@@ -124,7 +124,7 @@ function SidebarNavItem({
 // ─────────────────────────────────────────────────────────────
 function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   const router = useRouter();
-  const { session, isPending } = useSession();
+  const { data: session, isPending } = useSession();
 
   if (isPending) {
     return (

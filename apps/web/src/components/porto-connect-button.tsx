@@ -20,7 +20,7 @@ export function PortoConnectButton({
   const { isConnected, isConnecting, address } = useConnection();
   const { mutate: disconnect } = useDisconnect();
   const { connectors, connect, isPending } = useConnect();
-  const { session, isPending: isSessionPending } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
 
   const porto = connectors?.find((c) => c.id === "xyz.ithaca.porto");
 

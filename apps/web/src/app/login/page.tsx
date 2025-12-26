@@ -7,7 +7,7 @@ import { useSession } from "@/components/session-provider";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { session } = useSession();
+  const { data: session } = useSession();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {

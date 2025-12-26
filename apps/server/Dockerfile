@@ -25,8 +25,10 @@ COPY apps/server/package.json ./apps/server/
 COPY packages/ai/package.json ./packages/ai/
 COPY packages/api/package.json ./packages/api/
 COPY packages/auth/package.json ./packages/auth/
+COPY packages/blockchain/package.json ./packages/blockchain/
 COPY packages/db/package.json ./packages/db/
 COPY packages/logger/package.json ./packages/logger/
+COPY packages/markets/package.json ./packages/markets/
 COPY packages/queue/package.json ./packages/queue/
 COPY packages/redis/package.json ./packages/redis/
 COPY packages/shared/package.json ./packages/shared/
@@ -34,7 +36,7 @@ COPY packages/storage/package.json ./packages/storage/
 COPY packages/test-utils/package.json ./packages/test-utils/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install --filter=server --frozen-lockfile
 
 # Copy source code
 COPY apps/server ./apps/server
