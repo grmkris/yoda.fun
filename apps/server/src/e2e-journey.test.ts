@@ -175,7 +175,7 @@ describe("E2E: Complete User Journey", () => {
       throw new Error("Market not found after resolution");
     }
 
-    expect(resolvedMarket.status).toBe("RESOLVED");
+    expect(resolvedMarket.status).toBe("SETTLED");
     expect(resolvedMarket.result).toMatch(MARKET_RESULT_REGEX);
 
     testEnv.deps.logger.info({

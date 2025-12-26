@@ -2,6 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { useConnect, useConnection, useDisconnect } from "wagmi";
+import { useSession } from "@/components/session-provider";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -19,8 +20,7 @@ export function PortoConnectButton({
   const { isConnected, isConnecting, address } = useConnection();
   const { mutate: disconnect } = useDisconnect();
   const { connectors, connect, isPending } = useConnect();
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
+  const { session, isPending: isSessionPending } = useSession();
 
   const porto = connectors?.find((c) => c.id === "xyz.ithaca.porto");
 

@@ -45,6 +45,7 @@
     "@yoda.fun/storage": "workspace:*",
     "ai": "catalog:",
     "posthog-node": "catalog:",
+    "replicate": "^1.4.0",
     "zod": "catalog:"
   }
 }

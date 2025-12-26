@@ -1,17 +1,17 @@
 import { type AiClient, Output } from "@yoda.fun/ai";
-import { FEATURES } from "@yoda.fun/ai/ai-config";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
 import type { SelectMarket } from "@yoda.fun/db/schema";
 import type { Logger } from "@yoda.fun/logger";
+import { MARKET_PROMPTS } from "../prompts";
 import {
   type GeneratedMarket,
   GeneratedMarketsResponseSchema,
   type GenerateMarketsInput,
   type GenerateMarketsResult,
-} from "../market-generation-schemas";
-import { type PreparedMarket, prepareMarket } from "./market-preparer";
+} from "../schemas";
+import { type PreparedMarket, prepareMarket } from "./preparer";
 
 interface MarketGenerationServiceDeps {
   db: Database;
@@ -55,7 +55,7 @@ export function createMarketGenerationService(
     lastError?: string
   ): Promise<GenerateMarketsResult> {
     const startTime = Date.now();
-    const config = FEATURES.marketGeneration;
+    const config = MARKET_PROMPTS.generation;
     const model = aiClient.getModel(config.model);
     const prompt = buildPrompt(input.count, attempt, lastError);
 
@@ -88,7 +88,7 @@ export function createMarketGenerationService(
   const generateMarkets = async (
     input: GenerateMarketsInput
   ): Promise<GenerateMarketsResult> => {
-    const config = FEATURES.marketGeneration;
+    const config = MARKET_PROMPTS.generation;
 
     logger.info(
       { count: input.count, categories: input.categories },
@@ -130,18 +130,8 @@ export function createMarketGenerationService(
     throw new Error("Generation failed after all retries");
   };
 
-  const insertMarkets = async (
-    markets: GeneratedMarket[]
-  ): Promise<SelectMarket[]> => {
-    const prepared = await Promise.all(
-      markets.map((market) =>
-        prepareMarket({
-          market,
-          imageUrl: null,
-          logger,
-        })
-      )
-    );
+  const insertMarkets = (markets: GeneratedMarket[]): Promise<SelectMarket[]> => {
+    const prepared = markets.map((m) => prepareMarket(m, null));
     return insertToDatabase(prepared);
   };
 

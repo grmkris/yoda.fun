@@ -1,14 +1,11 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { client } from "@/utils/orpc";
 
-export function useMarketStack(limit = 10) {
-  return useInfiniteQuery({
-    queryKey: ["market", "stack", { limit }],
-    queryFn: ({ pageParam }: { pageParam?: string }) =>
-      client.market.getStack({ limit, cursor: pageParam }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: undefined,
+export function useMarketStack(limit = 20) {
+  return useQuery({
+    queryKey: ["market", "stack", limit],
+    queryFn: () => client.market.getStack({ limit }),
   });
 }

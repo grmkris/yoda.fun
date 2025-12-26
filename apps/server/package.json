@@ -25,6 +25,7 @@
     "@orpc/zod": "catalog:",
     "@yoda.fun/ai": "workspace:*",
     "@yoda.fun/api": "workspace:*",
+    "@yoda.fun/markets": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/blockchain": "workspace:*",
     "@yoda.fun/db": "workspace:*",

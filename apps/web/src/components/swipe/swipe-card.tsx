@@ -23,6 +23,7 @@ export interface SwipeCardProps<T> {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
 const SWIPE_THRESHOLD = 150;
@@ -36,6 +37,7 @@ export function SwipeCard<T>({
   children,
   className = "",
   style,
+  disabled = false,
 }: SwipeCardProps<T>) {
   const [exitX, setExitX] = useState(0);
 
@@ -102,7 +104,7 @@ export function SwipeCard<T>({
           : { x: 0, opacity: 1, scale: 1, rotate: 0 }
       }
       className={className}
-      drag="x"
+      drag={disabled ? false : "x"}
       dragElastic={NUMERIC_CONSTANTS.swipe.dragElasticity}
       initial={{ scale: 1, opacity: 1 }}
       onDragEnd={handleDragEnd}
@@ -111,7 +113,7 @@ export function SwipeCard<T>({
         x,
         rotate,
         touchAction: "pan-y",
-        cursor: "grab",
+        cursor: disabled ? "not-allowed" : "grab",
       }}
       whileDrag={{
         scale: NUMERIC_CONSTANTS.swipe.scaleOnDrag,

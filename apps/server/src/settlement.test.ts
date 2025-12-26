@@ -47,7 +47,7 @@ describe("Settlement Service", () => {
         .where(eq(DB_SCHEMA.market.id, market.id));
 
       expect(updatedMarkets[0]?.result).toBe("YES");
-      expect(updatedMarkets[0]?.status).toBe("RESOLVED");
+      expect(updatedMarkets[0]?.status).toBe("SETTLED");
       expect(updatedMarkets[0]?.resolutionConfidence).toBe(95);
     });
 

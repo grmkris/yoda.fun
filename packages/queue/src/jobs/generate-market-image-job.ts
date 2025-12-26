@@ -1,7 +1,8 @@
+import { MarketId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 
 export const GenerateMarketImageJobSchema = z.object({
-  marketId: z.string(),
+  marketId: MarketId,
   title: z.string(),
   description: z.string(),
   category: z.string(),

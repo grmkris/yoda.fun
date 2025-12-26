@@ -48,7 +48,7 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
       }
 
       // Validate market is active
-      if (marketData.status !== "ACTIVE") {
+      if (marketData.status !== "LIVE") {
         return err({
           type: "MARKET_NOT_ACTIVE",
           message: "Market is not active for betting",

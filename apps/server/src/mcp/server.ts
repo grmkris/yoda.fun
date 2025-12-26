@@ -68,7 +68,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
       const markets = await db
         .select()
         .from(DB_SCHEMA.market)
-        .where(eq(DB_SCHEMA.market.status, "ACTIVE"))
+        .where(eq(DB_SCHEMA.market.status, "LIVE"))
         .orderBy(desc(DB_SCHEMA.market.createdAt))
         .limit(limit);
 

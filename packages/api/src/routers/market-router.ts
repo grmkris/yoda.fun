@@ -22,12 +22,17 @@ function withSignedImageUrl<T extends SelectMarket>(
   market: T,
   storage?: StorageClient
 ): T {
-  if (!(storage && market.imageUrl)) {
+  if (!storage) {
     return market;
   }
   return {
     ...market,
-    imageUrl: storage.getSignedUrl({ key: market.imageUrl, expiresIn: 3600 }),
+    imageUrl: market.imageUrl
+      ? storage.getSignedUrl({ key: market.imageUrl, expiresIn: 3600 })
+      : null,
+    thumbnailUrl: market.thumbnailUrl
+      ? storage.getSignedUrl({ key: market.thumbnailUrl, expiresIn: 3600 })
+      : null,
   };
 }
 
@@ -54,7 +59,7 @@ export const marketRouter = {
     .input(
       z.object({
         status: z
-          .enum(["ACTIVE", "CLOSED", "RESOLVED", "CANCELLED"])
+          .enum(["LIVE", "VOTING_ENDED", "SETTLED", "CANCELLED"])
           .optional(),
         limit: z
           .number()
@@ -81,9 +86,9 @@ export const marketRouter = {
 
       if (input.resolved !== undefined) {
         if (input.resolved) {
-          conditions.push(eq(DB_SCHEMA.market.status, "RESOLVED"));
+          conditions.push(eq(DB_SCHEMA.market.status, "SETTLED"));
         } else {
-          conditions.push(notInArray(DB_SCHEMA.market.status, ["RESOLVED"]));
+          conditions.push(notInArray(DB_SCHEMA.market.status, ["SETTLED"]));
         }
       }
 
@@ -110,6 +115,7 @@ export const marketRouter = {
 
   /**
    * Get a single market by ID
+   * Includes user's bet if authenticated
    */
   get: publicProcedure
     .input(
@@ -126,7 +132,20 @@ export const marketRouter = {
         throw new ORPCError("NOT_FOUND");
       }
 
-      return withSignedImageUrl(market, context.storage);
+      // Get user's bet if authenticated
+      const userBet = context.session?.user?.id
+        ? await context.db.query.bet.findFirst({
+            where: and(
+              eq(DB_SCHEMA.bet.marketId, input.marketId),
+              eq(DB_SCHEMA.bet.userId, UserId.parse(context.session.user.id))
+            ),
+          })
+        : null;
+
+      return {
+        ...withSignedImageUrl(market, context.storage),
+        userBet,
+      };
     }),
 
   /**
@@ -158,7 +177,7 @@ export const marketRouter = {
 
       // Get active markets, excluding those the user has voted on
       const conditions: SQL[] = [
-        eq(DB_SCHEMA.market.status, "ACTIVE"),
+        eq(DB_SCHEMA.market.status, "LIVE"),
         gt(DB_SCHEMA.market.votingEndsAt, new Date()),
       ];
 
@@ -227,7 +246,7 @@ export const marketRouter = {
         .from(DB_SCHEMA.market)
         .where(
           and(
-            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            eq(DB_SCHEMA.market.status, "SETTLED"),
             gte(DB_SCHEMA.market.resolvedAt, startDate)
           )
         );
@@ -242,7 +261,7 @@ export const marketRouter = {
         .from(DB_SCHEMA.market)
         .where(
           and(
-            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            eq(DB_SCHEMA.market.status, "SETTLED"),
             gte(DB_SCHEMA.market.resolvedAt, startDate)
           )
         );
@@ -258,7 +277,7 @@ export const marketRouter = {
         .from(DB_SCHEMA.market)
         .where(
           and(
-            eq(DB_SCHEMA.market.status, "RESOLVED"),
+            eq(DB_SCHEMA.market.status, "SETTLED"),
             gte(DB_SCHEMA.market.resolvedAt, startDate),
             isNotNull(DB_SCHEMA.market.resolutionType)
           )
@@ -275,7 +294,7 @@ export const marketRouter = {
           resolvedAt: DB_SCHEMA.market.resolvedAt,
         })
         .from(DB_SCHEMA.market)
-        .where(eq(DB_SCHEMA.market.status, "RESOLVED"))
+        .where(eq(DB_SCHEMA.market.status, "SETTLED"))
         .orderBy(desc(DB_SCHEMA.market.resolvedAt))
         .limit(10);
 

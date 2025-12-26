@@ -4,11 +4,9 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
-  Moon,
   PanelLeft,
   PanelLeftClose,
   Sparkles,
-  Sun,
   Ticket,
   Trophy,
   User,
@@ -17,7 +15,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
+import { useSession } from "@/components/session-provider";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
@@ -122,56 +120,11 @@ function SidebarNavItem({
 }
 
 // ─────────────────────────────────────────────────────────────
-// Theme Toggle
-// ─────────────────────────────────────────────────────────────
-function SidebarThemeToggle({ isCollapsed }: { isCollapsed: boolean }) {
-  const { theme, setTheme } = useTheme();
-
-  return (
-    <button
-      className={cn(
-        "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-heading font-medium text-sm transition-all duration-200",
-        isCollapsed && "justify-center px-2"
-      )}
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      style={{
-        color: "oklch(0.65 0.04 280)",
-      }}
-      type="button"
-    >
-      <div className="relative z-10 h-5 w-5 shrink-0">
-        <Sun className="absolute h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      </div>
-
-      <AnimatePresence mode="wait">
-        {!isCollapsed && (
-          <motion.span
-            animate={{ opacity: 1, width: "auto" }}
-            className="relative z-10 truncate"
-            exit={{ opacity: 0, width: 0 }}
-            initial={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            Theme
-          </motion.span>
-        )}
-      </AnimatePresence>
-
-      <span
-        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        style={{ background: "oklch(0.65 0.25 290 / 8%)" }}
-      />
-    </button>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // User Section
 // ─────────────────────────────────────────────────────────────
 function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { session, isPending } = useSession();
 
   if (isPending) {
     return (
@@ -399,7 +352,6 @@ function DesktopSidebar({ className }: { className?: string }) {
           borderTop: "1px solid oklch(0.65 0.25 290 / 10%)",
         }}
       >
-        <SidebarThemeToggle isCollapsed={isCollapsed} />
         <SidebarUser isCollapsed={isCollapsed} />
       </div>
 
@@ -463,7 +415,6 @@ function MobileSidebar() {
             borderTop: "1px solid oklch(0.65 0.25 290 / 10%)",
           }}
         >
-          <SidebarThemeToggle isCollapsed={false} />
           <SidebarUser isCollapsed={false} />
         </div>
       </SheetContent>

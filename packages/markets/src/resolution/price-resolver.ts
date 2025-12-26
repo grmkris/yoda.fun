@@ -2,7 +2,7 @@ import type { PriceStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   CoinGeckoPriceResponseSchema,
   type PriceResolutionResult,
-} from "../market-generation-schemas";
+} from "../schemas";
 
 const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 

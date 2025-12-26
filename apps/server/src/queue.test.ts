@@ -106,7 +106,7 @@ describe("Market Resolution Queue", () => {
 
     const resolvedMarket = resolvedMarkets[0];
     expect(resolvedMarket).toBeDefined();
-    expect(resolvedMarket?.status).toBe("RESOLVED");
+    expect(resolvedMarket?.status).toBe("SETTLED");
     expect(resolvedMarket?.result).toMatch(MARKET_RESULT_REGEX);
 
     // Verify bets were settled
@@ -134,7 +134,7 @@ describe("Market Resolution Queue", () => {
     // Manually mark as resolved
     await testEnv.deps.db
       .update(DB_SCHEMA.market)
-      .set({ status: "RESOLVED", result: "YES" })
+      .set({ status: "SETTLED", result: "YES" })
       .where(eq(DB_SCHEMA.market.id, market.id));
 
     // Add job

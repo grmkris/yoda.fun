@@ -23,6 +23,7 @@ export const envSchema = z.object({
     .string()
     .regex(/^0x[a-fA-F0-9]{64}$/)
     .optional(),
+  REPLICATE_API_KEY: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

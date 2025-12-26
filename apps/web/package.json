@@ -20,6 +20,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@t3-oss/env-nextjs": "^0.13.10",
+    "@takumi-rs/image-response": "^0.60.8",
     "@tanstack/react-form": "^1.27.6",
     "@tanstack/react-query": "catalog:",
     "@yoda.fun/api": "workspace:*",

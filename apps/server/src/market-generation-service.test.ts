@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { createMarketGenerationService } from "@yoda.fun/api/services/market-generation/market-generation-service";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
+import { createMarketGenerationService } from "@yoda.fun/markets/generation";
 import { createTestSetup, type TestSetup } from "test/test.setup";
 
 describe("Market Generation Service", () => {
@@ -26,6 +26,7 @@ describe("Market Generation Service", () => {
     test("generates and inserts markets with correct structure", async () => {
       const result = await marketGenerationService.generateAndInsertMarkets({
         count: 2,
+        timeframe: "immediate",
       });
 
       expect(result.generated.markets.length).toBeGreaterThanOrEqual(1);
@@ -50,6 +51,7 @@ describe("Market Generation Service", () => {
     test("returns model version and token usage", async () => {
       const result = await marketGenerationService.generateAndInsertMarkets({
         count: 1,
+        timeframe: "immediate",
       });
 
       expect(result.generated.modelVersion).toBeTruthy();
@@ -59,6 +61,7 @@ describe("Market Generation Service", () => {
     test("inserts markets into database with correct fields", async () => {
       const result = await marketGenerationService.generateAndInsertMarkets({
         count: 1,
+        timeframe: "immediate",
       });
 
       expect(result.inserted.length).toBeGreaterThanOrEqual(1);
@@ -68,7 +71,7 @@ describe("Market Generation Service", () => {
       if (market) {
         expect(market.id).toBeTruthy();
         expect(market.title).toBeTruthy();
-        expect(market.status).toBe("ACTIVE");
+        expect(market.status).toBe("LIVE");
         expect(market.resolutionType).toBeDefined();
         expect(market.votingEndsAt).toBeInstanceOf(Date);
         expect(market.resolutionDeadline).toBeInstanceOf(Date);
@@ -90,6 +93,7 @@ describe("Market Generation Service", () => {
 
       const result = await marketGenerationService.generateAndInsertMarkets({
         count: 1,
+        timeframe: "immediate",
       });
 
       const market = result.inserted[0];

@@ -1,11 +1,10 @@
 import type {
   PriceStrategy,
-  ResolutionPlan,
   ResolutionStrategy,
   SportsStrategy,
-  ValidationResult,
   WebSearchStrategy,
 } from "@yoda.fun/shared/resolution-types";
+import type { ResolutionPlan, ValidationResult } from "../types";
 
 const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 const THESPORTSDB_API_URL = "https://www.thesportsdb.com/api/v1/json/3";

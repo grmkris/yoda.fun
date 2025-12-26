@@ -17,12 +17,14 @@ export interface SwipeStackProps<T> {
   renderCard: (data: T, index: number) => React.ReactNode;
   maxVisibleCards?: number;
   className?: string;
+  disabled?: boolean;
 }
 
 export interface SwipeStackRef {
   swipeLeft: () => void;
   swipeRight: () => void;
   getCurrentCard: () => unknown | undefined;
+  revert: () => void;
 }
 
 const DEFAULT_MAX_VISIBLE_CARDS = 3;
@@ -72,6 +74,7 @@ function SwipeStackComponent<T>(
     renderCard,
     maxVisibleCards = DEFAULT_MAX_VISIBLE_CARDS,
     className = "",
+    disabled = false,
   }: SwipeStackProps<T>,
   ref: ForwardedRef<SwipeStackRef>
 ) {
@@ -120,6 +123,10 @@ function SwipeStackComponent<T>(
       }
     },
     getCurrentCard: () => visibleCards[0]?.card,
+    revert: () => {
+      setCurrentIndex((prev) => Math.max(0, prev - 1));
+      setRemovedCards(new Set());
+    },
   }));
 
   if (currentIndex >= cards.length) {
@@ -183,6 +190,7 @@ function SwipeStackComponent<T>(
                 {isTopCard ? (
                   <SwipeCard
                     data={card}
+                    disabled={disabled}
                     onSwipe={(data, direction) => onSwipe?.(data, direction)}
                     onSwipeLeft={(data) =>
                       handleSwipe(index, onSwipeLeft, data)

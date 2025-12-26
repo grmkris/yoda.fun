@@ -1,7 +1,7 @@
 import type { AiClient } from "@yoda.fun/ai";
-import { createMarketGenerationService } from "@yoda.fun/api/services/market-generation/market-generation-service";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
+import { createMarketGenerationService } from "@yoda.fun/markets/generation";
 import type { QueueClient } from "@yoda.fun/queue";
 
 export interface MarketGenerationWorkerConfig {
@@ -10,6 +10,17 @@ export interface MarketGenerationWorkerConfig {
   logger: Logger;
   aiClient: AiClient;
 }
+
+const getTimeframe = () => {
+  const random = Math.random();
+  if (random < 0.33) {
+    return "immediate";
+  }
+  if (random < 0.66) {
+    return "short";
+  }
+  return "medium";
+};
 
 /**
  * Create and start the market generation worker
@@ -45,6 +56,7 @@ export function createMarketGenerationWorker(
         await marketGenerationService.generateAndInsertMarkets({
           count,
           categories,
+          timeframe: getTimeframe(),
         });
 
       // Schedule resolution and image jobs for each new market

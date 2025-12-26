@@ -1,10 +1,10 @@
-import { generateMarketImage } from "@yoda.fun/ai/image-generation";
+import { generateMarketImageBuffer } from "@yoda.fun/ai/image-generation";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
+import { processMarketImage } from "@yoda.fun/markets/image-processing";
 import type { QueueClient } from "@yoda.fun/queue";
-import type { MarketId } from "@yoda.fun/shared/typeid";
 import type { StorageClient } from "@yoda.fun/storage";
 
 export interface MarketImageWorkerConfig {
@@ -12,13 +12,13 @@ export interface MarketImageWorkerConfig {
   db: Database;
   logger: Logger;
   storage: StorageClient;
-  googleApiKey: string;
+  replicateApiKey: string;
 }
 
 export function createMarketImageWorker(config: MarketImageWorkerConfig): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, storage, googleApiKey } = config;
+  const { queue, db, logger, storage, replicateApiKey } = config;
 
   logger.info({ msg: "Starting market image worker" });
 
@@ -29,23 +29,30 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
 
       logger.info({ marketId, title }, "Generating market image");
 
-      const imageKey = await generateMarketImage(
+      const imageBuffer = await generateMarketImageBuffer(
         { title, description, category },
-        { googleApiKey, storage }
+        { replicateApiKey }
       );
 
-      if (imageKey) {
-        await db
-          .update(DB_SCHEMA.market)
-          .set({ imageUrl: imageKey, status: "ACTIVE" })
-          .where(eq(DB_SCHEMA.market.id, marketId as MarketId));
-
-        logger.info({ marketId, imageKey }, "Market image generated");
-        return { success: true, marketId, imageUrl: imageKey };
+      if (!imageBuffer) {
+        logger.warn({ marketId }, "Image generation returned null");
+        return { success: false, marketId };
       }
 
-      logger.warn({ marketId }, "Image generation returned null");
-      return { success: false, marketId };
+      const { imageUrl, thumbnailUrl } = await processMarketImage(imageBuffer, {
+        storage,
+      });
+
+      await db
+        .update(DB_SCHEMA.market)
+        .set({ imageUrl, thumbnailUrl, status: "LIVE" })
+        .where(eq(DB_SCHEMA.market.id, marketId));
+
+      logger.info(
+        { marketId, imageUrl, thumbnailUrl },
+        "Market image processed"
+      );
+      return { success: true, marketId, imageUrl, thumbnailUrl };
     },
     {
       onFailed: (job, error) => {

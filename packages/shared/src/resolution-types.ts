@@ -42,24 +42,31 @@ export const ResolutionStrategySchema = z.discriminatedUnion("type", [
   WebSearchStrategySchema,
 ]);
 
-export const ValidationResultSchema = z.object({
-  validated: z.boolean(),
-  validatedAt: z.string().datetime(),
-  errors: z.array(z.string()).optional(),
-});
-
-export const ResolutionPlanSchema = z.object({
-  primary: ResolutionStrategySchema,
-  verificationSources: z.array(z.string().url()).default([]),
-  successCriteria: z.string().min(10),
-  validation: ValidationResultSchema.optional(),
-});
-
 export type SportsLeague = (typeof SPORTS_LEAGUES)[number];
 export type PriceStrategy = z.infer<typeof PriceStrategySchema>;
 export type SportsStrategy = z.infer<typeof SportsStrategySchema>;
 export type WebSearchStrategy = z.infer<typeof WebSearchStrategySchema>;
 export type ResolutionStrategy = z.infer<typeof ResolutionStrategySchema>;
 export type ResolutionMethodType = ResolutionStrategy["type"];
-export type ValidationResult = z.infer<typeof ValidationResultSchema>;
-export type ResolutionPlan = z.infer<typeof ResolutionPlanSchema>;
+
+export const MarketForResolutionSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  category: z.string().nullable(),
+  resolutionCriteria: z.string().nullable(),
+});
+export type MarketForResolution = z.infer<typeof MarketForResolutionSchema>;
+
+export const AIResolutionSchema = z.object({
+  result: z.enum(["YES", "NO", "INVALID"]),
+  confidence: z.number().min(0).max(100),
+  reasoning: z.string(),
+  sources: z.array(
+    z.object({
+      url: z.string(),
+      snippet: z.string(),
+      relevance: z.string(),
+    })
+  ),
+});
+export type AIResolutionResult = z.infer<typeof AIResolutionSchema>;

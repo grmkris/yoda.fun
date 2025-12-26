@@ -1,7 +1,4 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { typeIdGenerator } from "@yoda.fun/shared/typeid";
-import type { StorageClient } from "@yoda.fun/storage";
-import { generateText } from "ai";
+import Replicate from "replicate";
 
 export interface MarketImageContext {
   title: string;
@@ -10,8 +7,7 @@ export interface MarketImageContext {
 }
 
 export interface ImageGenerationConfig {
-  googleApiKey: string;
-  storage: StorageClient;
+  replicateApiKey: string;
 }
 
 function buildImagePrompt(market: MarketImageContext): string {
@@ -41,62 +37,26 @@ Style requirements:
 - Professional quality, suitable for a betting app`;
 }
 
-export async function generateMarketImage(
+export async function generateMarketImageBuffer(
   market: MarketImageContext,
   config: ImageGenerationConfig
-): Promise<string | null> {
-  try {
-    const google = createGoogleGenerativeAI({ apiKey: config.googleApiKey });
-    const prompt = buildImagePrompt(market);
+): Promise<Buffer | null> {
+  const replicate = new Replicate({
+    auth: config.replicateApiKey,
+  });
+  const prompt = buildImagePrompt(market);
 
-    const result = await generateText({
-      model: google("gemini-2.5-flash-image-preview"),
+  const output = (await replicate.run("google/nano-banana", {
+    input: {
       prompt,
-    });
+      aspect_ratio: "2:3",
+      output_format: "png",
+    },
+  })) as { url: () => Promise<string>; blob: () => Promise<Blob> };
 
-    const image = result.files.find((file) =>
-      file.mediaType.startsWith("image/")
-    );
-
-    const imageData = image?.base64;
-    if (!imageData) {
-      return null;
-    }
-
-    const key = `markets/${typeIdGenerator("marketImage")}.jpg`;
-    const buffer = Buffer.from(imageData, "base64");
-    await config.storage.upload({
-      key,
-      data: buffer,
-      contentType: "image/jpeg",
-    });
-
-    return key;
-  } catch (error) {
-    console.error("Image generation failed:", error);
-    return null;
-  }
-}
-
-export async function generateMarketImages(
-  markets: MarketImageContext[],
-  config: ImageGenerationConfig
-): Promise<Map<string, string | null>> {
-  const results = new Map<string, string | null>();
-  const concurrency = 1;
-  for (let i = 0; i < markets.length; i += concurrency) {
-    const batch = markets.slice(i, i + concurrency);
-    const batchResults = await Promise.all(
-      batch.map(async (market) => {
-        const url = await generateMarketImage(market, config);
-        return { title: market.title, url };
-      })
-    );
-
-    for (const { title, url } of batchResults) {
-      results.set(title, url);
-    }
-  }
-
-  return results;
+  // To access the file URL:
+  const url = await output.url();
+  console.log(url);
+  const imageBuffer = await output.blob();
+  return Buffer.from(await imageBuffer.arrayBuffer());
 }

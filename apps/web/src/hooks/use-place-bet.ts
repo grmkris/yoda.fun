@@ -22,9 +22,7 @@ export function usePlaceBet() {
 
   return useMutation({
     mutationFn: async (input: PlaceBetInput) => client.bet.place(input),
-    onSuccess: (data) => {
-      toast.success(`Bet placed! ${data.vote} on market`);
-
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
       });

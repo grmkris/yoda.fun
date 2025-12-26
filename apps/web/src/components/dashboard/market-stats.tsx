@@ -2,6 +2,7 @@
 
 import { BarChart3, CheckCircle, TrendingUp } from "lucide-react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { ConfidenceBar } from "@/components/resolution/confidence-bar";
 import { MethodBadge } from "@/components/resolution/method-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -145,8 +146,9 @@ export function MarketStats() {
               </p>
               <div className="space-y-2">
                 {data.recentResolutions.slice(0, 3).map((market) => (
-                  <div
-                    className="flex items-center gap-3 rounded-xl p-2.5"
+                  <Link
+                    className="flex items-center gap-3 rounded-xl p-2.5 transition-all hover:scale-[1.02]"
+                    href={`/market/${market.id}`}
                     key={market.id}
                     style={{
                       background: "oklch(0.08 0.02 270 / 50%)",
@@ -179,7 +181,7 @@ export function MarketStats() {
                         <ConfidenceBar value={market.resolutionConfidence} />
                       </div>
                     )}
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

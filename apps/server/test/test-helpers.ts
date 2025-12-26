@@ -95,7 +95,7 @@ export async function createTestMarket(
       resolutionDeadline:
         options.resolutionDeadline ?? new Date(now.getTime() + 2 * ONE_DAY_MS),
       createdById: options.createdById,
-      status: "ACTIVE",
+      status: "LIVE",
     })
     .returning();
 

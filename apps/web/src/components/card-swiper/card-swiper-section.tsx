@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { SwipeStack } from "@/components/swipe/swipe-stack";
+import { useRef, useState } from "react";
+import { SwipeStack, type SwipeStackRef } from "@/components/swipe/swipe-stack";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketStack } from "@/hooks/use-market-stack";
 import { usePlaceBet } from "@/hooks/use-place-bet";
@@ -9,31 +9,26 @@ import { EmptyState } from "./empty-state";
 import { GameCard, type MarketCard } from "./game-card";
 
 export function CardSwiperSection() {
-  const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const stackRef = useRef<SwipeStackRef>(null);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useMarketStack(10);
+  const { data, isLoading, error, refetch } = useMarketStack(20);
   const placeBet = usePlaceBet();
 
-  const allMarkets = data?.pages.flatMap((page) => page.markets) ?? [];
-  const markets = allMarkets.filter((m) => !swipedIds.has(m.id));
-
-  useEffect(() => {
-    if (markets.length <= 3 && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [markets.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const markets = data?.markets ?? [];
 
   const handleSwipe = (card: MarketCard, vote: "YES" | "NO") => {
-    setSwipedIds((prev) => new Set(prev).add(card.id));
-    placeBet.mutate({ marketId: card.id, vote });
+    placeBet.mutate(
+      { marketId: card.id, vote },
+      {
+        onSuccess: () => setCurrentIndex((i) => i + 1),
+        onError: () => {
+          stackRef.current?.revert();
+          setIsBlocked(true);
+        },
+      }
+    );
   };
 
   const handleSwipeLeft = (card: MarketCard) => handleSwipe(card, "NO");
@@ -90,18 +85,22 @@ export function CardSwiperSection() {
     );
   }
 
+  const visibleMarkets = markets.slice(currentIndex);
+
   return (
     <section className="p-4">
       <div className="mx-auto max-w-md">
-        {markets.length === 0 ? (
+        {visibleMarkets.length === 0 ? (
           <EmptyState />
         ) : (
           <SwipeStack
-            cards={markets}
+            cards={visibleMarkets}
             className="min-h-[500px]"
-            maxVisibleCards={3}
+            disabled={isBlocked}
+            maxVisibleCards={5}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
+            ref={stackRef}
             renderCard={(card) => <GameCard card={card} />}
           />
         )}

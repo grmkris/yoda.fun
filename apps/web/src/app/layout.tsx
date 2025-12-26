@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito, Righteous } from "next/font/google";
+import { headers } from "next/headers";
 import "../index.css";
+import Script from "next/script";
 import Header from "@/components/header";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
@@ -25,31 +27,65 @@ const righteous = Righteous({
 });
 
 export const metadata: Metadata = {
-  title: "yoda.fun",
-  description: "yoda.fun",
+  title: "yoda.fun - AI Prediction Markets",
+  description:
+    "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+  openGraph: {
+    title: "yoda.fun - AI Prediction Markets",
+    description:
+      "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+    images: ["/api/og"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "yoda.fun - AI Prediction Markets",
+    description:
+      "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+    images: ["/api/og"],
+  },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const response = await authClient
+    .getSession({
+      fetchOptions: { headers: await headers() },
+    })
+    .catch(() => null);
+
+  const session = response?.data ?? null;
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            crossOrigin="anonymous"
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            strategy="beforeInteractive"
+          />
+        )}
+      </head>
       <body
         className={`${fredoka.variable} ${nunito.variable} ${righteous.variable} antialiased`}
       >
-        <Providers>
-          <SidebarProvider>
-            <div className="flex h-svh bg-cosmic-subtle">
-              <AppSidebar />
-              <div className="flex flex-1 flex-col overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-auto">{children}</main>
+        <SessionProvider initialSession={session}>
+          <Providers>
+            <SidebarProvider>
+              <div className="flex h-svh bg-cosmic-subtle">
+                <AppSidebar />
+                <div className="flex flex-1 flex-col overflow-hidden">
+                  <Header />
+                  <main className="flex-1 overflow-auto">{children}</main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
-        </Providers>
+            </SidebarProvider>
+          </Providers>
+        </SessionProvider>
       </body>
     </html>
   );

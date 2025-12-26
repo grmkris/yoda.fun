@@ -4,13 +4,13 @@ import type { UserId } from "@yoda.fun/shared/typeid";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsFollowing, useToggleFollow } from "@/hooks/use-follow";
 import { useProfileByUsername } from "@/hooks/use-profile";
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 function StatCard({
@@ -35,7 +35,7 @@ function StatCard({
 }
 
 function FollowButton({ userId }: { userId: UserId }) {
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
   const { data: followStatus, isLoading } = useIsFollowing(userId);
   const toggleFollow = useToggleFollow();
 

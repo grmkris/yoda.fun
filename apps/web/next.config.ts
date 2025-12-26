@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  serverExternalPackages: ["@takumi-rs/image-response"],
   typedRoutes: true,
   reactCompiler: true,
   images: {

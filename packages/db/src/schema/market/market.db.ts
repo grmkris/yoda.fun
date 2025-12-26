@@ -25,10 +25,10 @@ import { user } from "../auth/auth.db";
 
 // Enums
 export const marketStatusEnum = pgEnum("market_status", [
-  "PENDING",
-  "ACTIVE",
-  "CLOSED",
-  "RESOLVED",
+  "PROCESSING",
+  "LIVE",
+  "VOTING_ENDED",
+  "SETTLED",
   "CANCELLED",
 ]);
 
@@ -68,9 +68,10 @@ export const market = pgTable("market", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   imageUrl: text("image_url"),
+  thumbnailUrl: text("thumbnail_url"),
   category: text("category"),
   tags: text("tags").array(),
-  status: marketStatusEnum("status").notNull().default("PENDING"),
+  status: marketStatusEnum("status").notNull().default("PROCESSING"),
   votingEndsAt: createTimestampField("voting_ends_at").notNull(),
   resolutionDeadline: createTimestampField("resolution_deadline").notNull(),
   betAmount: numeric("bet_amount", { precision: 10, scale: 2 })

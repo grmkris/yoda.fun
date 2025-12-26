@@ -8,6 +8,13 @@
       "when": 1766690184298,
       "tag": "0000_friendly_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766762034669,
+      "tag": "0001_majestic_vin_gonzales",
+      "breakpoints": true
     }
   ]
 }

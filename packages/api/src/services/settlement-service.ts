@@ -116,7 +116,7 @@ export function createSettlementService({
         .update(DB_SCHEMA.market)
         .set({
           result,
-          status: "RESOLVED",
+          status: "SETTLED",
           resolvedAt: new Date(),
           resolutionSources: metadata?.sources,
           resolutionConfidence: metadata?.confidence,
@@ -281,7 +281,7 @@ export function createSettlementService({
         .from(DB_SCHEMA.market)
         .where(
           and(
-            eq(DB_SCHEMA.market.status, "ACTIVE"),
+            eq(DB_SCHEMA.market.status, "LIVE"),
             sql`${DB_SCHEMA.market.resolutionDeadline} <= ${now}`
           )
         );

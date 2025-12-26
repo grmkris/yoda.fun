@@ -3,7 +3,7 @@ import {
   type SportsResolutionResult,
   type TheSportsDBEvent,
   TheSportsDBResponseSchema,
-} from "../market-generation-schemas";
+} from "../schemas";
 
 const THESPORTSDB_API_URL = "https://www.thesportsdb.com/api/v1/json/3";
 

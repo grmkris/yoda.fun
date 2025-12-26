@@ -1,14 +1,7 @@
-import { ResolutionStrategySchema } from "@yoda.fun/shared/resolution-types";
 import { z } from "zod";
 
-/**
- * Valid bet amounts in USD
- */
 export const BET_AMOUNTS = ["0.10", "0.25", "0.50", "1.00", "5.00"] as const;
 
-/**
- * Market categories
- */
 export const MARKET_CATEGORIES = [
   "sports",
   "entertainment",
@@ -19,24 +12,11 @@ export const MARKET_CATEGORIES = [
   "other",
 ] as const;
 
-/**
- * Duration units for market timing
- */
 export const DURATION_UNITS = ["hours", "days", "months"] as const;
 
-/**
- * Timeframe presets for market generation
- */
 export const TIMEFRAME_PRESETS = ["immediate", "short", "medium"] as const;
 export type TimeframePreset = (typeof TIMEFRAME_PRESETS)[number];
 
-// ============================================================================
-// Consolidated Search/Resolution Schemas
-// ============================================================================
-
-/**
- * Single search result item from any provider
- */
 export const SearchResultItemSchema = z.object({
   url: z.string(),
   title: z.string(),
@@ -44,9 +24,6 @@ export const SearchResultItemSchema = z.object({
   date: z.string().optional(),
 });
 
-/**
- * Search result from a provider (used by web-search-resolver)
- */
 export const SearchResultSchema = z.object({
   provider: z.enum(["xai_web", "xai_x", "google", "exa"]),
   query: z.string(),
@@ -54,17 +31,11 @@ export const SearchResultSchema = z.object({
   error: z.string().optional(),
 });
 
-/**
- * Source reference for resolution evidence
- */
 export const SourceSchema = z.object({
   url: z.string(),
   snippet: z.string(),
 });
 
-/**
- * Standard resolution output (used by all resolvers)
- */
 export const ResolutionOutputSchema = z.object({
   result: z.enum(["YES", "NO", "INVALID"]),
   confidence: z.number().min(0).max(100),
@@ -77,13 +48,6 @@ export type SearchResult = z.infer<typeof SearchResultSchema>;
 export type Source = z.infer<typeof SourceSchema>;
 export type ResolutionOutput = z.infer<typeof ResolutionOutputSchema>;
 
-// ============================================================================
-// Resolver-specific Result Schemas
-// ============================================================================
-
-/**
- * Price resolution result (extends base with price data)
- */
 export const PriceResolutionResultSchema = ResolutionOutputSchema.extend({
   result: z.enum(["YES", "NO"]),
   confidence: z.literal(100),
@@ -91,17 +55,11 @@ export const PriceResolutionResultSchema = ResolutionOutputSchema.extend({
 });
 export type PriceResolutionResult = z.infer<typeof PriceResolutionResultSchema>;
 
-/**
- * Sports resolution result
- */
 export const SportsResolutionResultSchema = ResolutionOutputSchema;
 export type SportsResolutionResult = z.infer<
   typeof SportsResolutionResultSchema
 >;
 
-/**
- * Web search resolution result (extends base with tools used)
- */
 export const WebSearchResolutionResultSchema = ResolutionOutputSchema.extend({
   toolsUsed: z.array(z.string()),
 });
@@ -109,13 +67,6 @@ export type WebSearchResolutionResult = z.infer<
   typeof WebSearchResolutionResultSchema
 >;
 
-// ============================================================================
-// External API Response Schemas
-// ============================================================================
-
-/**
- * CoinGecko API response for price data
- */
 export const CoinGeckoPriceResponseSchema = z.record(
   z.string(),
   z.object({
@@ -127,9 +78,6 @@ export type CoinGeckoPriceResponse = z.infer<
   typeof CoinGeckoPriceResponseSchema
 >;
 
-/**
- * TheSportsDB event data
- */
 export const TheSportsDBEventSchema = z.object({
   idEvent: z.string(),
   strEvent: z.string(),
@@ -143,32 +91,11 @@ export const TheSportsDBEventSchema = z.object({
 });
 export type TheSportsDBEvent = z.infer<typeof TheSportsDBEventSchema>;
 
-/**
- * TheSportsDB API response
- */
 export const TheSportsDBResponseSchema = z.object({
   events: z.array(TheSportsDBEventSchema).nullable(),
 });
 export type TheSportsDBResponse = z.infer<typeof TheSportsDBResponseSchema>;
 
-// ============================================================================
-// Internal DTOs
-// ============================================================================
-
-/**
- * Market info needed for resolution
- */
-export const MarketForResolutionSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  category: z.string().nullable(),
-  resolutionCriteria: z.string().nullable(),
-});
-export type MarketForResolution = z.infer<typeof MarketForResolutionSchema>;
-
-/**
- * Duration schema for flexible market timing
- */
 export const DurationSchema = z.object({
   value: z.number().int().min(1).describe("Duration value"),
   unit: z
@@ -178,10 +105,6 @@ export const DurationSchema = z.object({
 
 export type Duration = z.infer<typeof DurationSchema>;
 
-/**
- * Schema for a single AI-generated market
- * Used with aiClient.generateObject() for structured output
- */
 export const GeneratedMarketSchema = z.object({
   title: z
     .string()
@@ -208,12 +131,8 @@ export const GeneratedMarketSchema = z.object({
     .min(20)
     .max(300)
     .describe(
-      "Clear, objective criteria for determining YES or NO outcome (e.g., 'Resolves YES if official announcement is made before deadline')"
+      "Plain English resolution criteria that an AI will interpret to determine YES/NO (e.g., 'Resolves YES if Bitcoin reaches $100,000 on CoinGecko')"
     ),
-
-  resolutionMethod: ResolutionStrategySchema.describe(
-    "How the market will be resolved - PRICE for crypto prices, SPORTS for sports, WEB_SEARCH for news/events"
-  ),
 
   duration: DurationSchema.describe(
     "How long until voting ends. Use hours (1-24) for time-sensitive events, days (1-30) for near-term events, months (1-6) for longer predictions"
@@ -226,9 +145,6 @@ export const GeneratedMarketSchema = z.object({
 
 export type GeneratedMarket = z.infer<typeof GeneratedMarketSchema>;
 
-/**
- * Schema for batch market generation response from AI
- */
 export const GeneratedMarketsResponseSchema = z.object({
   markets: z
     .array(GeneratedMarketSchema)
@@ -241,9 +157,6 @@ export type GeneratedMarketsResponse = z.infer<
   typeof GeneratedMarketsResponseSchema
 >;
 
-/**
- * Schema for market resolution AI response
- */
 export const MarketResolutionSchema = z.object({
   result: z
     .enum(["YES", "NO", "INVALID"])
@@ -279,9 +192,6 @@ export const MarketResolutionSchema = z.object({
 
 export type MarketResolution = z.infer<typeof MarketResolutionSchema>;
 
-/**
- * Input for market generation service
- */
 export const GenerateMarketsInputSchema = z.object({
   count: z.number().int().min(1).max(100).default(5),
   categories: z.array(z.enum(MARKET_CATEGORIES)).optional(),
@@ -290,9 +200,6 @@ export const GenerateMarketsInputSchema = z.object({
 
 export type GenerateMarketsInput = z.infer<typeof GenerateMarketsInputSchema>;
 
-/**
- * Result from market generation service
- */
 export interface GenerateMarketsResult {
   markets: GeneratedMarket[];
   modelVersion: string;

@@ -9,8 +9,9 @@ import { createAuth } from "@yoda.fun/auth";
 import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
 import { count } from "@yoda.fun/db/drizzle";
 import { createLogger } from "@yoda.fun/logger";
+import { MARKET_GENERATION } from "@yoda.fun/markets/config";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
-import { ENV_CONFIG, MARKET_GENERATION } from "@yoda.fun/shared/constants";
+import { ENV_CONFIG } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
 import { S3Client } from "bun";
@@ -196,7 +197,7 @@ const imageWorker = createMarketImageWorker({
   db,
   logger,
   storage,
-  googleApiKey: aiClient.getProviderConfig().googleGeminiApiKey ?? "",
+  replicateApiKey: env.REPLICATE_API_KEY,
 });
 logger.info({ msg: "Market image worker started" });
 

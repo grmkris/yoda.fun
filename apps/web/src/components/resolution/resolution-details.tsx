@@ -1,20 +1,367 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import type { ResolutionStrategy } from "@yoda.fun/shared/resolution-types";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  DollarSign,
+  ExternalLink,
+  Globe,
+  Search,
+  Trophy,
+  XCircle,
+  Zap,
+} from "lucide-react";
+import { motion } from "motion/react";
 import type { BetMarket, MarketResult } from "@/lib/orpc-types";
-import { cn } from "@/lib/utils";
-import { ConfidenceBar } from "./confidence-bar";
-import { MethodBadge } from "./method-badge";
-import { SourcesList } from "./sources-list";
+
+const COLORS = {
+  yes: "oklch(0.72 0.18 175)",
+  yesBg: "oklch(0.72 0.18 175 / 15%)",
+  yesGlow: "0 0 30px oklch(0.72 0.18 175 / 60%)",
+  no: "oklch(0.68 0.20 25)",
+  noBg: "oklch(0.68 0.20 25 / 15%)",
+  noGlow: "0 0 30px oklch(0.68 0.20 25 / 60%)",
+  invalid: "oklch(0.80 0.16 90)",
+  invalidBg: "oklch(0.80 0.16 90 / 15%)",
+  invalidGlow: "0 0 30px oklch(0.80 0.16 90 / 60%)",
+  oracle: "oklch(0.75 0.20 280)",
+  oracleBg: "oklch(0.75 0.20 280 / 12%)",
+  oracleGlow: "0 0 25px oklch(0.75 0.20 280 / 40%)",
+  text: "oklch(0.95 0.02 280)",
+  textMuted: "oklch(0.65 0.04 280)",
+  textDim: "oklch(0.50 0.04 280)",
+  cardBg: "oklch(0.12 0.03 280 / 70%)",
+  border: "oklch(0.65 0.25 290 / 15%)",
+} as const;
+
+const resultConfig = {
+  YES: {
+    color: COLORS.yes,
+    bg: COLORS.yesBg,
+    glow: COLORS.yesGlow,
+    icon: CheckCircle2,
+  },
+  NO: { color: COLORS.no, bg: COLORS.noBg, glow: COLORS.noGlow, icon: XCircle },
+  INVALID: {
+    color: COLORS.invalid,
+    bg: COLORS.invalidBg,
+    glow: COLORS.invalidGlow,
+    icon: AlertTriangle,
+  },
+};
+
+const methodConfig = {
+  PRICE: {
+    icon: DollarSign,
+    label: "Price Oracle",
+    color: "oklch(0.70 0.18 200)",
+  },
+  SPORTS: { icon: Trophy, label: "Sports Data", color: "oklch(0.72 0.20 145)" },
+  WEB_SEARCH: {
+    icon: Globe,
+    label: "Web Research",
+    color: "oklch(0.70 0.22 290)",
+  },
+};
 
 interface ResolutionDetailsProps {
   result: MarketResult;
   confidence: BetMarket["resolutionConfidence"];
   resolutionType: BetMarket["resolutionType"];
   sources: BetMarket["resolutionSources"];
+  strategy?: ResolutionStrategy | null;
+  criteria?: string | null;
   className?: string;
-  defaultExpanded?: boolean;
+}
+
+// Arc gauge for confidence
+function ConfidenceArc({ value }: { value: number }) {
+  const radius = 40;
+  const strokeWidth = 8;
+  const circumference = Math.PI * radius;
+  const progress = (value / 100) * circumference;
+
+  const getColor = (v: number) => {
+    if (v >= 85) {
+      return "oklch(0.72 0.18 175)";
+    }
+    if (v >= 70) {
+      return "oklch(0.75 0.20 145)";
+    }
+    if (v >= 50) {
+      return "oklch(0.80 0.16 90)";
+    }
+    return "oklch(0.68 0.20 25)";
+  };
+
+  return (
+    <div className="relative flex flex-col items-center">
+      <svg
+        aria-label={`Confidence: ${value}%`}
+        className="-rotate-90"
+        height={radius + strokeWidth}
+        role="img"
+        width={radius * 2 + strokeWidth}
+      >
+        <title>Confidence: {value}%</title>
+        <defs>
+          <linearGradient
+            gradientUnits="userSpaceOnUse"
+            id="arcGradient"
+            x1="0"
+            x2="100"
+            y1="0"
+            y2="0"
+          >
+            <stop offset="0%" stopColor={getColor(value)} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={getColor(value)} />
+          </linearGradient>
+        </defs>
+        <path
+          d={`M ${strokeWidth / 2 + radius} ${strokeWidth / 2 + radius} m -${radius} 0 a ${radius} ${radius} 0 1 1 ${radius * 2} 0`}
+          fill="none"
+          stroke="oklch(0.20 0.02 280)"
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+        />
+        <motion.path
+          animate={{ strokeDashoffset: circumference - progress }}
+          d={`M ${strokeWidth / 2 + radius} ${strokeWidth / 2 + radius} m -${radius} 0 a ${radius} ${radius} 0 1 1 ${radius * 2} 0`}
+          fill="none"
+          initial={{ strokeDashoffset: circumference }}
+          stroke="url(#arcGradient)"
+          strokeDasharray={circumference}
+          strokeLinecap="round"
+          strokeWidth={strokeWidth}
+          style={{ filter: `drop-shadow(0 0 6px ${getColor(value)})` }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+        />
+      </svg>
+      <motion.span
+        animate={{ opacity: 1, scale: 1 }}
+        className="absolute top-1/2 font-bold font-heading text-2xl"
+        initial={{ opacity: 0, scale: 0.5 }}
+        style={{ color: getColor(value) }}
+        transition={{ delay: 0.5, duration: 0.3 }}
+      >
+        {value}%
+      </motion.span>
+    </div>
+  );
+}
+
+// Strategy details renderer
+function StrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 },
+  };
+
+  if (strategy.type === "PRICE") {
+    const operatorLabels: Record<string, string> = {
+      ">=": "reaches or exceeds",
+      "<=": "drops to or below",
+      ">": "exceeds",
+      "<": "drops below",
+    };
+    return (
+      <motion.div
+        animate="visible"
+        className="space-y-2"
+        initial="hidden"
+        variants={containerVariants}
+      >
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <DollarSign
+            className="h-4 w-4"
+            style={{ color: methodConfig.PRICE.color }}
+          />
+          <span style={{ color: COLORS.textMuted }}>Asset:</span>
+          <span className="font-medium" style={{ color: COLORS.text }}>
+            {strategy.coinId.toUpperCase()}
+          </span>
+        </motion.div>
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <Zap
+            className="h-4 w-4"
+            style={{ color: methodConfig.PRICE.color }}
+          />
+          <span style={{ color: COLORS.textMuted }}>Condition:</span>
+          <span className="font-medium" style={{ color: COLORS.text }}>
+            {operatorLabels[strategy.operator]} $
+            {strategy.threshold.toLocaleString()}
+          </span>
+        </motion.div>
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <Globe className="h-4 w-4" style={{ color: COLORS.textDim }} />
+          <span style={{ color: COLORS.textMuted }}>Provider:</span>
+          <span style={{ color: COLORS.textDim }}>CoinGecko</span>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (strategy.type === "SPORTS") {
+    return (
+      <motion.div
+        animate="visible"
+        className="space-y-2"
+        initial="hidden"
+        variants={containerVariants}
+      >
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <Trophy
+            className="h-4 w-4"
+            style={{ color: methodConfig.SPORTS.color }}
+          />
+          <span style={{ color: COLORS.textMuted }}>Team:</span>
+          <span className="font-medium" style={{ color: COLORS.text }}>
+            {strategy.teamName}
+          </span>
+        </motion.div>
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <Zap
+            className="h-4 w-4"
+            style={{ color: methodConfig.SPORTS.color }}
+          />
+          <span style={{ color: COLORS.textMuted }}>Outcome:</span>
+          <span
+            className="font-medium capitalize"
+            style={{ color: COLORS.text }}
+          >
+            {strategy.outcome}
+          </span>
+        </motion.div>
+        <motion.div className="flex items-center gap-2" variants={itemVariants}>
+          <Globe className="h-4 w-4" style={{ color: COLORS.textDim }} />
+          <span style={{ color: COLORS.textMuted }}>Provider:</span>
+          <span style={{ color: COLORS.textDim }}>TheSportsDB</span>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (strategy.type === "WEB_SEARCH") {
+    return (
+      <motion.div
+        animate="visible"
+        className="space-y-3"
+        initial="hidden"
+        variants={containerVariants}
+      >
+        <motion.div className="flex items-start gap-2" variants={itemVariants}>
+          <Search
+            className="mt-0.5 h-4 w-4"
+            style={{ color: methodConfig.WEB_SEARCH.color }}
+          />
+          <div>
+            <span style={{ color: COLORS.textMuted }}>Search Query:</span>
+            <p
+              className="mt-1 font-medium text-sm"
+              style={{ color: COLORS.text }}
+            >
+              "{strategy.searchQuery}"
+            </p>
+          </div>
+        </motion.div>
+        {strategy.successIndicators.length > 0 && (
+          <motion.div
+            className="flex items-start gap-2"
+            variants={itemVariants}
+          >
+            <CheckCircle2
+              className="mt-0.5 h-4 w-4"
+              style={{ color: methodConfig.WEB_SEARCH.color }}
+            />
+            <div>
+              <span style={{ color: COLORS.textMuted }}>
+                Success Indicators:
+              </span>
+              <ul className="mt-1 space-y-1">
+                {strategy.successIndicators.map((indicator, i) => (
+                  <li
+                    className="flex items-center gap-1.5 text-sm"
+                    key={i}
+                    style={{ color: COLORS.text }}
+                  >
+                    <span style={{ color: methodConfig.WEB_SEARCH.color }}>
+                      •
+                    </span>
+                    {indicator}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  }
+
+  return null;
+}
+
+// Source card
+function SourceCard({
+  source,
+  index,
+}: {
+  source: { url: string; snippet: string };
+  index: number;
+}) {
+  const getDomain = (url: string) => {
+    try {
+      return new URL(url).hostname.replace("www.", "");
+    } catch {
+      return url.slice(0, 30);
+    }
+  };
+
+  return (
+    <motion.a
+      animate={{ opacity: 1, y: 0 }}
+      className="group block rounded-xl p-3 transition-all"
+      href={source.url}
+      initial={{ opacity: 0, y: 20 }}
+      rel="noopener noreferrer"
+      style={{
+        background: COLORS.cardBg,
+        border: `1px solid ${COLORS.border}`,
+      }}
+      target="_blank"
+      transition={{ delay: 0.6 + index * 0.1, duration: 0.4 }}
+      whileHover={{
+        y: -4,
+        boxShadow: COLORS.oracleGlow,
+        borderColor: "oklch(0.65 0.25 290 / 40%)",
+      }}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <ExternalLink
+          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+          style={{ color: COLORS.oracle }}
+        />
+        <span
+          className="font-heading font-medium text-sm"
+          style={{ color: COLORS.text }}
+        >
+          {getDomain(source.url)}
+        </span>
+      </div>
+      <p
+        className="line-clamp-2 text-sm leading-relaxed"
+        style={{ color: COLORS.textMuted }}
+      >
+        {source.snippet}
+      </p>
+    </motion.a>
+  );
 }
 
 export function ResolutionDetails({
@@ -22,63 +369,211 @@ export function ResolutionDetails({
   confidence,
   resolutionType,
   sources,
+  strategy,
+  criteria,
   className,
-  defaultExpanded = false,
 }: ResolutionDetailsProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
-  const resultColor = {
-    YES: "text-green-500",
-    NO: "text-red-500",
-    INVALID: "text-yellow-500",
-  }[result];
+  const config = resultConfig[result];
+  const ResultIcon = config.icon;
+  const method = resolutionType ? methodConfig[resolutionType] : null;
+  const MethodIcon = method?.icon;
 
   return (
-    <div className={cn("rounded-lg border bg-card", className)}>
-      <button
-        className="flex w-full items-center justify-between p-3 text-left"
-        onClick={() => setExpanded(!expanded)}
-        type="button"
+    <div className={className}>
+      {/* Verdict Banner */}
+      <motion.div
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative mb-6 overflow-hidden rounded-2xl p-6 text-center"
+        initial={{ opacity: 0, scale: 0.95 }}
+        style={{
+          background: `linear-gradient(135deg, ${config.bg} 0%, oklch(0.08 0.02 270 / 80%) 100%)`,
+          border: `2px solid ${config.color}40`,
+          boxShadow: config.glow,
+        }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="flex items-center gap-3">
-          <span className={cn("font-bold text-sm", resultColor)}>{result}</span>
-          {confidence !== null && (
-            <div className="w-20">
-              <ConfidenceBar value={confidence} />
-            </div>
-          )}
-          {resolutionType && <MethodBadge type={resolutionType} />}
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
-            expanded && "rotate-180"
-          )}
+        {/* Pulsing border effect */}
+        <motion.div
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{ border: `2px solid ${config.color}` }}
+          transition={{
+            duration: 2,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
         />
-      </button>
 
-      {expanded && (
-        <div className="space-y-3 border-t px-3 py-3">
-          {confidence !== null && (
-            <div>
-              <p className="mb-1 font-medium text-muted-foreground text-xs">
-                Confidence
-              </p>
-              <ConfidenceBar value={confidence} />
-            </div>
-          )}
+        <motion.div
+          animate={{ scale: 1, rotate: 0 }}
+          className="mb-3 inline-flex items-center justify-center rounded-full p-3"
+          initial={{ scale: 0, rotate: -180 }}
+          style={{ background: config.bg }}
+          transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
+        >
+          <ResultIcon className="h-8 w-8" style={{ color: config.color }} />
+        </motion.div>
 
-          {resolutionType && (
-            <div>
-              <p className="mb-1 font-medium text-muted-foreground text-xs">
-                Resolution Method
-              </p>
-              <MethodBadge type={resolutionType} />
-            </div>
-          )}
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.3 }}
+        >
+          <p
+            className="mb-1 font-heading text-xs uppercase tracking-widest"
+            style={{ color: COLORS.textMuted }}
+          >
+            Verdict
+          </p>
+          <h3
+            className="font-bold font-heading text-3xl"
+            style={{ color: config.color }}
+          >
+            {result}
+          </h3>
+        </motion.div>
+      </motion.div>
 
-          {sources && sources.length > 0 && <SourcesList sources={sources} />}
-        </div>
+      {/* Stats Grid */}
+      <div className="mb-6 grid grid-cols-2 gap-4">
+        {/* Confidence */}
+        {confidence !== null && (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl p-4"
+            initial={{ opacity: 0, y: 20 }}
+            style={{
+              background: COLORS.cardBg,
+              border: `1px solid ${COLORS.border}`,
+            }}
+            transition={{ delay: 0.2 }}
+          >
+            <p
+              className="mb-3 text-center font-heading text-xs uppercase tracking-wider"
+              style={{ color: COLORS.textMuted }}
+            >
+              Confidence
+            </p>
+            <ConfidenceArc value={confidence} />
+          </motion.div>
+        )}
+
+        {/* Resolution Method */}
+        {method && MethodIcon && (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center rounded-xl p-4"
+            initial={{ opacity: 0, y: 20 }}
+            style={{
+              background: COLORS.cardBg,
+              border: `1px solid ${COLORS.border}`,
+            }}
+            transition={{ delay: 0.3 }}
+          >
+            <p
+              className="mb-3 font-heading text-xs uppercase tracking-wider"
+              style={{ color: COLORS.textMuted }}
+            >
+              Method
+            </p>
+            <motion.div
+              animate={{ scale: 1 }}
+              className="mb-2 rounded-xl p-3"
+              initial={{ scale: 0 }}
+              style={{ background: `${method.color}20` }}
+              transition={{ delay: 0.4, type: "spring" }}
+            >
+              <MethodIcon className="h-6 w-6" style={{ color: method.color }} />
+            </motion.div>
+            <span
+              className="font-heading font-medium text-sm"
+              style={{ color: COLORS.text }}
+            >
+              {method.label}
+            </span>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Resolution Criteria */}
+      {criteria && (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-xl p-4"
+          initial={{ opacity: 0, y: 20 }}
+          style={{
+            background: COLORS.cardBg,
+            border: `1px solid ${COLORS.border}`,
+          }}
+          transition={{ delay: 0.35 }}
+        >
+          <p
+            className="mb-2 font-heading text-xs uppercase tracking-wider"
+            style={{ color: COLORS.textMuted }}
+          >
+            Resolution Criteria
+          </p>
+          <p className="leading-relaxed" style={{ color: COLORS.text }}>
+            {criteria}
+          </p>
+        </motion.div>
+      )}
+
+      {/* Strategy Details */}
+      {strategy && (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-xl p-4"
+          initial={{ opacity: 0, y: 20 }}
+          style={{
+            background: COLORS.cardBg,
+            border: `1px solid ${COLORS.border}`,
+          }}
+          transition={{ delay: 0.4 }}
+        >
+          <p
+            className="mb-3 font-heading text-xs uppercase tracking-wider"
+            style={{ color: COLORS.textMuted }}
+          >
+            Strategy Details
+          </p>
+          <StrategyDetails strategy={strategy} />
+        </motion.div>
+      )}
+
+      {/* Evidence Sources */}
+      {sources && sources.length > 0 && (
+        <motion.div
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <div
+              className="h-px flex-1"
+              style={{ background: COLORS.border }}
+            />
+            <span
+              className="font-heading text-xs uppercase tracking-wider"
+              style={{ color: COLORS.textMuted }}
+            >
+              Evidence
+            </span>
+            <div
+              className="h-px flex-1"
+              style={{ background: COLORS.border }}
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {sources.map((source, index) => (
+              <SourceCard
+                index={index}
+                key={`${source.url}-${index}`}
+                source={source}
+              />
+            ))}
+          </div>
+        </motion.div>
       )}
     </div>
   );

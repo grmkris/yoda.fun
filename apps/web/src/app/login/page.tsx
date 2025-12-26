@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { PortoConnectButton } from "@/components/porto-connect-button";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/components/session-provider";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { session } = useSession();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
