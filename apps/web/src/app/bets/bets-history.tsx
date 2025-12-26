@@ -2,7 +2,9 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { useState } from "react";
+import { CompactCountdownRow } from "@/components/countdown";
 import { ResolutionDetails } from "@/components/resolution/resolution-details";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBetHistory } from "@/hooks/use-bet-history";
@@ -158,118 +160,132 @@ export function BetsHistory() {
                 : "oklch(0.68 0.20 25)";
 
             return (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-xl p-4"
-                initial={{ opacity: 0, y: 10 }}
-                key={bet.id}
-                style={{
-                  background: "oklch(0.10 0.03 280 / 60%)",
-                  backdropFilter: "blur(20px)",
-                  border: `1px solid ${colors.text}20`,
-                }}
-                transition={{ delay: index * 0.03, duration: 0.3 }}
-              >
-                {/* Status indicator bar */}
-                <div
-                  className="absolute top-0 left-0 h-full w-1"
-                  style={{ background: colors.text }}
-                />
+              <Link className="block" href={`/bets/${bet.id}`} key={bet.id}>
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden rounded-xl p-4 transition-all hover:scale-[1.01]"
+                  initial={{ opacity: 0, y: 10 }}
+                  style={{
+                    background: "oklch(0.10 0.03 280 / 60%)",
+                    backdropFilter: "blur(20px)",
+                    border: `1px solid ${colors.text}20`,
+                  }}
+                  transition={{ delay: index * 0.03, duration: 0.3 }}
+                  whileHover={{
+                    boxShadow: `0 0 20px ${colors.text}15`,
+                  }}
+                >
+                  {/* Status indicator bar */}
+                  <div
+                    className="absolute top-0 left-0 h-full w-1"
+                    style={{ background: colors.text }}
+                  />
 
-                <div className="flex items-start justify-between gap-4 pl-3">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    {/* Title */}
-                    <h3
-                      className="font-heading font-medium leading-tight"
-                      style={{ color: "oklch(0.95 0.02 280)" }}
-                    >
-                      {market.title}
-                    </h3>
-
-                    {/* Meta info */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Status badge */}
-                      <span
-                        className="rounded-full px-2.5 py-0.5 font-medium text-xs"
-                        style={{
-                          background: colors.bg,
-                          color: colors.text,
-                          boxShadow: colors.glow,
-                        }}
+                  <div className="flex items-start justify-between gap-4 pl-3">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      {/* Title */}
+                      <h3
+                        className="font-heading font-medium leading-tight"
+                        style={{ color: "oklch(0.95 0.02 280)" }}
                       >
-                        {bet.status}
-                      </span>
+                        {market.title}
+                      </h3>
 
-                      {/* Vote */}
-                      <span
-                        className="text-sm"
-                        style={{ color: "oklch(0.60 0.04 280)" }}
-                      >
-                        Vote:{" "}
+                      {/* Meta info */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Status badge */}
                         <span
-                          className="font-semibold"
-                          style={{ color: voteColor }}
+                          className="rounded-full px-2.5 py-0.5 font-medium text-xs"
+                          style={{
+                            background: colors.bg,
+                            color: colors.text,
+                            boxShadow: colors.glow,
+                          }}
                         >
-                          {bet.vote}
+                          {bet.status}
                         </span>
-                      </span>
 
-                      {/* Category */}
-                      {market.category && (
-                        <>
-                          <span style={{ color: "oklch(0.40 0.04 280)" }}>
-                            •
-                          </span>
+                        {/* Vote */}
+                        <span
+                          className="text-sm"
+                          style={{ color: "oklch(0.60 0.04 280)" }}
+                        >
+                          Vote:{" "}
                           <span
-                            className="text-sm"
-                            style={{ color: "oklch(0.50 0.04 280)" }}
+                            className="font-semibold"
+                            style={{ color: voteColor }}
                           >
-                            {market.category}
+                            {bet.vote}
                           </span>
-                        </>
-                      )}
+                        </span>
+
+                        {/* Category */}
+                        {market.category && (
+                          <>
+                            <span style={{ color: "oklch(0.40 0.04 280)" }}>
+                              •
+                            </span>
+                            <span
+                              className="text-sm"
+                              style={{ color: "oklch(0.50 0.04 280)" }}
+                            >
+                              {market.category}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Countdown for active bets */}
+                      {bet.status === "ACTIVE" &&
+                        market.votingEndsAt &&
+                        market.resolutionDeadline && (
+                          <CompactCountdownRow
+                            resolutionDeadline={market.resolutionDeadline}
+                            votingEndsAt={market.votingEndsAt}
+                          />
+                        )}
+
+                      {/* Date */}
+                      <p
+                        className="text-xs"
+                        style={{ color: "oklch(0.50 0.04 280)" }}
+                      >
+                        Placed on {formatDate(bet.createdAt)}
+                      </p>
                     </div>
 
-                    {/* Date */}
-                    <p
-                      className="text-xs"
-                      style={{ color: "oklch(0.50 0.04 280)" }}
-                    >
-                      Placed on {formatDate(bet.createdAt)}
-                    </p>
-                  </div>
-
-                  {/* Amount */}
-                  <div className="shrink-0 text-right">
-                    <p
-                      className="font-bold font-heading text-lg"
-                      style={{ color: "oklch(0.95 0.02 280)" }}
-                    >
-                      ${bet.amount}
-                    </p>
-                    {bet.payout && (
+                    {/* Amount */}
+                    <div className="shrink-0 text-right">
                       <p
-                        className="font-medium text-sm"
-                        style={{ color: "oklch(0.72 0.18 175)" }}
+                        className="font-bold font-heading text-lg"
+                        style={{ color: "oklch(0.95 0.02 280)" }}
                       >
-                        Won ${bet.payout}
+                        ${bet.amount}
                       </p>
-                    )}
+                      {bet.payout && (
+                        <p
+                          className="font-medium text-sm"
+                          style={{ color: "oklch(0.72 0.18 175)" }}
+                        >
+                          Won ${bet.payout}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Resolution details for resolved markets */}
-                {market.result && (
-                  <div className="mt-3 pl-3">
-                    <ResolutionDetails
-                      confidence={market.resolutionConfidence}
-                      resolutionType={market.resolutionType}
-                      result={market.result}
-                      sources={market.resolutionSources}
-                    />
-                  </div>
-                )}
-              </motion.div>
+                  {/* Resolution details for resolved markets */}
+                  {market.result && (
+                    <div className="mt-3 pl-3">
+                      <ResolutionDetails
+                        confidence={market.resolutionConfidence}
+                        resolutionType={market.resolutionType}
+                        result={market.result}
+                        sources={market.resolutionSources}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              </Link>
             );
           })}
         </div>

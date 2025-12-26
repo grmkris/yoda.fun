@@ -26,11 +26,16 @@ async function proxyToServer(toolName: string, args: Record<string, unknown>) {
 
   if (!response.ok) {
     const error = await response.text();
-    return { content: [{ type: "text" as const, text: `Error: ${error}` }], isError: true };
+    return {
+      content: [{ type: "text" as const, text: `Error: ${error}` }],
+      isError: true,
+    };
   }
 
   const result = await response.json();
-  return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+  };
 }
 
 // MCP Server
@@ -115,7 +120,7 @@ server.registerTool(
   {
     description: "Get your agent wallet address and USDC balance",
   },
-  async () => {
+  () => {
     const address = getWalletAddress();
     return {
       content: [

@@ -27,6 +27,9 @@ export const idTypesMapNameToPrefix = {
   userProfile: "upr",
   follow: "flw",
   activity: "act",
+
+  // storage
+  marketImage: "mig",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -145,3 +148,7 @@ export type FollowId = z.infer<typeof FollowId>;
 
 export const ActivityId = typeIdValidator("activity");
 export type ActivityId = z.infer<typeof ActivityId>;
+
+// Storage types
+export const MarketImageId = typeIdValidator("marketImage");
+export type MarketImageId = z.infer<typeof MarketImageId>;

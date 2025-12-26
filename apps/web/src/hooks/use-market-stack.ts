@@ -1,12 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { orpc } from "@/utils/orpc";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { client } from "@/utils/orpc";
 
-/**
- * Fetch stack of markets for swiping UI
- * Returns active markets that the current user hasn't bet on yet
- */
 export function useMarketStack(limit = 10) {
-  return useQuery(orpc.market.getStack.queryOptions({ input: { limit } }));
+  return useInfiniteQuery({
+    queryKey: ["market", "stack", { limit }],
+    queryFn: ({ pageParam }: { pageParam?: string }) =>
+      client.market.getStack({ limit, cursor: pageParam }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: undefined,
+  });
 }

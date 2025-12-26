@@ -31,37 +31,58 @@ export async function fetchCoinGeckoPrice(symbol: string): Promise<number> {
   return coinData.usd;
 }
 
-export async function resolvePriceMarket(
-  strategy: PriceStrategy
-): Promise<PriceResolutionResult> {
-  const { coinId, condition } = strategy;
-  const { operator, threshold } = condition;
+export interface PriceResolverDeps {
+  fetchPrice: (coinId: string) => Promise<number>;
+}
 
-  const price = await fetchCoinGeckoPrice(coinId);
-
-  const meetsThreshold =
-    operator === ">=" || operator === ">"
-      ? price >= threshold
-      : price <= threshold;
-
-  const result = meetsThreshold ? "YES" : "NO";
-
-  const comparisonText =
-    operator === ">=" || operator === ">" ? "above" : "below";
-  const reasoning = `${coinId.toUpperCase()} price is $${price.toLocaleString()}, which is ${
-    meetsThreshold ? "" : "not "
-  }${comparisonText} the threshold of $${threshold.toLocaleString()}.`;
+export function createPriceResolverService(deps: PriceResolverDeps) {
+  const { fetchPrice } = deps;
 
   return {
-    result,
-    confidence: 100,
-    reasoning,
-    sources: [
-      {
-        url: `https://www.coingecko.com/en/coins/${coinId}`,
-        snippet: `${coinId.toUpperCase()}: $${price.toLocaleString()} USD`,
-      },
-    ],
-    priceAtResolution: price,
+    resolvePriceMarket: async (
+      strategy: PriceStrategy
+    ): Promise<PriceResolutionResult> => {
+      const { coinId, operator, threshold } = strategy;
+
+      const price = await fetchPrice(coinId);
+
+      const meetsThreshold =
+        operator === ">=" || operator === ">"
+          ? price >= threshold
+          : price <= threshold;
+
+      const result = meetsThreshold ? "YES" : "NO";
+
+      const comparisonText =
+        operator === ">=" || operator === ">" ? "above" : "below";
+      const reasoning = `${coinId.toUpperCase()} price is $${price.toLocaleString()}, which is ${
+        meetsThreshold ? "" : "not "
+      }${comparisonText} the threshold of $${threshold.toLocaleString()}.`;
+
+      return {
+        result,
+        confidence: 100,
+        reasoning,
+        sources: [
+          {
+            url: `https://www.coingecko.com/en/coins/${coinId}`,
+            snippet: `${coinId.toUpperCase()}: $${price.toLocaleString()} USD`,
+          },
+        ],
+        priceAtResolution: price,
+      };
+    },
   };
 }
+
+export type PriceResolverService = ReturnType<
+  typeof createPriceResolverService
+>;
+
+// Default service instance for production
+export const priceResolverService = createPriceResolverService({
+  fetchPrice: fetchCoinGeckoPrice,
+});
+
+// Convenience export for backwards compatibility
+export const resolvePriceMarket = priceResolverService.resolvePriceMarket;

@@ -17,10 +17,6 @@ function getErrorData(error: unknown): ORPCErrorData {
   return {};
 }
 
-/**
- * Place a bet on a market
- * Automatically invalidates market stack and balance queries on success
- */
 export function usePlaceBet() {
   const queryClient = useQueryClient();
 
@@ -29,10 +25,6 @@ export function usePlaceBet() {
     onSuccess: (data) => {
       toast.success(`Bet placed! ${data.vote} on market`);
 
-      // Invalidate related queries
-      queryClient.invalidateQueries({
-        queryKey: orpc.market.getStack.queryOptions({ input: {} }).queryKey,
-      });
       queryClient.invalidateQueries({
         queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
       });

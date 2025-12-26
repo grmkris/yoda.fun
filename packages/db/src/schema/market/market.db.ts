@@ -25,6 +25,7 @@ import { user } from "../auth/auth.db";
 
 // Enums
 export const marketStatusEnum = pgEnum("market_status", [
+  "PENDING",
   "ACTIVE",
   "CLOSED",
   "RESOLVED",
@@ -69,7 +70,7 @@ export const market = pgTable("market", {
   imageUrl: text("image_url"),
   category: text("category"),
   tags: text("tags").array(),
-  status: marketStatusEnum("status").notNull().default("ACTIVE"),
+  status: marketStatusEnum("status").notNull().default("PENDING"),
   votingEndsAt: createTimestampField("voting_ends_at").notNull(),
   resolutionDeadline: createTimestampField("resolution_deadline").notNull(),
   betAmount: numeric("bet_amount", { precision: 10, scale: 2 })

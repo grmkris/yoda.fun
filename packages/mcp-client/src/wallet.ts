@@ -1,7 +1,7 @@
-import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 const YODA_DIR = join(homedir(), ".yoda");
 const WALLET_PATH = join(YODA_DIR, "wallet.json");

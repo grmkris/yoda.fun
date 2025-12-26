@@ -19,7 +19,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: ">=", threshold: 150_000 },
+        operator: ">=",
+        threshold: 150_000,
       };
 
       const result = PriceStrategySchema.safeParse(strategy);
@@ -31,7 +32,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "dogecoin",
-        condition: { operator: ">=", threshold: 0 },
+        operator: ">=",
+        threshold: 0,
       };
 
       const result = PriceStrategySchema.safeParse(strategy);
@@ -43,7 +45,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: ">=", threshold: -100 },
+        operator: ">=",
+        threshold: -100,
       };
 
       const result = PriceStrategySchema.safeParse(strategy);
@@ -55,7 +58,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "shiba-inu",
-        condition: { operator: ">=", threshold: 0.000_01 },
+        operator: ">=",
+        threshold: 0.000_01,
       };
 
       const result = PriceStrategySchema.safeParse(strategy);
@@ -70,7 +74,8 @@ describe("Schema Validation", () => {
           type: "PRICE",
           provider: "coingecko",
           coinId: "bitcoin",
-          condition: { operator, threshold: 100_000 },
+          operator,
+          threshold: 100_000,
         };
 
         const result = PriceStrategySchema.safeParse(strategy);
@@ -83,7 +88,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: "==", threshold: 100_000 },
+        operator: "==",
+        threshold: 100_000,
       };
 
       const result = PriceStrategySchema.safeParse(strategy);
@@ -211,7 +217,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: ">=", threshold: 150_000 },
+        operator: ">=",
+        threshold: 150_000,
       };
 
       const result = ResolutionStrategySchema.safeParse(strategy);
@@ -312,7 +319,8 @@ describe("Schema Validation", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: ">=", threshold: 150_000 },
+        operator: ">=",
+        threshold: 150_000,
       },
       duration: { value: 7, unit: "days" },
       betAmount: "1.00",
@@ -370,7 +378,8 @@ describe("Schema Validation", () => {
           type: "PRICE",
           provider: "coingecko",
           coinId: "dogecoin",
-          condition: { operator: ">=", threshold: 0 },
+          operator: ">=",
+          threshold: 0,
         },
       };
       const result = GeneratedMarketSchema.safeParse(market);

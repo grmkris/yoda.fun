@@ -39,7 +39,11 @@ describe("Web Search Resolver", () => {
         {
           type: "WEB_SEARCH",
           searchQuery: "why is the sky blue during the day",
-          successIndicators: ["sky is blue", "Rayleigh scattering", "blue light"],
+          successIndicators: [
+            "sky is blue",
+            "Rayleigh scattering",
+            "blue light",
+          ],
         }
       );
 
@@ -78,7 +82,8 @@ describe("Web Search Resolver", () => {
         aiClient,
         {
           title: "Did Bitcoin exist before 2010?",
-          description: "Market resolves YES if Bitcoin was created before 2010.",
+          description:
+            "Market resolves YES if Bitcoin was created before 2010.",
           category: "crypto",
           resolutionCriteria: null,
         },
@@ -107,7 +112,11 @@ describe("Web Search Resolver", () => {
         {
           type: "WEB_SEARCH",
           searchQuery: "JavaScript programming language",
-          successIndicators: ["programming language", "JavaScript", "scripting"],
+          successIndicators: [
+            "programming language",
+            "JavaScript",
+            "scripting",
+          ],
         }
       );
 

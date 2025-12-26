@@ -12,9 +12,34 @@ import {
   type SQL,
   sql,
 } from "@yoda.fun/db/drizzle";
+import type { SelectMarket } from "@yoda.fun/db/schema";
 import { MarketId, UserId } from "@yoda.fun/shared/typeid";
+import type { StorageClient } from "@yoda.fun/storage";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
+
+function withSignedImageUrl<T extends SelectMarket>(
+  market: T,
+  storage?: StorageClient
+): T {
+  if (!(storage && market.imageUrl)) {
+    return market;
+  }
+  return {
+    ...market,
+    imageUrl: storage.getSignedUrl({ key: market.imageUrl, expiresIn: 3600 }),
+  };
+}
+
+function withSignedImageUrls<T extends SelectMarket>(
+  markets: T[],
+  storage?: StorageClient
+): T[] {
+  if (!storage) {
+    return markets;
+  }
+  return markets.map((m) => withSignedImageUrl(m, storage));
+}
 
 const MAX_MARKETS_PER_PAGE = 100;
 const DEFAULT_MARKETS_PER_PAGE = 20;
@@ -77,7 +102,7 @@ export const marketRouter = {
         .offset(input.offset);
 
       return {
-        markets,
+        markets: withSignedImageUrls(markets, context.storage),
         limit: input.limit,
         offset: input.offset,
       };
@@ -93,17 +118,15 @@ export const marketRouter = {
       })
     )
     .handler(async ({ context, input }) => {
-      const marketRecords = await context.db
-        .select()
-        .from(DB_SCHEMA.market)
-        .where(eq(DB_SCHEMA.market.id, input.marketId))
-        .limit(1);
+      const market = await context.db.query.market.findFirst({
+        where: eq(DB_SCHEMA.market.id, input.marketId),
+      });
 
-      if (marketRecords.length === 0) {
+      if (!market) {
         throw new ORPCError("NOT_FOUND");
       }
 
-      return marketRecords[0];
+      return withSignedImageUrl(market, context.storage);
     }),
 
   /**
@@ -119,6 +142,7 @@ export const marketRouter = {
           .max(MAX_STACK_SIZE)
           .optional()
           .default(DEFAULT_STACK_SIZE),
+        cursor: z.string().datetime().optional(),
       })
     )
     .handler(async ({ context, input }) => {
@@ -133,7 +157,7 @@ export const marketRouter = {
       const betMarketIds = userBets.map((b) => b.marketId);
 
       // Get active markets, excluding those the user has voted on
-      const conditions = [
+      const conditions: SQL[] = [
         eq(DB_SCHEMA.market.status, "ACTIVE"),
         gt(DB_SCHEMA.market.votingEndsAt, new Date()),
       ];
@@ -143,15 +167,29 @@ export const marketRouter = {
         conditions.push(notInArray(DB_SCHEMA.market.id, betMarketIds));
       }
 
+      // Cursor-based pagination: fetch items older than cursor
+      if (input.cursor) {
+        conditions.push(
+          sql`${DB_SCHEMA.market.createdAt} < ${new Date(input.cursor)}`
+        );
+      }
+
+      // Fetch one extra to determine if there are more items
       const markets = await context.db
         .select()
         .from(DB_SCHEMA.market)
         .where(and(...conditions))
         .orderBy(desc(DB_SCHEMA.market.createdAt))
-        .limit(input.limit);
+        .limit(input.limit + 1);
+
+      const hasMore = markets.length > input.limit;
+      const items = hasMore ? markets.slice(0, input.limit) : markets;
+      const lastItem = items.at(-1);
 
       return {
-        markets,
+        markets: withSignedImageUrls(items, context.storage),
+        nextCursor:
+          hasMore && lastItem ? lastItem.createdAt.toISOString() : undefined,
       };
     }),
 

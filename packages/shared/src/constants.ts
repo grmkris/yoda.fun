@@ -2,6 +2,7 @@
 export type JobType =
   | "resolve-market"
   | "generate-market"
+  | "generate-market-image"
   | "process-withdrawal";
 export interface RateLimitConfig {
   max: number;
@@ -14,20 +15,23 @@ export const WORKER_CONFIG = {
   CONCURRENCY: {
     "resolve-market": 2, // Keep low - AI calls are expensive
     "generate-market": 1, // Single market generation at a time
+    "generate-market-image": 2, // Can parallelize image generation
     "process-withdrawal": 1, // Process withdrawals one at a time
   } satisfies Record<JobType, number>,
   // Per-queue rate limits
   RATE_LIMITS: {
     "resolve-market": { max: 10, duration: 60_000 }, // 10/min
     "generate-market": { max: 5, duration: 60_000 }, // 5/min - don't spam AI
+    "generate-market-image": { max: 20, duration: 60_000 }, // 20/min
     "process-withdrawal": { max: 30, duration: 60_000 }, // 30/min - on-chain txs
   } satisfies Record<JobType, RateLimitConfig>,
 } as const;
 
 // Market Generation Config
 export const MARKET_GENERATION = {
-  COUNT: 5,
-  CRON: "0 */6 * * *", // Every 6 hours
+  COUNT: 10,
+  // every 1 hour
+  CRON: "0 * * * *",
 } as const;
 
 // Network types

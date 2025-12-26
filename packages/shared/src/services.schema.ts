@@ -25,7 +25,7 @@ export const SERVICE_URLS: Record<
     web: "https://localhost:4201",
     cookieDomain: "localhost",
     siweDomain: "localhost",
-    storageUrl: "http://localhost:9100",
+    storageUrl: "https://minio-eg4wkg0480c04og400osksws.37.60.232.68.sslip.io",
     posthog: "https://eu.i.posthog.com",
     posthogAssets: "https://eu-assets.i.posthog.com",
     posthogUi: "https://eu.posthog.com",

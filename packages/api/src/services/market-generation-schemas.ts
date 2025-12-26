@@ -24,6 +24,12 @@ export const MARKET_CATEGORIES = [
  */
 export const DURATION_UNITS = ["hours", "days", "months"] as const;
 
+/**
+ * Timeframe presets for market generation
+ */
+export const TIMEFRAME_PRESETS = ["immediate", "short", "medium"] as const;
+export type TimeframePreset = (typeof TIMEFRAME_PRESETS)[number];
+
 // ============================================================================
 // Consolidated Search/Resolution Schemas
 // ============================================================================
@@ -277,8 +283,9 @@ export type MarketResolution = z.infer<typeof MarketResolutionSchema>;
  * Input for market generation service
  */
 export const GenerateMarketsInputSchema = z.object({
-  count: z.number().int().min(1).max(10).default(5),
+  count: z.number().int().min(1).max(100).default(5),
   categories: z.array(z.enum(MARKET_CATEGORIES)).optional(),
+  timeframe: z.enum(TIMEFRAME_PRESETS).default("short"),
 });
 
 export type GenerateMarketsInput = z.infer<typeof GenerateMarketsInputSchema>;

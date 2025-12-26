@@ -15,7 +15,6 @@ describe("Market Generation Service", () => {
       db: testEnv.deps.db,
       logger: testEnv.deps.logger,
       aiClient: testEnv.deps.aiClient,
-      storage: testEnv.deps.storage,
     });
   }, 60_000);
 

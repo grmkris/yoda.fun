@@ -37,7 +37,7 @@ describe("Bet Router", () => {
       await expect(
         call(
           betRouter.place,
-          { marketId: "invalid_market_id", vote: "YES" },
+          { marketId: "mkt_invalid_market_id", vote: "YES" },
           { context: mockContext }
         )
       ).rejects.toThrow();

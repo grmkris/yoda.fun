@@ -23,6 +23,9 @@ export type BetWithMarket = BetHistoryResponse["bets"][0];
 export type Bet = BetWithMarket["bet"];
 export type BetMarket = BetWithMarket["market"];
 export type BetStatus = Bet["status"];
+export type BetByIdResponse = ExtractSuccess<
+  Awaited<ReturnType<typeof client.bet.byId>>
+>;
 
 // Resolution
 export type ResolutionStatsResponse = ExtractSuccess<

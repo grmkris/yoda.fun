@@ -2,6 +2,7 @@ import type { Logger } from "@yoda.fun/logger";
 import { type JobType, WORKER_CONFIG } from "@yoda.fun/shared/constants";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
+import type { GenerateMarketImageJob } from "./jobs/generate-market-image-job";
 import type { GenerateMarketJob } from "./jobs/generate-market-job";
 import type { ProcessWithdrawalJob } from "./jobs/process-withdrawal-job";
 import type { ResolveMarketJob } from "./jobs/resolve-market-job";
@@ -14,12 +15,18 @@ export interface QueueConfig {
 export interface JobData {
   "resolve-market": ResolveMarketJob;
   "generate-market": GenerateMarketJob;
+  "generate-market-image": GenerateMarketImageJob;
   "process-withdrawal": ProcessWithdrawalJob;
 }
 
 export interface JobResult {
   "resolve-market": { success: boolean; marketId: string };
   "generate-market": { success: boolean; marketsCreated: number };
+  "generate-market-image": {
+    success: boolean;
+    marketId: string;
+    imageUrl?: string;
+  };
   "process-withdrawal": {
     success: boolean;
     withdrawalId: string;
@@ -75,6 +82,13 @@ export function createQueueClient(config: QueueConfig) {
       connection,
       defaultJobOptions,
     }),
+    "generate-market-image": new Queue<GenerateMarketImageJob>(
+      "generate-market-image",
+      {
+        connection,
+        defaultJobOptions,
+      }
+    ),
     "process-withdrawal": new Queue<ProcessWithdrawalJob>(
       "process-withdrawal",
       {
@@ -120,6 +134,13 @@ export function createQueueClient(config: QueueConfig) {
         const job = await queues["generate-market"].add(
           queueName,
           data as GenerateMarketJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else if (queueName === "generate-market-image") {
+        const job = await queues["generate-market-image"].add(
+          queueName,
+          data as GenerateMarketImageJob,
           jobOptions
         );
         jobId = job.id;

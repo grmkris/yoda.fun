@@ -27,6 +27,7 @@ import {
 import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
+import { createMarketImageWorker } from "@/workers/market-image.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
 
 const logger = createLogger({
@@ -187,9 +188,17 @@ const generationWorker = createMarketGenerationWorker({
   db,
   logger,
   aiClient,
-  storage,
 });
 logger.info({ msg: "Market generation worker started" });
+
+const imageWorker = createMarketImageWorker({
+  queue,
+  db,
+  logger,
+  storage,
+  googleApiKey: aiClient.getProviderConfig().googleGeminiApiKey ?? "",
+});
+logger.info({ msg: "Market image worker started" });
 
 // Seed initial markets if database is empty
 const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
@@ -230,6 +239,7 @@ process.on("SIGTERM", async () => {
   logger.info({ msg: "Shutting down server..." });
   await resolutionWorker.close();
   await generationWorker.close();
+  await imageWorker.close();
   await queue.close();
   await shutdownPostHog();
   process.exit(0);

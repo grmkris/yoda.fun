@@ -9,7 +9,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev:disabled": "tsc --watch"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",

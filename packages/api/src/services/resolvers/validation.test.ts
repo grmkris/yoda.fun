@@ -15,7 +15,8 @@ describe("Validation Layer", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "bitcoin",
-        condition: { operator: ">=", threshold: 100_000 },
+        operator: ">=",
+        threshold: 100_000,
       });
 
       expect(result.valid).toBe(true);
@@ -28,7 +29,8 @@ describe("Validation Layer", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "ethereum",
-        condition: { operator: ">=", threshold: 1000 },
+        operator: ">=",
+        threshold: 1000,
       });
 
       expect(result.valid).toBe(true);
@@ -41,7 +43,8 @@ describe("Validation Layer", () => {
         type: "PRICE",
         provider: "coingecko",
         coinId: "not-a-real-coin-xyz-123",
-        condition: { operator: ">=", threshold: 1 },
+        operator: ">=",
+        threshold: 1,
       });
 
       expect(result.valid).toBe(false);

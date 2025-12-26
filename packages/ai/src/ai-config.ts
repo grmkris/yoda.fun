@@ -1,3 +1,4 @@
+import type { TimeframePreset } from "@yoda.fun/api/services/market-generation-schemas";
 import type { AIModelConfig } from "./ai-providers";
 
 /**
@@ -15,6 +16,12 @@ export const MODELS = {
     provider: "xai",
     modelId: "grok-4-1-fast-reasoning",
   } as const satisfies AIModelConfig,
+
+  // Google Gemini models
+  GOOGLE_GEMINI_2_5_FLASH_THINKING: {
+    provider: "google",
+    modelId: "gemini-flash-latest",
+  } as const satisfies AIModelConfig,
 } as const;
 
 /**
@@ -25,6 +32,7 @@ export interface MarketGenerationContext {
   categories?: string[];
   existingMarketTitles?: string[];
   targetCount: number;
+  timeframe: TimeframePreset;
 }
 
 /**
@@ -37,6 +45,30 @@ export interface MarketResolutionContext {
   votingEndedAt: string;
 }
 
+function getDurationGuidance(timeframe: TimeframePreset): string {
+  switch (timeframe) {
+    case "immediate":
+      return `   IMPORTANT: Generate ONLY short-term markets (1-6 hours)
+   { value: 2, unit: "hours" } - for live events happening NOW
+   { value: 4, unit: "hours" } - for events happening today
+   { value: 6, unit: "hours" } - maximum allowed duration
+   DO NOT use days or months - only hours between 1-6`;
+    case "short":
+      return `   Focus on near-term markets (1-3 days preferred)
+   { value: 12, unit: "hours" } - for events happening today
+   { value: 1, unit: "days" } - for tomorrow (preferred)
+   { value: 2, unit: "days" } - for day after tomorrow
+   { value: 3, unit: "days" } - maximum preferred duration
+   Avoid durations longer than 3 days`;
+    case "medium":
+      return `   For events with known future dates (3-14 days)
+   { value: 5, unit: "days" } - for events this week
+   { value: 7, unit: "days" } - for events next week
+   { value: 14, unit: "days" } - maximum duration
+   Use when event date is known in advance`;
+  }
+}
+
 /**
  * Feature-specific AI configurations
  * Each feature has its own model and prompt builder
@@ -46,7 +78,7 @@ export const FEATURES = {
    * Generate new betting markets from current events/trends
    */
   marketGeneration: {
-    model: MODELS.XAI_GROK_4_LATEST,
+    model: MODELS.GOOGLE_GEMINI_2_5_FLASH_THINKING,
     systemPrompt: (ctx: MarketGenerationContext): string => {
       const sections: string[] = [];
 
@@ -90,11 +122,11 @@ For each market provide:
 4. resolutionCriteria: Clear, objective criteria for determining YES or NO
 5. resolutionMethod: HOW the market will be resolved (pick ONE type):
    - PRICE: For crypto price targets (absolute USD values only, NOT percentages)
-     { type: "PRICE", provider: "coingecko", coinId: "bitcoin", condition: { operator: ">=", threshold: 150000 } }
+     { type: "PRICE", provider: "coingecko", coinId: "bitcoin", operator: ">=", threshold: 150000 }
      coinId = CoinGecko coin ID (bitcoin, ethereum, solana, dogecoin, etc.)
      operator = ">=" for above, "<=" for below
-     threshold = absolute USD price (e.g., 150000 for $150k, 0.40 for $0.40)
-     IMPORTANT: Never use percentage changes like "pump 20%" - always use absolute prices
+     threshold = absolute USD price (e.g., 150000 for $150k, 0.50 for $0.50)
+     IMPORTANT: threshold must match the price in your title - if title says "$0.50", threshold must be 0.5
    - SPORTS: For sports outcomes
      { type: "SPORTS", provider: "thesportsdb", sport: "nba", teamName: "Lakers", outcome: "win" }
      sport = nba, nfl, mlb, nhl, soccer, mma, boxing, tennis, esports
@@ -102,30 +134,28 @@ For each market provide:
    - WEB_SEARCH: For news/announcements/events (use this for complex cases too)
      { type: "WEB_SEARCH", searchQuery: "Apple iPhone announcement 2025", successIndicators: ["announced", "unveiled", "released"] }
 6. duration: How long until voting ends
-   { value: 2, unit: "hours" } - for live events, breaking news (1-24 hours)
-   { value: 7, unit: "days" } - for near-term events (1-30 days, prefer 3-14)
-   { value: 1, unit: "months" } - for longer predictions (1-6 months)
+${getDurationGuidance(ctx.timeframe)}
 7. betAmount: Suggested bet amount in USD (0.10, 0.25, 0.50, 1.00, or 5.00)`);
 
       // Examples
       sections.push(`## GOOD EXAMPLES
-- "Will Bitcoin hit $150k before January 2025?"
-  → resolutionMethod: { type: "PRICE", provider: "coingecko", coinId: "bitcoin", condition: { operator: ">=", threshold: 150000 } }
-  → duration: { value: 7, unit: "days" }
+- "Will Bitcoin hit $100k today?"
+  → resolutionMethod: { type: "PRICE", provider: "coingecko", coinId: "bitcoin", operator: ">=", threshold: 100000 }
+  → duration: { value: 4, unit: "hours" }
 
 - "Will the Lakers win tonight?"
   → resolutionMethod: { type: "SPORTS", provider: "thesportsdb", sport: "nba", teamName: "Lakers", outcome: "win" }
-  → duration: { value: 4, unit: "hours" }
+  → duration: { value: 3, unit: "hours" }
 
-- "Will Taylor Swift announce a new album this month?"
-  → resolutionMethod: { type: "WEB_SEARCH", searchQuery: "Taylor Swift new album announcement", successIndicators: ["announced", "new album", "release date"] }
-  → duration: { value: 14, unit: "days" }
+- "Will Elon tweet about Dogecoin today?"
+  → resolutionMethod: { type: "WEB_SEARCH", searchQuery: "Elon Musk Dogecoin tweet", successIndicators: ["tweeted", "posted", "Dogecoin"] }
+  → duration: { value: 6, unit: "hours" }
 
 ## BAD EXAMPLES (avoid these patterns)
 - "Will the economy improve?" (subjective, unverifiable)
 - "Will X be the best movie of the year?" (opinion-based)
 - "Will someone famous die?" (morbid, inappropriate)
-- "Will Dogecoin pump 20%?" (percentage-based - use absolute price like "hit $0.40" instead)`);
+- "Will Dogecoin pump 20%?" (percentage-based - use absolute price like "hit $0.50" instead)`);
 
       return sections.join("\n\n");
     },

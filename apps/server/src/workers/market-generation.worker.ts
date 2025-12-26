@@ -3,14 +3,12 @@ import { createMarketGenerationService } from "@yoda.fun/api/services/market-gen
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
-import type { StorageClient } from "@yoda.fun/storage";
 
 export interface MarketGenerationWorkerConfig {
   queue: QueueClient;
   db: Database;
   logger: Logger;
   aiClient: AiClient;
-  storage?: StorageClient;
 }
 
 /**
@@ -22,13 +20,12 @@ export function createMarketGenerationWorker(
 ): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, aiClient, storage } = config;
+  const { queue, db, logger, aiClient } = config;
 
   const marketGenerationService = createMarketGenerationService({
     db,
     logger,
     aiClient,
-    storage,
   });
 
   logger.info({ msg: "Starting market generation worker" });
@@ -50,8 +47,17 @@ export function createMarketGenerationWorker(
           categories,
         });
 
-      // Schedule resolution jobs for each new market
+      // Schedule resolution and image jobs for each new market
       for (const market of inserted) {
+        // Queue image generation
+        await queue.addJob("generate-market-image", {
+          marketId: market.id,
+          title: market.title,
+          description: market.description ?? "",
+          category: market.category ?? "other",
+        });
+
+        // Schedule resolution
         const delayMs =
           new Date(market.resolutionDeadline).getTime() - Date.now();
 

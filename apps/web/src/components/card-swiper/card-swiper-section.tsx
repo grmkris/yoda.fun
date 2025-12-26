@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import type { SwipeStackRef } from "@/components/swipe/swipe-stack";
+import { useEffect, useState } from "react";
 import { SwipeStack } from "@/components/swipe/swipe-stack";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketStack } from "@/hooks/use-market-stack";
@@ -10,37 +9,36 @@ import { EmptyState } from "./empty-state";
 import { GameCard, type MarketCard } from "./game-card";
 
 export function CardSwiperSection() {
-  const swipeRef = useRef<SwipeStackRef>(null);
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
 
-  const { data, isLoading, error, refetch } = useMarketStack(10);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMarketStack(10);
   const placeBet = usePlaceBet();
 
-  const markets = (data?.markets ?? []).filter((m) => !swipedIds.has(m.id));
+  const allMarkets = data?.pages.flatMap((page) => page.markets) ?? [];
+  const markets = allMarkets.filter((m) => !swipedIds.has(m.id));
 
-  const handleSwipeLeft = (card: MarketCard) => {
-    placeBet.mutate(
-      { marketId: card.id, vote: "NO" },
-      {
-        onSettled: () => {
-          setSwipedIds((prev) => new Set(prev).add(card.id));
-        },
-      }
-    );
+  useEffect(() => {
+    if (markets.length <= 3 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [markets.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleSwipe = (card: MarketCard, vote: "YES" | "NO") => {
+    setSwipedIds((prev) => new Set(prev).add(card.id));
+    placeBet.mutate({ marketId: card.id, vote });
   };
 
-  const handleSwipeRight = (card: MarketCard) => {
-    placeBet.mutate(
-      { marketId: card.id, vote: "YES" },
-      {
-        onSettled: () => {
-          setSwipedIds((prev) => new Set(prev).add(card.id));
-        },
-      }
-    );
-  };
+  const handleSwipeLeft = (card: MarketCard) => handleSwipe(card, "NO");
+  const handleSwipeRight = (card: MarketCard) => handleSwipe(card, "YES");
 
-  // Loading state
   if (isLoading) {
     return (
       <section className="p-4">
@@ -57,7 +55,6 @@ export function CardSwiperSection() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <section className="p-4">
@@ -93,22 +90,19 @@ export function CardSwiperSection() {
     );
   }
 
-  const allSwiped = markets.length === 0;
-
   return (
     <section className="p-4">
       <div className="mx-auto max-w-md">
-        {allSwiped ? (
+        {markets.length === 0 ? (
           <EmptyState />
         ) : (
           <SwipeStack
-            cards={markets as MarketCard[]}
+            cards={markets}
             className="min-h-[500px]"
             maxVisibleCards={3}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-            ref={swipeRef}
-            renderCard={(card) => <GameCard card={card as MarketCard} />}
+            renderCard={(card) => <GameCard card={card} />}
           />
         )}
       </div>

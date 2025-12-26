@@ -16,10 +16,8 @@ export const PriceStrategySchema = z.object({
   type: z.literal("PRICE"),
   provider: z.literal("coingecko"),
   coinId: z.string(),
-  condition: z.object({
-    operator: z.enum([">=", "<=", ">", "<"]),
-    threshold: z.number().positive(),
-  }),
+  operator: z.enum([">=", "<=", ">", "<"]),
+  threshold: z.number().positive(),
 });
 
 export const SportsStrategySchema = z.object({

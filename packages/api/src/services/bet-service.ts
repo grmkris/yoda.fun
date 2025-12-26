@@ -2,7 +2,7 @@ import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, desc, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
-import type { MarketId, UserId } from "@yoda.fun/shared/typeid";
+import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import { err, ok, type Result } from "neverthrow";
 import type { SelectBet } from "../../../db/src/schema/market/market.zod";
 
@@ -220,6 +220,25 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         .offset(input.offset);
 
       return bets;
+    },
+
+    async getBetById(userId: UserId, betId: BetId) {
+      const result = await db
+        .select({
+          bet: DB_SCHEMA.bet,
+          market: DB_SCHEMA.market,
+        })
+        .from(DB_SCHEMA.bet)
+        .innerJoin(
+          DB_SCHEMA.market,
+          eq(DB_SCHEMA.bet.marketId, DB_SCHEMA.market.id)
+        )
+        .where(
+          and(eq(DB_SCHEMA.bet.id, betId), eq(DB_SCHEMA.bet.userId, userId))
+        )
+        .limit(1);
+
+      return result[0] ?? null;
     },
   };
 }

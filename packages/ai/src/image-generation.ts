@@ -1,4 +1,5 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { typeIdGenerator } from "@yoda.fun/shared/typeid";
 import type { StorageClient } from "@yoda.fun/storage";
 import { generateText } from "ai";
 
@@ -13,9 +14,6 @@ export interface ImageGenerationConfig {
   storage: StorageClient;
 }
 
-/**
- * Build an image prompt from market context
- */
 function buildImagePrompt(market: MarketImageContext): string {
   const categoryStyles: Record<string, string> = {
     sports: "dynamic action shot, stadium atmosphere, vibrant colors",
@@ -43,10 +41,6 @@ Style requirements:
 - Professional quality, suitable for a betting app`;
 }
 
-/**
- * Generate an image for a market and upload to storage
- * Returns the public URL or null if generation fails
- */
 export async function generateMarketImage(
   market: MarketImageContext,
   config: ImageGenerationConfig
@@ -56,7 +50,7 @@ export async function generateMarketImage(
     const prompt = buildImagePrompt(market);
 
     const result = await generateText({
-      model: google("gemini-3-pro-image-preview"),
+      model: google("gemini-2.5-flash-image-preview"),
       prompt,
     });
 
@@ -64,21 +58,12 @@ export async function generateMarketImage(
       file.mediaType.startsWith("image/")
     );
 
-    // Get the image data as base64
     const imageData = image?.base64;
     if (!imageData) {
       return null;
     }
 
-    // Generate unique key for storage
-    const timestamp = Date.now();
-    const slug = market.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .slice(0, 50);
-    const key = `markets/${timestamp}-${slug}.jpg`;
-
-    // Convert base64 to buffer and upload
+    const key = `markets/${typeIdGenerator("marketImage")}.jpg`;
     const buffer = Buffer.from(imageData, "base64");
     await config.storage.upload({
       key,
@@ -86,26 +71,18 @@ export async function generateMarketImage(
       contentType: "image/jpeg",
     });
 
-    // Return the signed URL (long expiry for public access)
-    return config.storage.getSignedUrl({ key, expiresIn: 60 * 60 * 24 * 365 });
+    return key;
   } catch (error) {
-    // Log but don't throw - image generation is optional
     console.error("Image generation failed:", error);
     return null;
   }
 }
 
-/**
- * Generate images for multiple markets in parallel
- * Returns map of market title -> image URL (or null)
- */
 export async function generateMarketImages(
   markets: MarketImageContext[],
   config: ImageGenerationConfig
 ): Promise<Map<string, string | null>> {
   const results = new Map<string, string | null>();
-
-  // Generate in parallel with concurrency limit
   const concurrency = 1;
   for (let i = 0; i < markets.length; i += concurrency) {
     const batch = markets.slice(i, i + concurrency);
