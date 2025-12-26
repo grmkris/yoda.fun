@@ -160,7 +160,11 @@ export function BetsHistory() {
                 : "oklch(0.68 0.20 25)";
 
             return (
-              <Link className="block" href={`/market/${market.id}`} key={bet.id}>
+              <Link
+                className="block"
+                href={`/market/${market.id}`}
+                key={bet.id}
+              >
                 <motion.div
                   animate={{ opacity: 1, y: 0 }}
                   className="relative overflow-hidden rounded-xl p-4 transition-all hover:scale-[1.01]"
@@ -233,7 +237,6 @@ export function BetsHistory() {
                             </span>
                           </>
                         )}
-
                       </div>
 
                       {/* Countdown for active bets */}

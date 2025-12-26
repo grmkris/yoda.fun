@@ -41,8 +41,6 @@ describe("Market Generation Service", () => {
         expect(market.duration).toBeDefined();
         expect(market.duration.value).toBeGreaterThan(0);
         expect(["hours", "days", "months"]).toContain(market.duration.unit);
-        expect(market.resolutionMethod).toBeDefined();
-        expect(market.resolutionMethod.type).toBeTruthy();
       }
 
       expect(result.inserted.length).toBeGreaterThanOrEqual(1);

@@ -130,7 +130,9 @@ export function createMarketGenerationService(
     throw new Error("Generation failed after all retries");
   };
 
-  const insertMarkets = (markets: GeneratedMarket[]): Promise<SelectMarket[]> => {
+  const insertMarkets = (
+    markets: GeneratedMarket[]
+  ): Promise<SelectMarket[]> => {
     const prepared = markets.map((m) => prepareMarket(m, null));
     return insertToDatabase(prepared);
   };

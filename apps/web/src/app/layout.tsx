@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito, Righteous } from "next/font/google";
-import { headers } from "next/headers";
 import "../index.css";
 import Script from "next/script";
 import Header from "@/components/header";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
 import { SidebarProvider } from "@/components/sidebar/sidebar-context";
-import { authClient } from "@/lib/auth-client";
 
 const fredoka = Fredoka({
   variable: "--font-heading",
@@ -47,27 +45,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const reqHeaders = await headers();
-  const response = await authClient
-    .getSession({
-      fetchOptions: { headers: reqHeaders },
-    })
-    .catch(() => null);
-
-  // Create anonymous session if none exists
-  if (!response?.data) {
-    await authClient.signIn
-      .anonymous({
-        fetchOptions: { headers: reqHeaders },
-      })
-      .catch(() => null);
-  }
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

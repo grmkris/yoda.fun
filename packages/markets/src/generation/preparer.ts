@@ -16,7 +16,9 @@ export function prepareMarket(
   market: GeneratedMarket,
   imageUrl?: string | null
 ): PreparedMarket {
-  const { votingEndsAt, resolutionDeadline } = calculateMarketDates(market.duration);
+  const { votingEndsAt, resolutionDeadline } = calculateMarketDates(
+    market.duration
+  );
 
   return {
     title: market.title,
