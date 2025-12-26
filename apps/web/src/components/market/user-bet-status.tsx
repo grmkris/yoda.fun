@@ -27,6 +27,29 @@ const COLORS = {
   goldBg: "oklch(0.80 0.16 90 / 15%)",
 } as const;
 
+function getPayoutLabel(status: string) {
+  if (status === "WON") {
+    return "Payout";
+  }
+  if (status === "ACTIVE") {
+    return "Potential Win";
+  }
+  return "Payout";
+}
+
+function getPayoutDisplay(
+  payout: string | null | undefined,
+  potentialPayout: string | null
+) {
+  if (payout) {
+    return `$${Number(payout).toFixed(2)}`;
+  }
+  if (potentialPayout) {
+    return `~$${potentialPayout}`;
+  }
+  return "-";
+}
+
 const statusConfig = {
   ACTIVE: {
     label: "Awaiting Resolution",
@@ -187,11 +210,7 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
           transition={{ delay: 0.8 }}
         >
           <p className="mb-1 text-xs" style={{ color: COLORS.textDim }}>
-            {bet.status === "WON"
-              ? "Payout"
-              : bet.status === "ACTIVE"
-                ? "Potential Win"
-                : "Payout"}
+            {getPayoutLabel(bet.status)}
           </p>
           <p
             className="font-heading font-semibold text-lg"
@@ -199,11 +218,7 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
               color: bet.status === "WON" ? COLORS.gold : COLORS.text,
             }}
           >
-            {bet.payout
-              ? `$${Number(bet.payout).toFixed(2)}`
-              : potentialPayout
-                ? `~$${potentialPayout}`
-                : "-"}
+            {getPayoutDisplay(bet.payout, potentialPayout)}
           </p>
         </motion.div>
       </div>

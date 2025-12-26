@@ -109,6 +109,102 @@ function PulsingGlow({ leadingVote }: { leadingVote: "YES" | "NO" }) {
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-48 w-full rounded-2xl" />
+      <Skeleton className="h-16 w-full rounded-xl" />
+      <div className="grid gap-4 md:grid-cols-3">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function MarketNotFound() {
+  return (
+    <div className="space-y-6">
+      <Link
+        className="inline-flex items-center gap-2 transition-opacity hover:opacity-80"
+        href="/"
+        style={{ color: COLORS.primary }}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="font-heading text-sm">Back to Markets</span>
+      </Link>
+
+      <div
+        className="rounded-2xl p-12 text-center"
+        style={{
+          background: COLORS.cardBg,
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${COLORS.no}30`,
+        }}
+      >
+        <p className="font-heading text-lg" style={{ color: COLORS.no }}>
+          Market not found
+        </p>
+        <p className="mt-2 text-sm" style={{ color: COLORS.textMuted }}>
+          This market may not exist or has been removed.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MarketHeroImage({
+  imageUrl,
+  title,
+  status,
+  isLive,
+}: {
+  imageUrl: string;
+  title: string;
+  status: string;
+  isLive: boolean;
+}) {
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="relative h-48 w-full overflow-hidden rounded-2xl"
+      initial={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+    >
+      <Image
+        alt={title}
+        className="object-cover"
+        fill
+        priority
+        sizes="(max-width: 768px) 100vw, 800px"
+        src={imageUrl}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to top, oklch(0.08 0.02 270) 0%, oklch(0.08 0.02 270 / 40%) 40%, transparent 70%)",
+        }}
+      />
+
+      <div className="absolute top-4 right-4">
+        <span
+          className="rounded-full px-3 py-1.5 font-heading font-medium text-sm backdrop-blur-md"
+          style={{
+            background: isLive ? COLORS.yesBg : COLORS.primaryBg,
+            color: isLive ? COLORS.yes : COLORS.primary,
+            boxShadow: isLive ? COLORS.yesGlow : COLORS.primaryGlow,
+          }}
+        >
+          {status}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
 function ResolutionSection({
   result,
   resolutionType,
@@ -209,6 +305,112 @@ function CountdownSection({
   );
 }
 
+function BettingSection({
+  isLive,
+  userBet,
+  market,
+  placeBet,
+  onBet,
+}: {
+  isLive: boolean;
+  userBet: NonNullable<ReturnType<typeof useMarket>["data"]>["userBet"];
+  market: {
+    totalYesVotes: number;
+    totalNoVotes: number;
+    totalPool: string;
+    betAmount: string;
+  };
+  placeBet: ReturnType<typeof usePlaceBet>;
+  onBet: (vote: "YES" | "NO") => void;
+}) {
+  if (!isLive) {
+    return null;
+  }
+
+  if (userBet) {
+    return (
+      <UserBetStatus
+        bet={userBet}
+        market={{
+          totalYesVotes: market.totalYesVotes,
+          totalNoVotes: market.totalNoVotes,
+          totalPool: market.totalPool,
+        }}
+      />
+    );
+  }
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl p-6"
+      initial={{ opacity: 0, y: 20 }}
+      style={{
+        background:
+          "linear-gradient(135deg, oklch(0.12 0.04 290 / 80%), oklch(0.10 0.03 280 / 60%))",
+        backdropFilter: "blur(20px)",
+        border: `1px solid ${COLORS.border}`,
+      }}
+      transition={{ duration: 0.4, delay: 0.6 }}
+    >
+      <h2
+        className="mb-4 text-center font-heading font-medium"
+        style={{ color: COLORS.text }}
+      >
+        Place Your Prediction
+      </h2>
+
+      <div className="grid grid-cols-2 gap-4">
+        <motion.button
+          className="flex flex-col items-center gap-2 rounded-xl p-4 font-bold font-heading transition-all"
+          disabled={placeBet.isPending}
+          onClick={() => onBet("YES")}
+          style={{
+            background: COLORS.yesBg,
+            border: `2px solid ${COLORS.yes}`,
+            color: COLORS.yes,
+          }}
+          type="button"
+          whileHover={{
+            scale: 1.02,
+            boxShadow: COLORS.yesGlow,
+          }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <ThumbsUp className="h-8 w-8" />
+          <span className="text-lg">YES</span>
+          <span className="text-xs opacity-70">
+            ${Number(market.betAmount).toFixed(2)}
+          </span>
+        </motion.button>
+
+        <motion.button
+          className="flex flex-col items-center gap-2 rounded-xl p-4 font-bold font-heading transition-all"
+          disabled={placeBet.isPending}
+          onClick={() => onBet("NO")}
+          style={{
+            background: COLORS.noBg,
+            border: `2px solid ${COLORS.no}`,
+            color: COLORS.no,
+          }}
+          type="button"
+          whileHover={{
+            scale: 1.02,
+            boxShadow: COLORS.noGlow,
+          }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <ThumbsDown className="h-8 w-8" />
+          <span className="text-lg">NO</span>
+          <span className="text-xs opacity-70">
+            ${Number(market.betAmount).toFixed(2)}
+          </span>
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
 export function MarketDetail({ marketId }: MarketDetailProps) {
   const { data: market, isLoading, error } = useMarket(marketId);
   const placeBet = usePlaceBet();
@@ -226,49 +428,11 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
-        <Skeleton className="h-16 w-full rounded-xl" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-24 rounded-xl" />
-          <Skeleton className="h-24 rounded-xl" />
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (error || !market) {
-    return (
-      <div className="space-y-6">
-        <Link
-          className="inline-flex items-center gap-2 transition-opacity hover:opacity-80"
-          href="/"
-          style={{ color: COLORS.primary }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="font-heading text-sm">Back to Markets</span>
-        </Link>
-
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{
-            background: COLORS.cardBg,
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${COLORS.no}30`,
-          }}
-        >
-          <p className="font-heading text-lg" style={{ color: COLORS.no }}>
-            Market not found
-          </p>
-          <p className="mt-2 text-sm" style={{ color: COLORS.textMuted }}>
-            This market may not exist or has been removed.
-          </p>
-        </div>
-      </div>
-    );
+    return <MarketNotFound />;
   }
 
   const totalVotes = market.totalYesVotes + market.totalNoVotes;
@@ -297,41 +461,12 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
       </motion.div>
 
       {market.imageUrl && (
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="relative h-48 w-full overflow-hidden rounded-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <Image
-            alt={market.title}
-            className="object-cover"
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 800px"
-            src={market.imageUrl}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to top, oklch(0.08 0.02 270) 0%, oklch(0.08 0.02 270 / 40%) 40%, transparent 70%)",
-            }}
-          />
-
-          <div className="absolute top-4 right-4">
-            <span
-              className="rounded-full px-3 py-1.5 font-heading font-medium text-sm backdrop-blur-md"
-              style={{
-                background: isLive ? COLORS.yesBg : COLORS.primaryBg,
-                color: isLive ? COLORS.yes : COLORS.primary,
-                boxShadow: isLive ? COLORS.yesGlow : COLORS.primaryGlow,
-              }}
-            >
-              {market.status}
-            </span>
-          </div>
-        </motion.div>
+        <MarketHeroImage
+          imageUrl={market.imageUrl}
+          isLive={isLive}
+          status={market.status}
+          title={market.title}
+        />
       )}
 
       <motion.div
@@ -578,84 +713,13 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
         />
       )}
 
-      {isLive && market.userBet ? (
-        <UserBetStatus
-          bet={market.userBet}
-          market={{
-            totalYesVotes: market.totalYesVotes,
-            totalNoVotes: market.totalNoVotes,
-            totalPool: market.totalPool,
-          }}
-        />
-      ) : isLive ? (
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl p-6"
-          initial={{ opacity: 0, y: 20 }}
-          style={{
-            background:
-              "linear-gradient(135deg, oklch(0.12 0.04 290 / 80%), oklch(0.10 0.03 280 / 60%))",
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${COLORS.border}`,
-          }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-        >
-          <h2
-            className="mb-4 text-center font-heading font-medium"
-            style={{ color: COLORS.text }}
-          >
-            Place Your Prediction
-          </h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <motion.button
-              className="flex flex-col items-center gap-2 rounded-xl p-4 font-bold font-heading transition-all"
-              disabled={placeBet.isPending}
-              onClick={() => handleBet("YES")}
-              style={{
-                background: COLORS.yesBg,
-                border: `2px solid ${COLORS.yes}`,
-                color: COLORS.yes,
-              }}
-              type="button"
-              whileHover={{
-                scale: 1.02,
-                boxShadow: COLORS.yesGlow,
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <ThumbsUp className="h-8 w-8" />
-              <span className="text-lg">YES</span>
-              <span className="text-xs opacity-70">
-                ${Number(market.betAmount).toFixed(2)}
-              </span>
-            </motion.button>
-
-            <motion.button
-              className="flex flex-col items-center gap-2 rounded-xl p-4 font-bold font-heading transition-all"
-              disabled={placeBet.isPending}
-              onClick={() => handleBet("NO")}
-              style={{
-                background: COLORS.noBg,
-                border: `2px solid ${COLORS.no}`,
-                color: COLORS.no,
-              }}
-              type="button"
-              whileHover={{
-                scale: 1.02,
-                boxShadow: COLORS.noGlow,
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <ThumbsDown className="h-8 w-8" />
-              <span className="text-lg">NO</span>
-              <span className="text-xs opacity-70">
-                ${Number(market.betAmount).toFixed(2)}
-              </span>
-            </motion.button>
-          </div>
-        </motion.div>
-      ) : null}
+      <BettingSection
+        isLive={isLive}
+        market={market}
+        onBet={handleBet}
+        placeBet={placeBet}
+        userBet={market.userBet}
+      />
 
       <motion.div
         animate={{ opacity: 1 }}
