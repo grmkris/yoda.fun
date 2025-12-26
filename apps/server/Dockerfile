@@ -3,7 +3,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM oven/bun:1.3.3-slim AS builder
+FROM oven/bun:1.3.5-slim AS builder
 
 # Install build dependencies for native modules
 RUN apt-get update && apt-get install -y \
@@ -21,6 +21,7 @@ COPY package.json bun.lock turbo.json ./
 COPY tsconfig.json tsconfig.base.json ./
 
 # Copy all package.json files for dependency resolution
+COPY apps/web/package.json ./apps/web/
 COPY apps/server/package.json ./apps/server/
 COPY packages/ai/package.json ./packages/ai/
 COPY packages/api/package.json ./packages/api/
@@ -49,7 +50,7 @@ RUN bun run build
 # ============================================
 # Stage 2: Runner
 # ============================================
-FROM oven/bun:1.3.3-slim AS runner
+FROM oven/bun:1.3.5-slim AS runner
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \

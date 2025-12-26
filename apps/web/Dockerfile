@@ -3,7 +3,7 @@
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM oven/bun:1.3.3 AS builder
+FROM oven/bun:1.3.5 AS builder
 
 # Install build dependencies for native modules
 RUN apt-get update && apt-get install -y \
@@ -21,13 +21,19 @@ COPY tsconfig.json tsconfig.base.json ./
 
 # Copy all package.json files for dependency resolution
 COPY apps/web/package.json ./apps/web/
+COPY apps/server/package.json ./apps/server/
+COPY packages/ai/package.json ./packages/ai/
 COPY packages/api/package.json ./packages/api/
 COPY packages/auth/package.json ./packages/auth/
 COPY packages/blockchain/package.json ./packages/blockchain/
 COPY packages/db/package.json ./packages/db/
 COPY packages/logger/package.json ./packages/logger/
 COPY packages/markets/package.json ./packages/markets/
+COPY packages/queue/package.json ./packages/queue/
+COPY packages/redis/package.json ./packages/redis/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/storage/package.json ./packages/storage/
+COPY packages/test-utils/package.json ./packages/test-utils/
 
 # Install dependencies
 RUN bun install --filter=web --frozen-lockfile
@@ -53,7 +59,7 @@ RUN bun run build
 # ============================================
 # Stage 2: Runner
 # ============================================
-FROM oven/bun:1.3.3 AS runner
+FROM oven/bun:1.3.5 AS runner
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
