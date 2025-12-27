@@ -15,11 +15,16 @@ export function createImageService(deps: ImageServiceDeps) {
       return null;
     }
 
+    const tagsArray = sql`ARRAY[${sql.join(
+      tags.map((t) => sql`${t}`),
+      sql.raw(",")
+    )}]::text[]`;
+
     const match = await db.query.media.findFirst({
       where: and(
         eq(DB_SCHEMA.media.type, "market_image"),
         eq(DB_SCHEMA.media.status, "processed"),
-        sql`${DB_SCHEMA.media.tags} && ${tags}`
+        sql`${DB_SCHEMA.media.tags} && ${tagsArray}`
       ),
       orderBy: desc(DB_SCHEMA.media.createdAt),
     });
