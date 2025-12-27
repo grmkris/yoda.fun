@@ -1,9 +1,9 @@
-import type { SportsStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   type SportsResolutionResult,
   type TheSportsDBEvent,
   TheSportsDBResponseSchema,
 } from "@yoda.fun/shared/market.schema";
+import type { SportsStrategy } from "@yoda.fun/shared/resolution-types";
 
 const THESPORTSDB_API_URL = "https://www.thesportsdb.com/api/v1/json/3";
 

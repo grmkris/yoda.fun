@@ -61,7 +61,7 @@ export function createMarketGenerationWorker(
       );
 
       // For scheduled jobs, use soft distribution guidance
-      let distributionGuidance = undefined;
+      let distributionGuidance;
       if (trigger === "scheduled") {
         distributionGuidance = await getDistributionGuidance(db);
         logger.info(
@@ -74,7 +74,7 @@ export function createMarketGenerationWorker(
       const now = Date.now();
       if (now - lastTrendingFetch > TRENDING_CACHE_TTL) {
         try {
-          logger.info("Refreshing trending topics cache");
+          logger.info({}, "Refreshing trending topics cache");
           cachedTrendingTopics = await getTrendingTopics({ aiClient, logger });
           lastTrendingFetch = now;
           logger.info(
@@ -82,7 +82,10 @@ export function createMarketGenerationWorker(
             "Trending topics refreshed"
           );
         } catch (error) {
-          logger.warn({ error }, "Failed to fetch trending topics, using cache");
+          logger.warn(
+            { error },
+            "Failed to fetch trending topics, using cache"
+          );
         }
       }
 

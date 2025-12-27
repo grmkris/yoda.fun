@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Copy, Check } from "lucide-react";
+import { Check, Copy, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export function ReferralCard() {
     >
       {/* Background effect */}
       <div
-        className="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full blur-3xl"
+        className="pointer-events-none absolute -right-20 -bottom-20 h-60 w-60 rounded-full blur-3xl"
         style={{ background: "oklch(0.65 0.25 290 / 15%)" }}
       />
 
@@ -59,7 +59,8 @@ export function ReferralCard() {
         <div
           className="flex h-10 w-10 items-center justify-center rounded-xl"
           style={{
-            background: "linear-gradient(135deg, oklch(0.65 0.25 290), oklch(0.55 0.25 310))",
+            background:
+              "linear-gradient(135deg, oklch(0.65 0.25 290), oklch(0.55 0.25 310))",
             boxShadow: "0 0 20px oklch(0.65 0.25 290 / 30%)",
           }}
         >
@@ -91,7 +92,7 @@ export function ReferralCard() {
         ) : (
           <div className="flex gap-2">
             <div
-              className="flex flex-1 items-center rounded-lg px-4 py-3 font-mono font-bold tracking-wider"
+              className="flex flex-1 items-center rounded-lg px-4 py-3 font-bold font-mono tracking-wider"
               style={{
                 background: "oklch(0.08 0.02 270 / 80%)",
                 border: "1px solid oklch(0.65 0.25 290 / 20%)",
@@ -177,7 +178,8 @@ export function ReferralCard() {
             disabled={!inputCode.trim() || applyCodeMutation.isPending}
             onClick={handleApplyCode}
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.25 290), oklch(0.55 0.25 310))",
+              background:
+                "linear-gradient(135deg, oklch(0.65 0.25 290), oklch(0.55 0.25 310))",
             }}
           >
             Apply

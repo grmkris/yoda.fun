@@ -28,7 +28,7 @@ export function createMarketResolutionWorker(
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const balanceService = createBalanceService({ deps: { db, logger } });
   const rewardService = createRewardService({
-    deps: { db, logger, balanceService },
+    deps: { db, balanceService },
   });
   const settlementService = createSettlementService({
     deps: { db, logger, leaderboardService, rewardService },

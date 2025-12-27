@@ -40,7 +40,10 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
 
       // Check if market already has an image
       const [market] = await db
-        .select({ mediaId: DB_SCHEMA.market.mediaId, imageUrl: DB_SCHEMA.market.imageUrl })
+        .select({
+          mediaId: DB_SCHEMA.market.mediaId,
+          imageUrl: DB_SCHEMA.market.imageUrl,
+        })
         .from(DB_SCHEMA.market)
         .where(eq(DB_SCHEMA.market.id, marketId))
         .limit(1);
@@ -56,7 +59,10 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         aiClient
       );
 
-      logger.info({ marketId, tags, reuseOk }, "Generated image prompt and tags");
+      logger.info(
+        { marketId, tags, reuseOk },
+        "Generated image prompt and tags"
+      );
 
       // Try to find reusable image if AI says it's ok to reuse
       let mediaId = reuseOk ? await imageService.findReusableImage(tags) : null;
@@ -124,8 +130,8 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         marketId,
         mediaId,
         reused,
-        imageUrl: media?.finalKey,
-        thumbnailUrl: media?.thumbnailKey,
+        imageUrl: media?.finalKey ?? undefined,
+        thumbnailUrl: media?.thumbnailKey ?? undefined,
       };
     },
     {

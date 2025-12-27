@@ -1,14 +1,14 @@
 import { type AiClient, Output, stepCountIs } from "@yoda.fun/ai";
-import type {
-  MarketForResolution,
-  WebSearchStrategy,
-} from "@yoda.fun/shared/resolution-types";
-import { z } from "zod";
 import {
   type SearchResult,
   SearchResultItemSchema,
   type WebSearchResolutionResult,
 } from "@yoda.fun/shared/market.schema";
+import type {
+  MarketForResolution,
+  WebSearchStrategy,
+} from "@yoda.fun/shared/resolution-types";
+import { z } from "zod";
 
 const XaiSearchOutputSchema = z.object({
   webResults: z.array(SearchResultItemSchema),

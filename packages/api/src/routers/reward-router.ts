@@ -53,7 +53,10 @@ export const rewardRouter = {
     )
     .handler(async ({ context, input }) => {
       const userId = UserId.parse(context.session.user.id);
-      const rewards = await context.rewardService.getRewardHistory(userId, input);
+      const rewards = await context.rewardService.getRewardHistory(
+        userId,
+        input
+      );
       return { rewards, limit: input.limit, offset: input.offset };
     }),
 

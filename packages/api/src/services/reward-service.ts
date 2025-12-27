@@ -183,9 +183,15 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
       await db.transaction(async (tx) => {
         const updates: Record<string, boolean> = {};
         for (const r of rewards) {
-          if (r.milestone === 3) updates.winStreak3Claimed = true;
-          if (r.milestone === 5) updates.winStreak5Claimed = true;
-          if (r.milestone === 10) updates.winStreak10Claimed = true;
+          if (r.milestone === 3) {
+            updates.winStreak3Claimed = true;
+          }
+          if (r.milestone === 5) {
+            updates.winStreak5Claimed = true;
+          }
+          if (r.milestone === 10) {
+            updates.winStreak10Claimed = true;
+          }
         }
 
         await tx
@@ -236,9 +242,15 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         };
 
         for (const r of rewards) {
-          if (r.milestone === 100) updates.volume100Claimed = true;
-          if (r.milestone === 500) updates.volume500Claimed = true;
-          if (r.milestone === 1000) updates.volume1000Claimed = true;
+          if (r.milestone === 100) {
+            updates.volume100Claimed = true;
+          }
+          if (r.milestone === 500) {
+            updates.volume500Claimed = true;
+          }
+          if (r.milestone === 1000) {
+            updates.volume1000Claimed = true;
+          }
         }
 
         await tx
@@ -329,7 +341,7 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         await tx
           .update(DB_SCHEMA.referral)
           .set({ referrerRewarded: true, rewardedAt: new Date() })
-          .where(eq(DB_SCHEMA.referral.id, referralRecord[0]!.id));
+          .where(eq(DB_SCHEMA.referral.id, referralRecord[0]?.id));
 
         await tx
           .update(DB_SCHEMA.userRewardState)

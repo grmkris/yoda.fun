@@ -33,6 +33,7 @@ export async function createTestContext(props: {
     leaderboardService: deps.leaderboardService,
     profileService: deps.profileService,
     followService: deps.followService,
+    rewardService: deps.rewardService,
   };
 }
 
@@ -49,6 +50,7 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     leaderboardService: testEnv.deps.leaderboardService,
     profileService: testEnv.deps.profileService,
     followService: testEnv.deps.followService,
+    rewardService: testEnv.deps.rewardService,
   };
 }
 

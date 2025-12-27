@@ -197,6 +197,7 @@ const imageWorker = createMarketImageWorker({
   db,
   logger,
   storage,
+  aiClient,
   replicateApiKey: env.REPLICATE_API_KEY,
 });
 logger.info({ msg: "Market image worker started" });
@@ -207,7 +208,7 @@ const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
 if (marketCount[0]?.count === 0) {
   logger.info({ msg: "No markets found, seeding initial markets" });
   await queue.addJob("generate-market", {
-    count: MARKET_GENERATION.COUNT,
+    count: MARKET_GENERATION.BATCH_SIZE,
     trigger: "seed",
   });
 }
@@ -216,7 +217,7 @@ queue
   .addJob(
     "generate-market",
     {
-      count: MARKET_GENERATION.COUNT,
+      count: MARKET_GENERATION.BATCH_SIZE,
       trigger: "scheduled",
     },
     {
@@ -227,7 +228,7 @@ queue
     logger.info({
       msg: "Market generation scheduled",
       cron: MARKET_GENERATION.CRON,
-      count: MARKET_GENERATION.COUNT,
+      count: MARKET_GENERATION.BATCH_SIZE,
     });
   })
   .catch((err) => {

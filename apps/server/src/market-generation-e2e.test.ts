@@ -47,7 +47,9 @@ describe("Market Generation E2E", () => {
       console.log(`\n  Title: ${market.title}`);
       console.log(`  Category: ${market.category}`);
       console.log(`  Description: ${market.description}`);
-      console.log(`  Duration: ${market.duration.value} ${market.duration.unit}`);
+      console.log(
+        `  Duration: ${market.duration.value} ${market.duration.unit}`
+      );
       console.log(`  Resolution: ${market.resolutionCriteria}`);
     }
 

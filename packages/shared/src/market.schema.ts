@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const BET_AMOUNTS = ["0.10", "0.25", "0.50", "1.00", "5.00"] as const;
+export const SPICE_LEVELS = ["mild", "medium", "spicy"] as const;
+export type SpiceLevel = (typeof SPICE_LEVELS)[number];
 
 export const MARKET_CATEGORIES = [
   // Entertainment (split from generic "entertainment")
@@ -152,6 +154,20 @@ export const GeneratedMarketSchema = z.object({
   betAmount: z
     .enum(BET_AMOUNTS)
     .describe("Suggested bet amount in USD per vote"),
+
+  whyViral: z
+    .string()
+    .min(10)
+    .max(200)
+    .describe(
+      "One sentence explaining why people will share, argue about, or screenshot this market"
+    ),
+
+  spiceLevel: z
+    .enum(SPICE_LEVELS)
+    .describe(
+      "How provocative the framing is: mild (safe), medium (has a take), spicy (will generate debate)"
+    ),
 });
 
 export type GeneratedMarket = z.infer<typeof GeneratedMarketSchema>;

@@ -40,6 +40,10 @@
     "./services/profile-service": {
       "types": "./dist/services/profile-service.d.ts",
       "default": "./src/services/profile-service.ts"
+    },
+    "./services/reward-service": {
+      "types": "./dist/services/reward-service.d.ts",
+      "default": "./src/services/reward-service.ts"
     }
   },
   "type": "module",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, Trophy, TrendingUp, Users, Gift } from "lucide-react";
+import { Flame, Gift, TrendingUp, Trophy, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRewardHistory } from "@/hooks/use-rewards";
@@ -42,10 +42,18 @@ function formatDate(date: string | Date): string {
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (minutes < 1) {
+    return "Just now";
+  }
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+  if (days < 7) {
+    return `${days}d ago`;
+  }
 
   return d.toLocaleDateString("en-US", {
     month: "short",
@@ -78,8 +86,8 @@ export function RewardHistoryList() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
+          {[...new Array(5)].map((_, i) => (
+            <Skeleton className="h-14 w-full" key={i} />
           ))}
         </div>
       ) : rewards.length === 0 ? (
@@ -92,17 +100,22 @@ export function RewardHistoryList() {
       ) : (
         <div className="space-y-2">
           {rewards.map((reward, idx) => {
-            const config = REWARD_TYPE_CONFIG[reward.rewardType as keyof typeof REWARD_TYPE_CONFIG];
-            if (!config) return null;
+            const config =
+              REWARD_TYPE_CONFIG[
+                reward.rewardType as keyof typeof REWARD_TYPE_CONFIG
+              ];
+            if (!config) {
+              return null;
+            }
 
             const Icon = config.icon;
 
             return (
               <motion.div
-                key={reward.id}
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center justify-between rounded-lg px-3 py-2.5"
                 initial={{ opacity: 0, x: -10 }}
+                key={reward.id}
                 style={{
                   background: "oklch(0.12 0.02 280 / 50%)",
                   border: "1px solid oklch(0.65 0.25 290 / 10%)",
@@ -134,10 +147,7 @@ export function RewardHistoryList() {
                     </div>
                   </div>
                 </div>
-                <span
-                  className="font-semibold"
-                  style={{ color: config.color }}
-                >
+                <span className="font-semibold" style={{ color: config.color }}>
                   +${Number(reward.amount).toFixed(2)}
                 </span>
               </motion.div>

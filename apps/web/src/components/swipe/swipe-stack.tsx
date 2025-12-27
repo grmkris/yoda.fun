@@ -192,7 +192,9 @@ function SwipeStackComponent<T>(
                   disabled={!isTopCard || disabled}
                   onSwipe={(data, direction) => onSwipe?.(data, direction)}
                   onSwipeLeft={(data) => handleSwipe(index, onSwipeLeft, data)}
-                  onSwipeRight={(data) => handleSwipe(index, onSwipeRight, data)}
+                  onSwipeRight={(data) =>
+                    handleSwipe(index, onSwipeRight, data)
+                  }
                 >
                   {renderCard(card, index)}
                 </SwipeCard>

@@ -4,6 +4,7 @@ import { createBetService } from "@yoda.fun/api/services/bet-service";
 import { createFollowService } from "@yoda.fun/api/services/follow-service";
 import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
 import { createProfileService } from "@yoda.fun/api/services/profile-service";
+import { createRewardService } from "@yoda.fun/api/services/reward-service";
 import { createWithdrawalService } from "@yoda.fun/api/services/withdrawal-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
@@ -43,6 +44,7 @@ export interface TestSetup {
     leaderboardService: ReturnType<typeof createLeaderboardService>;
     profileService: ReturnType<typeof createProfileService>;
     followService: ReturnType<typeof createFollowService>;
+    rewardService: ReturnType<typeof createRewardService>;
   };
   users: {
     authenticated: TestUser;
@@ -181,6 +183,9 @@ export async function createTestSetup(): Promise<TestSetup> {
   const followService = createFollowService({
     deps: { db, logger, profileService },
   });
+  const rewardService = createRewardService({
+    deps: { db, balanceService },
+  });
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
@@ -230,6 +235,7 @@ export async function createTestSetup(): Promise<TestSetup> {
       leaderboardService,
       profileService,
       followService,
+      rewardService,
     },
     users: {
       authenticated: authenticatedUser,

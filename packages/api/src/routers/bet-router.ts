@@ -43,7 +43,10 @@ export const betRouter = {
             context.rewardService.processVolumeMilestone(userId, betAmount),
             context.rewardService.processReferralBonus(userId),
           ]).catch((error) => {
-            context.logger.error({ error, userId }, "Failed to process bet rewards");
+            context.logger.error(
+              { error, userId },
+              "Failed to process bet rewards"
+            );
           });
 
           return {

@@ -93,9 +93,15 @@ export function createSettlementService({
 
       if (won && rewardService && result.newCurrentStreak > 0) {
         try {
-          await rewardService.processWinStreakBonus(userId, result.newCurrentStreak);
+          await rewardService.processWinStreakBonus(
+            userId,
+            result.newCurrentStreak
+          );
         } catch (error) {
-          logger.error({ error, userId }, "Failed to process win streak reward");
+          logger.error(
+            { error, userId },
+            "Failed to process win streak reward"
+          );
         }
       }
     }

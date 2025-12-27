@@ -32,7 +32,10 @@ export async function researchTrendingTopics(
   const { aiClient, logger } = deps;
 
   const model = aiClient.getGoogleModel("gemini-2.5-flash");
-  const xaiModel = aiClient.getModel({ provider: "xai", modelId: "grok-3-mini" });
+  const xaiModel = aiClient.getModel({
+    provider: "xai",
+    modelId: "grok-3-mini",
+  });
   const { googleSearch } = aiClient.getGoogleTools();
   const { xSearch } = aiClient.getXaiTools();
 
@@ -44,11 +47,14 @@ export async function researchTrendingTopics(
     "tech product launches announcements Apple Google this week",
   ];
 
-  // xSearch: Twitter/X real-time buzz
+  // xSearch: Twitter/X real-time buzz - spicy drama-focused queries
   const twitterQueries = [
-    "trending viral moments celebrity drama today",
-    "memes going viral TikTok challenges internet culture",
-    "influencer news milestones subscribers followers",
+    "ratio this L cope seethe drama today",
+    "this aged poorly prediction wrong receipts",
+    "calling it now prediction thread bet",
+    "screenshotting this for later receipts",
+    "biggest W biggest L of the day",
+    "main character of the day twitter",
   ];
 
   // Google: General news with outcomes
@@ -65,28 +71,42 @@ List specific events with dates.`;
     // Exa searches
     Promise.all(
       exaQueries.map((q) =>
-        aiClient.searchWithExa(q).then((r) => r.text).catch(() => "")
+        aiClient
+          .searchWithExa(q)
+          .then((r) => r.text)
+          .catch(() => "")
       )
     ),
     // xSearch (Twitter)
     Promise.all(
       twitterQueries.map((q) =>
-        generateText({ model: xaiModel, tools: { xSearch: xSearch({}) }, prompt: q })
+        generateText({
+          model: xaiModel,
+          tools: { xSearch: xSearch({}) },
+          prompt: q,
+        })
           .then((r) => r.text)
           .catch(() => "")
       )
     ),
     // Google search
-    generateText({ model, tools: { google_search: googleSearch({}) }, prompt: googlePrompt })
+    generateText({
+      model,
+      tools: { google_search: googleSearch({}) },
+      prompt: googlePrompt,
+    })
       .then((r) => r.text)
       .catch(() => ""),
   ]);
 
-  logger.info({
-    exaCount: exaResults.filter(Boolean).length,
-    twitterCount: twitterResults.filter(Boolean).length,
-    hasGoogle: !!googleResult,
-  }, "Trending research complete");
+  logger.info(
+    {
+      exaCount: exaResults.filter(Boolean).length,
+      twitterCount: twitterResults.filter(Boolean).length,
+      hasGoogle: !!googleResult,
+    },
+    "Trending research complete"
+  );
 
   return {
     scheduled: exaResults.join("\n\n"),
@@ -118,6 +138,20 @@ ${rawData.news || "None"}
 - Engaging for casual users (not just crypto traders!)
 - Diverse mix across categories
 - Categories: movies, tv, music, celebrities, gaming, sports, politics, tech, crypto, viral, memes, weather, other
+
+## PRIORITIZE SPICY TOPICS
+- Drama, beef, rivalries (sports rivalries, celebrity feuds, brand wars)
+- "Called it" moments - predictions people are already making
+- Main character energy - someone having their moment (good or bad)
+- Things people will argue about in group chats
+- Underdog vs favorite dynamics
+- Controversy or hot takes that will generate debate
+
+## AVOID BORING TOPICS
+- Generic announcements without stakes ("X company announces Y")
+- Obvious outcomes with no tension (Taylor Swift album going #1)
+- Topics only crypto traders care about
+- Anything that wouldn't get quote tweeted
 
 Return JSON: { topics: [{ topic, category, eventDate?, whyGood }] }`;
 

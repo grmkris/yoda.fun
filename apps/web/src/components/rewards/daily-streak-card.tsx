@@ -1,6 +1,6 @@
 "use client";
 
-import { Gift, Flame, Check, Clock } from "lucide-react";
+import { Check, Clock, Flame, Gift } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,10 +9,14 @@ import { useClaimDailyStreak, useRewardSummary } from "@/hooks/use-rewards";
 const DAILY_AMOUNTS = [1, 2, 3, 4, 5, 6, 7];
 
 function formatTimeRemaining(date: Date | null): string {
-  if (!date) return "";
+  if (!date) {
+    return "";
+  }
   const now = new Date();
   const diff = date.getTime() - now.getTime();
-  if (diff <= 0) return "Ready!";
+  if (diff <= 0) {
+    return "Ready!";
+  }
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -30,7 +34,9 @@ export function DailyStreakCard() {
   const dailyStreak = data?.dailyStreak;
   const currentDay = dailyStreak?.currentDay ?? 0;
   const canClaim = dailyStreak?.canClaim ?? false;
-  const nextClaimAt = dailyStreak?.nextClaimAt ? new Date(dailyStreak.nextClaimAt) : null;
+  const nextClaimAt = dailyStreak?.nextClaimAt
+    ? new Date(dailyStreak.nextClaimAt)
+    : null;
   const nextAmount = dailyStreak?.nextAmount ?? DAILY_AMOUNTS[0];
 
   return (
@@ -61,7 +67,8 @@ export function DailyStreakCard() {
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl"
             style={{
-              background: "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))",
+              background:
+                "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))",
               boxShadow: "0 0 20px oklch(0.80 0.16 50 / 30%)",
             }}
           >
@@ -74,11 +81,10 @@ export function DailyStreakCard() {
             >
               Daily Streak
             </h3>
-            <p
-              className="text-sm"
-              style={{ color: "oklch(0.65 0.04 280)" }}
-            >
-              {currentDay > 0 ? `Day ${currentDay} streak` : "Start your streak!"}
+            <p className="text-sm" style={{ color: "oklch(0.65 0.04 280)" }}>
+              {currentDay > 0
+                ? `Day ${currentDay} streak`
+                : "Start your streak!"}
             </p>
           </div>
         </div>
@@ -93,7 +99,8 @@ export function DailyStreakCard() {
             onClick={() => claimMutation.mutate()}
             size="sm"
             style={{
-              background: "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
+              background:
+                "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
               border: "none",
             }}
           >
@@ -108,8 +115,14 @@ export function DailyStreakCard() {
               border: "1px solid oklch(0.65 0.25 290 / 15%)",
             }}
           >
-            <Clock className="h-4 w-4" style={{ color: "oklch(0.65 0.04 280)" }} />
-            <span className="font-medium text-sm" style={{ color: "oklch(0.80 0.04 280)" }}>
+            <Clock
+              className="h-4 w-4"
+              style={{ color: "oklch(0.65 0.04 280)" }}
+            />
+            <span
+              className="font-medium text-sm"
+              style={{ color: "oklch(0.80 0.04 280)" }}
+            >
               {formatTimeRemaining(nextClaimAt)}
             </span>
           </div>
@@ -128,14 +141,15 @@ export function DailyStreakCard() {
           const dayNum = idx + 1;
           const isCompleted = dayNum <= currentDay;
           const isCurrent = dayNum === currentDay + 1 && canClaim;
-          const isFuture = dayNum > currentDay + 1 || (!canClaim && dayNum === currentDay + 1);
+          const _isFuture =
+            dayNum > currentDay + 1 || (!canClaim && dayNum === currentDay + 1);
 
           return (
             <motion.div
-              key={dayNum}
               animate={{ scale: 1, opacity: 1 }}
               className="flex flex-col items-center gap-1"
               initial={{ scale: 0.8, opacity: 0 }}
+              key={dayNum}
               transition={{ delay: idx * 0.05 + 0.2 }}
             >
               <div
@@ -144,24 +158,27 @@ export function DailyStreakCard() {
                   background: isCompleted
                     ? "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))"
                     : isCurrent
-                    ? "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))"
-                    : "oklch(0.15 0.02 280 / 60%)",
+                      ? "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))"
+                      : "oklch(0.15 0.02 280 / 60%)",
                   border: isCurrent
                     ? "2px solid oklch(0.80 0.16 50)"
                     : "1px solid oklch(0.65 0.25 290 / 15%)",
-                  color: isCompleted || isCurrent ? "white" : "oklch(0.50 0.04 280)",
-                  boxShadow: isCurrent ? "0 0 15px oklch(0.80 0.16 50 / 40%)" : "none",
+                  color:
+                    isCompleted || isCurrent ? "white" : "oklch(0.50 0.04 280)",
+                  boxShadow: isCurrent
+                    ? "0 0 15px oklch(0.80 0.16 50 / 40%)"
+                    : "none",
                 }}
               >
-                {isCompleted ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  `$${amount}`
-                )}
+                {isCompleted ? <Check className="h-5 w-5" /> : `$${amount}`}
               </div>
               <span
                 className="font-medium text-xs"
-                style={{ color: isCompleted ? "oklch(0.72 0.18 175)" : "oklch(0.50 0.04 280)" }}
+                style={{
+                  color: isCompleted
+                    ? "oklch(0.72 0.18 175)"
+                    : "oklch(0.50 0.04 280)",
+                }}
               >
                 Day {dayNum}
               </span>

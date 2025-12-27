@@ -4,14 +4,14 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
 import type { SelectMarket } from "@yoda.fun/db/schema";
 import type { Logger } from "@yoda.fun/logger";
-import type { CuratedTopic, DistributionGuidance } from "../prompts";
-import { MARKET_PROMPTS } from "../prompts";
 import {
   type GeneratedMarket,
   GeneratedMarketsResponseSchema,
   type GenerateMarketsInput,
   type GenerateMarketsResult,
 } from "@yoda.fun/shared/market.schema";
+import type { CuratedTopic, DistributionGuidance } from "../prompts";
+import { MARKET_PROMPTS } from "../prompts";
 import { type PreparedMarket, prepareMarket } from "./preparer";
 
 /** Extended input with trending topics and distribution guidance */

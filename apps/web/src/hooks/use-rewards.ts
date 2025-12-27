@@ -25,15 +25,19 @@ export function useClaimDailyStreak() {
   return useMutation({
     mutationFn: async () => client.reward.claimDaily({}),
     onSuccess: (data) => {
-      toast.success(`Claimed $${data.amount.toFixed(2)} for day ${data.streakDay}!`);
+      toast.success(
+        `Claimed $${data.amount.toFixed(2)} for day ${data.streakDay}!`
+      );
       queryClient.invalidateQueries({
         queryKey: orpc.reward.getSummary.queryOptions({ input: {} }).queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: orpc.reward.getClaimableCount.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.reward.getClaimableCount.queryOptions({ input: {} })
+          .queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: orpc.reward.getDailyStatus.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.reward.getDailyStatus.queryOptions({ input: {} })
+          .queryKey,
       });
       queryClient.invalidateQueries({
         queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
@@ -55,7 +59,8 @@ export function useApplyReferralCode() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (code: string) => client.reward.applyReferralCode({ code }),
+    mutationFn: async (code: string) =>
+      client.reward.applyReferralCode({ code }),
     onSuccess: () => {
       toast.success("Referral code applied!");
       queryClient.invalidateQueries({
@@ -70,7 +75,10 @@ export function useApplyReferralCode() {
   });
 }
 
-export function useRewardHistory(options?: { limit?: number; offset?: number }) {
+export function useRewardHistory(options?: {
+  limit?: number;
+  offset?: number;
+}) {
   return useQuery(
     orpc.reward.getHistory.queryOptions({
       input: {

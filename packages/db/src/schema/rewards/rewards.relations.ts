@@ -3,12 +3,15 @@ import { user } from "../auth/auth.db";
 import { transaction } from "../market/transaction.db";
 import { referral, rewardClaim, userRewardState } from "./rewards.db";
 
-export const userRewardStateRelations = relations(userRewardState, ({ one }) => ({
-  user: one(user, {
-    fields: [userRewardState.userId],
-    references: [user.id],
-  }),
-}));
+export const userRewardStateRelations = relations(
+  userRewardState,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userRewardState.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const rewardClaimRelations = relations(rewardClaim, ({ one }) => ({
   user: one(user, {

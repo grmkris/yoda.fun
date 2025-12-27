@@ -1,8 +1,8 @@
-import type { PriceStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   CoinGeckoPriceResponseSchema,
   type PriceResolutionResult,
 } from "@yoda.fun/shared/market.schema";
+import type { PriceStrategy } from "@yoda.fun/shared/resolution-types";
 
 const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 

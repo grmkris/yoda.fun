@@ -15,6 +15,8 @@ export default defineConfig({
     "./src/schema/market",
     "./src/schema/config",
     "./src/schema/social",
+    "./src/schema/rewards",
+    "./src/schema/media",
   ],
   out: "./drizzle",
   dialect: "postgresql",

@@ -1,8 +1,8 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { count, gte, sql } from "@yoda.fun/db/drizzle";
-import { CATEGORY_DISTRIBUTION, CRYPTO_DAILY_CAP } from "../config";
 import { MARKET_CATEGORIES } from "@yoda.fun/shared/market.schema";
+import { CATEGORY_DISTRIBUTION, CRYPTO_DAILY_CAP } from "../config";
 
 export type MarketCategory = (typeof MARKET_CATEGORIES)[number];
 
@@ -64,7 +64,9 @@ export async function isCryptoAllowed(db: Database): Promise<boolean> {
   return (result[0]?.count ?? 0) < CRYPTO_DAILY_CAP;
 }
 
-export async function selectNextCategory(db: Database): Promise<MarketCategory> {
+export async function selectNextCategory(
+  db: Database
+): Promise<MarketCategory> {
   const distribution = await getCategoryDistribution(db);
   const cryptoAllowed = await isCryptoAllowed(db);
 
@@ -82,7 +84,9 @@ export async function selectNextCategory(db: Database): Promise<MarketCategory> 
 
   for (const d of withWeights) {
     random -= d.weight;
-    if (random <= 0) return d.category;
+    if (random <= 0) {
+      return d.category;
+    }
   }
 
   return "other";
@@ -90,7 +94,11 @@ export async function selectNextCategory(db: Database): Promise<MarketCategory> 
 
 export async function getDistributionGuidance(
   db: Database
-): Promise<{ deficits: { category: string; deficit: number }[]; atCap: string[]; suggested: string }> {
+): Promise<{
+  deficits: { category: string; deficit: number }[];
+  atCap: string[];
+  suggested: string;
+}> {
   const distribution = await getCategoryDistribution(db);
   const cryptoAllowed = await isCryptoAllowed(db);
 

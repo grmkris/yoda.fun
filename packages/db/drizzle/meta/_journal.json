@@ -15,6 +15,20 @@
       "when": 1766762034669,
       "tag": "0001_majestic_vin_gonzales",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766847641546,
+      "tag": "0002_dashing_wendell_vaughn",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766847670768,
+      "tag": "0003_smart_agent_zero",
+      "breakpoints": true
     }
   ]
 }

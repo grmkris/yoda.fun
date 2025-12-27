@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, TrendingUp, Check } from "lucide-react";
+import { Check, TrendingUp, Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRewardSummary } from "@/hooks/use-rewards";
@@ -22,7 +22,7 @@ export function VolumeCard() {
   const volume = data?.volume;
 
   const totalVolume = volume?.total ?? 0;
-  const nextMilestone = volume?.nextMilestone;
+  const _nextMilestone = volume?.nextMilestone;
 
   return (
     <motion.div
@@ -41,7 +41,8 @@ export function VolumeCard() {
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg"
           style={{
-            background: "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.60 0.20 200))",
+            background:
+              "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.60 0.20 200))",
             boxShadow: "0 0 15px oklch(0.72 0.18 175 / 30%)",
           }}
         >
@@ -67,18 +68,32 @@ export function VolumeCard() {
       {/* Milestones */}
       <div className="space-y-3">
         {VOLUME_MILESTONES.map((milestone, idx) => {
-          const isCompleted = volume?.[`milestone${milestone.amount}` as keyof typeof volume] ?? false;
-          const progress = isCompleted ? 100 : Math.min((totalVolume / milestone.amount) * 100, 100);
+          const isCompleted =
+            volume?.[`milestone${milestone.amount}` as keyof typeof volume] ??
+            false;
+          const progress = isCompleted
+            ? 100
+            : Math.min((totalVolume / milestone.amount) * 100, 100);
 
           return (
             <div key={milestone.amount}>
               <div className="mb-1 flex items-center justify-between text-sm">
-                <span style={{ color: isCompleted ? "oklch(0.72 0.18 175)" : "oklch(0.75 0.04 280)" }}>
+                <span
+                  style={{
+                    color: isCompleted
+                      ? "oklch(0.72 0.18 175)"
+                      : "oklch(0.75 0.04 280)",
+                  }}
+                >
                   ${milestone.amount} volume
                 </span>
                 <span
                   className="font-medium"
-                  style={{ color: isCompleted ? "oklch(0.72 0.18 175)" : "oklch(0.65 0.04 280)" }}
+                  style={{
+                    color: isCompleted
+                      ? "oklch(0.72 0.18 175)"
+                      : "oklch(0.65 0.04 280)",
+                  }}
                 >
                   {isCompleted ? (
                     <span className="flex items-center gap-1">
@@ -134,7 +149,8 @@ export function WinStreakCard() {
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg"
           style={{
-            background: "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.70 0.18 60))",
+            background:
+              "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.70 0.18 60))",
             boxShadow: "0 0 15px oklch(0.80 0.16 90 / 30%)",
           }}
         >
@@ -155,13 +171,16 @@ export function WinStreakCard() {
 
       {/* Milestones */}
       <div className="space-y-3">
-        {WIN_STREAK_MILESTONES.map((milestone, idx) => {
-          const isCompleted = winStreak?.[`milestone${milestone.streak}` as keyof typeof winStreak] ?? false;
+        {WIN_STREAK_MILESTONES.map((milestone, _idx) => {
+          const isCompleted =
+            winStreak?.[
+              `milestone${milestone.streak}` as keyof typeof winStreak
+            ] ?? false;
 
           return (
             <div
-              key={milestone.streak}
               className="flex items-center justify-between rounded-lg px-3 py-2"
+              key={milestone.streak}
               style={{
                 background: isCompleted
                   ? "oklch(0.80 0.16 90 / 15%)"
@@ -173,13 +192,21 @@ export function WinStreakCard() {
             >
               <span
                 className="font-medium text-sm"
-                style={{ color: isCompleted ? "oklch(0.80 0.16 90)" : "oklch(0.75 0.04 280)" }}
+                style={{
+                  color: isCompleted
+                    ? "oklch(0.80 0.16 90)"
+                    : "oklch(0.75 0.04 280)",
+                }}
               >
                 {milestone.streak} wins in a row
               </span>
               <span
                 className="flex items-center gap-1 font-semibold text-sm"
-                style={{ color: isCompleted ? "oklch(0.80 0.16 90)" : "oklch(0.65 0.04 280)" }}
+                style={{
+                  color: isCompleted
+                    ? "oklch(0.80 0.16 90)"
+                    : "oklch(0.65 0.04 280)",
+                }}
               >
                 {isCompleted && <Check className="h-3.5 w-3.5" />}
                 +${milestone.reward}
@@ -225,13 +252,18 @@ export function FirstBetCard() {
           {isEarned ? (
             <Check className="h-4 w-4 text-white" />
           ) : (
-            <Trophy className="h-4 w-4" style={{ color: "oklch(0.50 0.04 280)" }} />
+            <Trophy
+              className="h-4 w-4"
+              style={{ color: "oklch(0.50 0.04 280)" }}
+            />
           )}
         </div>
         <div>
           <h3
             className="font-heading font-semibold"
-            style={{ color: isEarned ? "oklch(0.72 0.18 175)" : "oklch(0.95 0.02 280)" }}
+            style={{
+              color: isEarned ? "oklch(0.72 0.18 175)" : "oklch(0.95 0.02 280)",
+            }}
           >
             First Bet Bonus
           </h3>
@@ -242,7 +274,9 @@ export function FirstBetCard() {
       </div>
       <span
         className="font-bold text-lg"
-        style={{ color: isEarned ? "oklch(0.72 0.18 175)" : "oklch(0.50 0.04 280)" }}
+        style={{
+          color: isEarned ? "oklch(0.72 0.18 175)" : "oklch(0.50 0.04 280)",
+        }}
       >
         +$5
       </span>
