@@ -34,6 +34,7 @@ COPY packages/queue/package.json ./packages/queue/
 COPY packages/redis/package.json ./packages/redis/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/storage/package.json ./packages/storage/
+COPY packages/cache/package.json ./packages/cache/
 COPY packages/test-utils/package.json ./packages/test-utils/
 
 # Install dependencies
