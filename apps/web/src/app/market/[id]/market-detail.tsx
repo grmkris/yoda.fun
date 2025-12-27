@@ -17,11 +17,12 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Countdown } from "@/components/countdown";
 import { UserBetStatus } from "@/components/market/user-bet-status";
 import { ResolutionDetails } from "@/components/resolution/resolution-details";
 import { ResolutionMethodPreview } from "@/components/resolution/resolution-method-preview";
+import { useSession } from "@/components/session-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarket } from "@/hooks/use-market";
 import { usePlaceBet } from "@/hooks/use-place-bet";
@@ -419,9 +420,17 @@ function BettingSection({
 }
 
 export function MarketDetail({ marketId }: MarketDetailProps) {
-  const { data: market, isLoading, error } = useMarket(marketId);
+  const { data: session } = useSession();
+  const { data: market, isLoading, error, refetch } = useMarket(marketId);
   const placeBet = usePlaceBet();
   const [copied, setCopied] = useState(false);
+
+  // SSR returns userBet as null, refetch to get it for authenticated users
+  useEffect(() => {
+    if (session?.user && market && !market.userBet) {
+      refetch();
+    }
+  }, [session?.user, market, refetch]);
 
   const handleShare = async () => {
     const url = `${window.location.origin}/market/${marketId}`;

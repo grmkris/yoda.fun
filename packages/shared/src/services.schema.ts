@@ -9,7 +9,9 @@ export const SERVICE_URLS: Record<
   Environment,
   {
     auth: string;
+    authInternal: string;
     api: string;
+    apiInternal: string;
     web: string;
     cookieDomain: string;
     siweDomain: string;
@@ -21,7 +23,9 @@ export const SERVICE_URLS: Record<
 > = {
   dev: {
     auth: "http://localhost:4200",
+    authInternal: "http://localhost:4200",
     api: "http://localhost:4200",
+    apiInternal: "http://localhost:4200",
     web: "https://localhost:4201",
     cookieDomain: "localhost",
     siweDomain: "localhost",
@@ -32,7 +36,9 @@ export const SERVICE_URLS: Record<
   },
   prod: {
     auth: "https://api.yoda.fun",
+    authInternal: "http://server:4200",
     api: "https://api.yoda.fun",
+    apiInternal: "http://server:4200",
     web: "https://yoda.fun",
     cookieDomain: ".yoda.fun",
     siweDomain: ".yoda.fun",

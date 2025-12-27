@@ -45,7 +45,7 @@ export function createMarketGenerationService(
       .select({ title: DB_SCHEMA.market.title })
       .from(DB_SCHEMA.market)
       .orderBy(desc(DB_SCHEMA.market.createdAt))
-      .limit(50);
+      .limit(100);
     return existingMarkets.map((m) => m.title);
   }
 

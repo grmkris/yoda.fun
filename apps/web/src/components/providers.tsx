@@ -37,9 +37,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
         attribute="class"
-        defaultTheme="system"
+        defaultTheme="dark"
         disableTransitionOnChange
-        enableSystem
+        forcedTheme="dark"
       >
         {env.NEXT_PUBLIC_ENV === "dev" && <ReactQueryDevtools />}
         <Web3Provider>

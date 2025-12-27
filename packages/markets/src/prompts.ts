@@ -154,7 +154,7 @@ Don't just use these verbatim - find the SPICY ANGLE. What's the debate? What's 
       if (ctx.existingMarketTitles?.length) {
         sections.push(`## AVOID DUPLICATES (don't create similar)
 ${ctx.existingMarketTitles
-  .slice(0, 20)
+  .slice(0, 100)
   .map((t) => `- ${t}`)
   .join("\n")}`);
       }

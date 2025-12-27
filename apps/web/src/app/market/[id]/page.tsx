@@ -1,6 +1,13 @@
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { MarketId } from "@yoda.fun/shared/typeid";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { marketQueryKey } from "@/hooks/market-query-key";
+import { client } from "@/utils/orpc";
 import { MarketDetail } from "./market-detail";
 
 interface Props {
@@ -29,9 +36,19 @@ export default async function MarketPage({ params }: Props) {
     notFound();
   }
 
+  const marketId = parsed.data;
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: marketQueryKey(marketId),
+    queryFn: () => client.market.get({ marketId }),
+  });
+
   return (
-    <div className="container mx-auto p-4 pb-8">
-      <MarketDetail marketId={parsed.data} />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="container mx-auto p-4 pb-8">
+        <MarketDetail marketId={marketId} />
+      </div>
+    </HydrationBoundary>
   );
 }

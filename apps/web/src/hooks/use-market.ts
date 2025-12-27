@@ -2,11 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { MarketId } from "@yoda.fun/shared/typeid";
-import { orpc } from "@/utils/orpc";
-
-export const marketQueryOptions = (marketId: MarketId) =>
-  orpc.market.get.queryOptions({ input: { marketId } });
+import { client } from "@/utils/orpc";
+import { marketQueryKey } from "./market-query-key";
 
 export function useMarket(marketId: MarketId) {
-  return useQuery(marketQueryOptions(marketId));
+  return useQuery({
+    queryKey: marketQueryKey(marketId),
+    queryFn: () => client.market.get({ marketId }),
+  });
 }
