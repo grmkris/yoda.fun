@@ -27,6 +27,119 @@ function formatTimeRemaining(date: Date | null): string {
   return `${minutes}m`;
 }
 
+function ClaimButtonSection({
+  isLoading,
+  canClaim,
+  isPending,
+  onClaim,
+  nextAmount,
+  nextClaimAt,
+}: {
+  isLoading: boolean;
+  canClaim: boolean;
+  isPending: boolean;
+  onClaim: () => void;
+  nextAmount: number;
+  nextClaimAt: Date | null;
+}) {
+  if (isLoading) {
+    return <Skeleton className="h-10 w-24" />;
+  }
+
+  if (canClaim) {
+    return (
+      <Button
+        className="relative overflow-hidden"
+        disabled={isPending}
+        onClick={onClaim}
+        size="sm"
+        style={{
+          background:
+            "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
+          border: "none",
+        }}
+      >
+        <Gift className="mr-2 h-4 w-4" />
+        Claim ${nextAmount}
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      className="flex items-center gap-2 rounded-lg px-3 py-2"
+      style={{
+        background: "oklch(0.15 0.02 280 / 80%)",
+        border: "1px solid oklch(0.65 0.25 290 / 15%)",
+      }}
+    >
+      <Clock className="h-4 w-4" style={{ color: "oklch(0.65 0.04 280)" }} />
+      <span
+        className="font-medium text-sm"
+        style={{ color: "oklch(0.80 0.04 280)" }}
+      >
+        {formatTimeRemaining(nextClaimAt)}
+      </span>
+    </div>
+  );
+}
+
+function getDayCellBackground(isCompleted: boolean, isCurrent: boolean) {
+  if (isCompleted) {
+    return "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))";
+  }
+  if (isCurrent) {
+    return "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))";
+  }
+  return "oklch(0.15 0.02 280 / 60%)";
+}
+
+function DayCell({
+  dayNum,
+  amount,
+  isCompleted,
+  isCurrent,
+  idx,
+}: {
+  dayNum: number;
+  amount: number;
+  isCompleted: boolean;
+  isCurrent: boolean;
+  idx: number;
+}) {
+  return (
+    <motion.div
+      animate={{ scale: 1, opacity: 1 }}
+      className="flex flex-col items-center gap-1"
+      initial={{ scale: 0.8, opacity: 0 }}
+      key={dayNum}
+      transition={{ delay: idx * 0.05 + 0.2 }}
+    >
+      <div
+        className="flex h-10 w-10 items-center justify-center rounded-lg font-medium text-sm transition-all"
+        style={{
+          background: getDayCellBackground(isCompleted, isCurrent),
+          border: isCurrent
+            ? "2px solid oklch(0.80 0.16 50)"
+            : "1px solid oklch(0.65 0.25 290 / 15%)",
+          color: isCompleted || isCurrent ? "white" : "oklch(0.50 0.04 280)",
+          boxShadow: isCurrent ? "0 0 15px oklch(0.80 0.16 50 / 40%)" : "none",
+        }}
+      >
+        {isCompleted ? <Check className="h-5 w-5" /> : `$${amount}`}
+      </div>
+      <span
+        className="font-medium text-xs"
+        style={{
+          color: isCompleted ? "oklch(0.72 0.18 175)" : "oklch(0.50 0.04 280)",
+        }}
+      >
+        Day {dayNum}
+      </span>
+    </motion.div>
+  );
+}
+
 export function DailyStreakCard() {
   const { data, isLoading } = useRewardSummary();
   const claimMutation = useClaimDailyStreak();
@@ -89,44 +202,14 @@ export function DailyStreakCard() {
           </div>
         </div>
 
-        {/* Claim button or timer */}
-        {isLoading ? (
-          <Skeleton className="h-10 w-24" />
-        ) : canClaim ? (
-          <Button
-            className="relative overflow-hidden"
-            disabled={claimMutation.isPending}
-            onClick={() => claimMutation.mutate()}
-            size="sm"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-              border: "none",
-            }}
-          >
-            <Gift className="mr-2 h-4 w-4" />
-            Claim ${nextAmount}
-          </Button>
-        ) : (
-          <div
-            className="flex items-center gap-2 rounded-lg px-3 py-2"
-            style={{
-              background: "oklch(0.15 0.02 280 / 80%)",
-              border: "1px solid oklch(0.65 0.25 290 / 15%)",
-            }}
-          >
-            <Clock
-              className="h-4 w-4"
-              style={{ color: "oklch(0.65 0.04 280)" }}
-            />
-            <span
-              className="font-medium text-sm"
-              style={{ color: "oklch(0.80 0.04 280)" }}
-            >
-              {formatTimeRemaining(nextClaimAt)}
-            </span>
-          </div>
-        )}
+        <ClaimButtonSection
+          canClaim={canClaim}
+          isLoading={isLoading}
+          isPending={claimMutation.isPending}
+          nextAmount={nextAmount ?? 1}
+          nextClaimAt={nextClaimAt}
+          onClaim={() => claimMutation.mutate()}
+        />
       </div>
 
       {/* 7-day progress */}
@@ -141,48 +224,16 @@ export function DailyStreakCard() {
           const dayNum = idx + 1;
           const isCompleted = dayNum <= currentDay;
           const isCurrent = dayNum === currentDay + 1 && canClaim;
-          const _isFuture =
-            dayNum > currentDay + 1 || (!canClaim && dayNum === currentDay + 1);
 
           return (
-            <motion.div
-              animate={{ scale: 1, opacity: 1 }}
-              className="flex flex-col items-center gap-1"
-              initial={{ scale: 0.8, opacity: 0 }}
+            <DayCell
+              amount={amount}
+              dayNum={dayNum}
+              idx={idx}
+              isCompleted={isCompleted}
+              isCurrent={isCurrent}
               key={dayNum}
-              transition={{ delay: idx * 0.05 + 0.2 }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-lg font-medium text-sm transition-all"
-                style={{
-                  background: isCompleted
-                    ? "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))"
-                    : isCurrent
-                      ? "linear-gradient(135deg, oklch(0.80 0.16 50), oklch(0.70 0.20 30))"
-                      : "oklch(0.15 0.02 280 / 60%)",
-                  border: isCurrent
-                    ? "2px solid oklch(0.80 0.16 50)"
-                    : "1px solid oklch(0.65 0.25 290 / 15%)",
-                  color:
-                    isCompleted || isCurrent ? "white" : "oklch(0.50 0.04 280)",
-                  boxShadow: isCurrent
-                    ? "0 0 15px oklch(0.80 0.16 50 / 40%)"
-                    : "none",
-                }}
-              >
-                {isCompleted ? <Check className="h-5 w-5" /> : `$${amount}`}
-              </div>
-              <span
-                className="font-medium text-xs"
-                style={{
-                  color: isCompleted
-                    ? "oklch(0.72 0.18 175)"
-                    : "oklch(0.50 0.04 280)",
-                }}
-              >
-                Day {dayNum}
-              </span>
-            </motion.div>
+            />
           );
         })}
       </div>

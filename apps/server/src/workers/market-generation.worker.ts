@@ -1,11 +1,15 @@
 import type { AiClient } from "@yoda.fun/ai";
+import type { Cache } from "@yoda.fun/cache";
+import { cachified } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
+import { TRENDING_CACHE } from "@yoda.fun/markets/config";
 import {
   createMarketGenerationService,
   getDistributionGuidance,
   getTrendingTopics,
 } from "@yoda.fun/markets/generation";
+import type { CuratedTopic } from "@yoda.fun/markets/prompts";
 import type { QueueClient } from "@yoda.fun/queue";
 
 export interface MarketGenerationWorkerConfig {
@@ -13,6 +17,7 @@ export interface MarketGenerationWorkerConfig {
   db: Database;
   logger: Logger;
   aiClient: AiClient;
+  cache: Cache;
 }
 
 const getTimeframe = () => {
@@ -35,7 +40,7 @@ export function createMarketGenerationWorker(
 ): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, aiClient } = config;
+  const { queue, db, logger, aiClient, cache } = config;
 
   const marketGenerationService = createMarketGenerationService({
     db,
@@ -44,11 +49,6 @@ export function createMarketGenerationWorker(
   });
 
   logger.info({ msg: "Starting market generation worker" });
-
-  // Cache trending topics (refresh every 30 min)
-  let cachedTrendingTopics: Awaited<ReturnType<typeof getTrendingTopics>> = [];
-  let lastTrendingFetch = 0;
-  const TRENDING_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
   const worker = queue.createWorker<"generate-market">(
     "generate-market",
@@ -72,32 +72,23 @@ export function createMarketGenerationWorker(
         );
       }
 
-      // Fetch trending topics (with caching)
-      const now = Date.now();
-      if (now - lastTrendingFetch > TRENDING_CACHE_TTL) {
-        try {
-          logger.info({}, "Refreshing trending topics cache");
-          cachedTrendingTopics = await getTrendingTopics({ aiClient, logger });
-          lastTrendingFetch = now;
-          logger.info(
-            { topicCount: cachedTrendingTopics.length },
-            "Trending topics refreshed"
-          );
-        } catch (error) {
-          logger.warn(
-            { error },
-            "Failed to fetch trending topics, using cache"
-          );
-        }
-      }
+      const curatedTopics = await cachified<CuratedTopic[]>({
+        key: "trending-topics",
+        cache,
+        ttl: TRENDING_CACHE.TTL_MS,
+        staleWhileRevalidate: TRENDING_CACHE.SWR_MS,
+        getFreshValue() {
+          logger.info({}, "Fetching fresh trending topics");
+          return getTrendingTopics({ aiClient, logger });
+        },
+      });
 
-      // Generate and insert markets
       const { generated, inserted } =
         await marketGenerationService.generateAndInsertMarkets({
           count,
           categories,
           timeframe: getTimeframe(),
-          curatedTopics: cachedTrendingTopics,
+          curatedTopics,
           distributionGuidance,
         });
 

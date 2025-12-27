@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Users } from "lucide-react";
+import { Check, Copy, Link, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { useApplyReferralCode, useRewardSummary } from "@/hooks/use-rewards";
 export function ReferralCard() {
   const { data, isLoading } = useRewardSummary();
   const applyCodeMutation = useApplyReferralCode();
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [inputCode, setInputCode] = useState("");
 
   const referral = data?.referral;
@@ -19,10 +20,21 @@ export function ReferralCard() {
   const count = referral?.count ?? 0;
   const earnings = referral?.earnings ?? 0;
 
-  const handleCopy = async () => {
+  const inviteUrl =
+    typeof window !== "undefined" && code
+      ? `${window.location.origin}/invite/${code}`
+      : "";
+
+  const handleCopyCode = async () => {
     await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(inviteUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const handleApplyCode = () => {
@@ -81,12 +93,12 @@ export function ReferralCard() {
 
       {/* Your referral code */}
       <div className="relative mb-4">
-        <label
+        <span
           className="mb-2 block font-medium text-sm"
           style={{ color: "oklch(0.75 0.04 280)" }}
         >
           Your referral code
-        </label>
+        </span>
         {isLoading ? (
           <Skeleton className="h-12 w-full" />
         ) : (
@@ -103,20 +115,40 @@ export function ReferralCard() {
             </div>
             <Button
               className="shrink-0"
-              onClick={handleCopy}
+              onClick={handleCopyCode}
               size="icon"
               style={{
-                background: copied
+                background: copiedCode
                   ? "oklch(0.72 0.18 175)"
                   : "oklch(0.20 0.04 280)",
                 border: "1px solid oklch(0.65 0.25 290 / 20%)",
               }}
+              title="Copy code"
               variant="outline"
             >
-              {copied ? (
+              {copiedCode ? (
                 <Check className="h-4 w-4" />
               ) : (
                 <Copy className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              className="shrink-0"
+              onClick={handleCopyLink}
+              size="icon"
+              style={{
+                background: copiedLink
+                  ? "oklch(0.72 0.18 175)"
+                  : "oklch(0.20 0.04 280)",
+                border: "1px solid oklch(0.65 0.25 290 / 20%)",
+              }}
+              title="Copy invite link"
+              variant="outline"
+            >
+              {copiedLink ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Link className="h-4 w-4" />
               )}
             </Button>
           </div>
@@ -157,12 +189,12 @@ export function ReferralCard() {
 
       {/* Apply a code */}
       <div>
-        <label
+        <span
           className="mb-2 block font-medium text-sm"
           style={{ color: "oklch(0.75 0.04 280)" }}
         >
           Have a referral code?
-        </label>
+        </span>
         <div className="flex gap-2">
           <Input
             className="flex-1"

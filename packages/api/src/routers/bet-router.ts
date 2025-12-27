@@ -35,7 +35,7 @@ export const betRouter = {
       const result = await context.betService.placeBet(userId, input);
 
       return result.match(
-        async (bet) => {
+        (bet) => {
           const betAmount = Number(bet.amount);
           const betId = BetId.parse(bet.id);
           Promise.all([

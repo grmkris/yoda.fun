@@ -20,4 +20,8 @@ export const CATEGORY_DISTRIBUTION = {
 } as const;
 
 export const CRYPTO_DAILY_CAP = 12;
-export const TRENDING_CACHE_TTL = 1800;
+
+export const TRENDING_CACHE = {
+  TTL_MS: 65 * 60 * 1000, // 65 min (guarantees 2 cache hits with 30 min cron)
+  SWR_MS: 5 * 60 * 1000, // 5 min stale-while-revalidate
+} as const;

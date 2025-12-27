@@ -129,7 +129,7 @@ export function VolumeCard() {
 }
 
 export function WinStreakCard() {
-  const { data, isLoading } = useRewardSummary();
+  const { data } = useRewardSummary();
   const winStreak = data?.winStreak;
 
   return (
@@ -220,7 +220,7 @@ export function WinStreakCard() {
 }
 
 export function FirstBetCard() {
-  const { data, isLoading } = useRewardSummary();
+  const { data } = useRewardSummary();
   const firstBet = data?.firstBetBonus;
   const isEarned = firstBet?.earned ?? false;
 

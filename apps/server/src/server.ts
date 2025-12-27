@@ -6,6 +6,7 @@ import { createAiClient } from "@yoda.fun/ai";
 import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers";
 import { createAuth } from "@yoda.fun/auth";
+import { createRedisCache } from "@yoda.fun/cache";
 import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
 import { count } from "@yoda.fun/db/drizzle";
 import { createLogger } from "@yoda.fun/logger";
@@ -14,7 +15,7 @@ import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
 import { ENV_CONFIG } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
-import { S3Client } from "bun";
+import { RedisClient, S3Client } from "bun";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
@@ -160,6 +161,9 @@ const queue: QueueClient = createQueueClient({
   logger,
 });
 
+const cacheRedis = new RedisClient(env.REDIS_URL);
+const cache = createRedisCache(cacheRedis);
+
 // Bull-Board admin UI for queue monitoring
 const { serverAdapter: bullBoardAdapter } = setupBullBoard(queue);
 app.route("/admin/queues", bullBoardAdapter.registerPlugin());
@@ -189,6 +193,7 @@ const generationWorker = createMarketGenerationWorker({
   db,
   logger,
   aiClient,
+  cache,
 });
 logger.info({ msg: "Market generation worker started" });
 

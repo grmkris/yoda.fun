@@ -4,6 +4,7 @@ import { QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
 import { env } from "@/env";
+import { useReferralAutoApply } from "@/hooks/use-referral-auto-apply";
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
 import { useSession } from "./session-provider";
@@ -26,6 +27,11 @@ function AutoAnonymousAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ReferralAutoApply({ children }: { children: React.ReactNode }) {
+  useReferralAutoApply();
+  return <>{children}</>;
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -37,7 +43,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       >
         {env.NEXT_PUBLIC_ENV === "dev" && <ReactQueryDevtools />}
         <Web3Provider>
-          <AutoAnonymousAuth>{children}</AutoAnonymousAuth>
+          <AutoAnonymousAuth>
+            <ReferralAutoApply>{children}</ReferralAutoApply>
+          </AutoAnonymousAuth>
         </Web3Provider>
         <Toaster richColors />
       </ThemeProvider>

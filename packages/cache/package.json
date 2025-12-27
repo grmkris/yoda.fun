@@ -1,0 +1,29 @@
+{
+  "name": "@yoda.fun/cache",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/cache.d.ts",
+      "default": "./src/cache.ts"
+    },
+    "./adapters/redis": {
+      "types": "./dist/adapters/redis.d.ts",
+      "default": "./src/adapters/redis.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "bun ultracite check",
+    "fix": "bun ultracite fix",
+    "fix:unsafe": "bun ultracite fix --unsafe",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "tsdown": "catalog:"
+  },
+  "dependencies": {
+    "@epic-web/cachified": "^5.6.0"
+  }
+}
