@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SwipeStack, type SwipeStackRef } from "@/components/swipe/swipe-stack";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketStack } from "@/hooks/use-market-stack";
@@ -9,7 +9,7 @@ import { EmptyState } from "./empty-state";
 import { GameCard, type MarketCard } from "./game-card";
 
 export function CardSwiperSection() {
-  const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
+  const [swipedCount, setSwipedCount] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const stackRef = useRef<SwipeStackRef>(null);
 
@@ -24,26 +24,26 @@ export function CardSwiperSection() {
   } = useMarketStack(10);
   const placeBet = usePlaceBet();
 
-  const allMarkets = data?.pages.flatMap((page) => page.markets) ?? [];
-  const markets = allMarkets.filter((m) => !swipedIds.has(m.id));
+  const allMarkets = useMemo(
+    () => data?.pages.flatMap((page) => page.markets) ?? [],
+    [data]
+  );
+
+  const remaining = allMarkets.length - swipedCount;
 
   useEffect(() => {
-    if (markets.length <= 3 && hasNextPage && !isFetchingNextPage) {
+    if (remaining <= 3 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [markets.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [remaining, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSwipe = (card: MarketCard, vote: "YES" | "NO") => {
-    setSwipedIds((prev) => new Set(prev).add(card.id));
+    setSwipedCount((prev) => prev + 1);
     placeBet.mutate(
       { marketId: card.id, vote },
       {
         onError: () => {
-          setSwipedIds((prev) => {
-            const next = new Set(prev);
-            next.delete(card.id);
-            return next;
-          });
+          setSwipedCount((prev) => prev - 1);
           stackRef.current?.revert();
           setIsBlocked(true);
         },
@@ -108,11 +108,11 @@ export function CardSwiperSection() {
   return (
     <section className="p-4">
       <div className="mx-auto max-w-md">
-        {markets.length === 0 ? (
+        {remaining <= 0 && !hasNextPage ? (
           <EmptyState />
         ) : (
           <SwipeStack
-            cards={markets}
+            cards={allMarkets}
             className="min-h-[500px]"
             disabled={isBlocked}
             maxVisibleCards={5}
