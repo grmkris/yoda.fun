@@ -36,9 +36,9 @@ export const SERVICE_URLS: Record<
   },
   prod: {
     auth: "https://api.yoda.fun",
-    authInternal: "http://server:4200",
+    authInternal: "http://server.internal:4200",
     api: "https://api.yoda.fun",
-    apiInternal: "http://server:4200",
+    apiInternal: "http://server.internal:4200",
     web: "https://yoda.fun",
     cookieDomain: ".yoda.fun",
     siweDomain: ".yoda.fun",
