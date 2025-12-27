@@ -13,6 +13,38 @@ const REFERRAL_BONUS = 5;
 const DAILY_CLAIM_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 const STREAK_BREAK_MS = 48 * 60 * 60 * 1000; // 48 hours (24h window after 24h cooldown)
 
+function getWinStreakUpdates(milestones: number[]) {
+  const updates: Record<string, boolean> = {};
+  for (const m of milestones) {
+    if (m === 3) {
+      updates.winStreak3Claimed = true;
+    }
+    if (m === 5) {
+      updates.winStreak5Claimed = true;
+    }
+    if (m === 10) {
+      updates.winStreak10Claimed = true;
+    }
+  }
+  return updates;
+}
+
+function getVolumeUpdates(milestones: number[]) {
+  const updates: Record<string, boolean> = {};
+  for (const m of milestones) {
+    if (m === 100) {
+      updates.volume100Claimed = true;
+    }
+    if (m === 500) {
+      updates.volume500Claimed = true;
+    }
+    if (m === 1000) {
+      updates.volume1000Claimed = true;
+    }
+  }
+  return updates;
+}
+
 interface RewardServiceDeps {
   db: Database;
   balanceService: BalanceService;
@@ -40,7 +72,11 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         .values({ userId, referralCode })
         .returning();
 
-      return created[0]!;
+      const result = created[0];
+      if (!result) {
+        throw new Error("Failed to create reward state");
+      }
+      return result;
     },
 
     async canClaimDailyStreak(userId: UserId) {
@@ -96,7 +132,7 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
 
       const now = new Date();
       const newStreak = check.streakBroken ? 1 : check.currentStreak + 1;
-      const amount = DAILY_STREAK_AMOUNTS[Math.min(newStreak - 1, 6)]!;
+      const amount = DAILY_STREAK_AMOUNTS[Math.min(newStreak - 1, 6)] ?? 1;
 
       const result = await db.transaction(async (tx) => {
         await tx
@@ -107,7 +143,7 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
           })
           .where(eq(DB_SCHEMA.userRewardState.userId, userId));
 
-        const claim = await tx
+        const [claim] = await tx
           .insert(DB_SCHEMA.rewardClaim)
           .values({
             userId,
@@ -119,7 +155,11 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
           })
           .returning();
 
-        return claim[0]!;
+        if (!claim) {
+          throw new Error("Failed to create reward claim");
+        }
+
+        return claim;
       });
 
       await balanceService.creditBalance(userId, amount, "REWARD", {
@@ -180,20 +220,9 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         return null;
       }
 
-      await db.transaction(async (tx) => {
-        const updates: Record<string, boolean> = {};
-        for (const r of rewards) {
-          if (r.milestone === 3) {
-            updates.winStreak3Claimed = true;
-          }
-          if (r.milestone === 5) {
-            updates.winStreak5Claimed = true;
-          }
-          if (r.milestone === 10) {
-            updates.winStreak10Claimed = true;
-          }
-        }
+      const updates = getWinStreakUpdates(rewards.map((r) => r.milestone));
 
+      await db.transaction(async (tx) => {
         await tx
           .update(DB_SCHEMA.userRewardState)
           .set(updates)
@@ -236,23 +265,15 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         rewards.push({ milestone: 1000, amount: VOLUME_MILESTONES[1000] });
       }
 
+      const milestoneUpdates = getVolumeUpdates(
+        rewards.map((r) => r.milestone)
+      );
+      const updates: Record<string, unknown> = {
+        ...milestoneUpdates,
+        totalBettingVolume: sql`${DB_SCHEMA.userRewardState.totalBettingVolume} + ${betAmount.toFixed(2)}`,
+      };
+
       await db.transaction(async (tx) => {
-        const updates: Record<string, unknown> = {
-          totalBettingVolume: sql`${DB_SCHEMA.userRewardState.totalBettingVolume} + ${betAmount.toFixed(2)}`,
-        };
-
-        for (const r of rewards) {
-          if (r.milestone === 100) {
-            updates.volume100Claimed = true;
-          }
-          if (r.milestone === 500) {
-            updates.volume500Claimed = true;
-          }
-          if (r.milestone === 1000) {
-            updates.volume1000Claimed = true;
-          }
-        }
-
         await tx
           .update(DB_SCHEMA.userRewardState)
           .set(updates)
@@ -320,7 +341,7 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
     },
 
     async processReferralBonus(refereeUserId: UserId) {
-      const referralRecord = await db
+      const [referralRecord] = await db
         .select()
         .from(DB_SCHEMA.referral)
         .where(
@@ -331,17 +352,17 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
         )
         .limit(1);
 
-      if (!referralRecord[0]) {
+      if (!referralRecord) {
         return null;
       }
 
-      const referrerId = referralRecord[0].referrerId;
+      const referrerId = referralRecord.referrerId;
 
       await db.transaction(async (tx) => {
         await tx
           .update(DB_SCHEMA.referral)
           .set({ referrerRewarded: true, rewardedAt: new Date() })
-          .where(eq(DB_SCHEMA.referral.id, referralRecord[0]?.id));
+          .where(eq(DB_SCHEMA.referral.id, referralRecord.id));
 
         await tx
           .update(DB_SCHEMA.userRewardState)
@@ -407,7 +428,7 @@ export function createRewardService({ deps }: { deps: RewardServiceDeps }) {
       return {
         claimableCount: claimableRewards.length + (dailyCheck.canClaim ? 1 : 0),
         claimableTotal:
-          claimableTotal + (dailyCheck.canClaim ? dailyCheck.amount! : 0),
+          claimableTotal + (dailyCheck.canClaim ? (dailyCheck.amount ?? 0) : 0),
         dailyStreak: {
           currentDay: state.currentDailyStreak,
           canClaim: dailyCheck.canClaim,

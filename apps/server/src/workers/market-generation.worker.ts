@@ -61,7 +61,9 @@ export function createMarketGenerationWorker(
       );
 
       // For scheduled jobs, use soft distribution guidance
-      let distributionGuidance;
+      let distributionGuidance:
+        | Awaited<ReturnType<typeof getDistributionGuidance>>
+        | undefined;
       if (trigger === "scheduled") {
         distributionGuidance = await getDistributionGuidance(db);
         logger.info(

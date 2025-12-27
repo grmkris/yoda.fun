@@ -29,6 +29,13 @@
       "when": 1766847670768,
       "tag": "0003_smart_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766849050258,
+      "tag": "0004_useful_marauders",
+      "breakpoints": true
     }
   ]
 }

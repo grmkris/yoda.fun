@@ -7,7 +7,7 @@ import { protectedProcedure } from "../api";
 export const rewardRouter = {
   getSummary: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
-    return context.rewardService.getRewardSummary(userId);
+    return await context.rewardService.getRewardSummary(userId);
   }),
 
   getClaimableCount: protectedProcedure.handler(async ({ context }) => {
@@ -36,7 +36,7 @@ export const rewardRouter = {
 
   getDailyStatus: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
-    return context.rewardService.canClaimDailyStreak(userId);
+    return await context.rewardService.canClaimDailyStreak(userId);
   }),
 
   getHistory: protectedProcedure

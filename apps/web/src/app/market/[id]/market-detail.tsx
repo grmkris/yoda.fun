@@ -212,6 +212,7 @@ function ResolutionSection({
   sources,
   strategy,
   criteria,
+  reasoning,
 }: {
   result: NonNullable<
     NonNullable<ReturnType<typeof useMarket>["data"]>["result"]
@@ -235,11 +236,17 @@ function ResolutionSection({
       ? C
       : never
     : never;
+  reasoning: ReturnType<typeof useMarket>["data"] extends infer T
+    ? T extends { resolutionReasoning: infer R }
+      ? R
+      : never
+    : never;
 }) {
   return (
     <ResolutionDetails
       confidence={confidence}
       criteria={criteria}
+      reasoning={reasoning}
       resolutionType={resolutionType}
       result={result}
       sources={sources}
@@ -706,6 +713,7 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
         <ResolutionSection
           confidence={market.resolutionConfidence}
           criteria={market.resolutionCriteria}
+          reasoning={market.resolutionReasoning}
           resolutionType={market.resolutionType}
           result={market.result}
           sources={market.resolutionSources}

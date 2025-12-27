@@ -2,6 +2,7 @@ import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
+import type { ResolutionMetadata } from "@yoda.fun/shared/resolution-types";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import type { LeaderboardService } from "./leaderboard-service";
 import type { RewardService } from "./reward-service";
@@ -14,11 +15,6 @@ interface SettlementServiceDeps {
 }
 
 type MarketResult = "YES" | "NO" | "INVALID";
-
-interface ResolutionMetadata {
-  sources?: Array<{ url: string; snippet: string }>;
-  confidence?: number;
-}
 
 export function createSettlementService({
   deps,
@@ -136,6 +132,7 @@ export function createSettlementService({
           resolvedAt: new Date(),
           resolutionSources: metadata?.sources,
           resolutionConfidence: metadata?.confidence,
+          resolutionReasoning: metadata?.reasoning,
         })
         .where(eq(DB_SCHEMA.market.id, marketId));
 

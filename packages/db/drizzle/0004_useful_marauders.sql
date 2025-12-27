@@ -1,0 +1,1 @@
+ALTER TABLE "market" ADD COLUMN "resolution_reasoning" text;

@@ -92,9 +92,7 @@ export async function selectNextCategory(
   return "other";
 }
 
-export async function getDistributionGuidance(
-  db: Database
-): Promise<{
+export async function getDistributionGuidance(db: Database): Promise<{
   deficits: { category: string; deficit: number }[];
   atCap: string[];
   suggested: string;

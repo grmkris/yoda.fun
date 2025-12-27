@@ -70,3 +70,12 @@ export const AIResolutionSchema = z.object({
   ),
 });
 export type AIResolutionResult = z.infer<typeof AIResolutionSchema>;
+
+export const ResolutionMetadataSchema = z.object({
+  sources: z
+    .array(z.object({ url: z.string(), snippet: z.string() }))
+    .optional(),
+  confidence: z.number().min(0).max(100).optional(),
+  reasoning: z.string().optional(),
+});
+export type ResolutionMetadata = z.infer<typeof ResolutionMetadataSchema>;

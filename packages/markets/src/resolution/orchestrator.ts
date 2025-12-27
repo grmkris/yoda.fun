@@ -1,15 +1,11 @@
 import type { AiClient } from "@yoda.fun/ai";
 import type { SelectMarket } from "@yoda.fun/db/schema";
 import type { Logger } from "@yoda.fun/logger";
+import type { ResolutionMetadata } from "@yoda.fun/shared/resolution-types";
 import type { MarketId } from "@yoda.fun/shared/typeid";
 import { resolveWithAgent } from "./agentic-resolver";
 
 export type MarketResult = "YES" | "NO" | "INVALID";
-
-export interface ResolutionMetadata {
-  sources?: Array<{ url: string; snippet: string }>;
-  confidence?: number;
-}
 
 export interface SettlementService {
   resolveMarket: (
@@ -59,6 +55,7 @@ export async function resolveMarket(
   await settlementService.resolveMarket(market.id, resolution.result, {
     sources: resolution.sources,
     confidence: resolution.confidence,
+    reasoning: resolution.reasoning,
   });
 
   return { success: true, result: resolution.result };

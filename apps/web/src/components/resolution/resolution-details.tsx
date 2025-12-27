@@ -72,6 +72,7 @@ interface ResolutionDetailsProps {
   sources: BetMarket["resolutionSources"];
   strategy?: ResolutionStrategy | null;
   criteria?: string | null;
+  reasoning?: string | null;
   className?: string;
 }
 
@@ -371,6 +372,7 @@ export function ResolutionDetails({
   sources,
   strategy,
   criteria,
+  reasoning,
   className,
 }: ResolutionDetailsProps) {
   const config = resultConfig[result];
@@ -433,6 +435,33 @@ export function ResolutionDetails({
           </h3>
         </motion.div>
       </motion.div>
+
+      {/* AI Reasoning */}
+      {reasoning && (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-xl p-4"
+          initial={{ opacity: 0, y: 20 }}
+          style={{
+            background: COLORS.oracleBg,
+            border: `1px solid ${COLORS.oracle}40`,
+          }}
+          transition={{ delay: 0.25 }}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <Zap className="h-4 w-4" style={{ color: COLORS.oracle }} />
+            <p
+              className="font-heading text-xs uppercase tracking-wider"
+              style={{ color: COLORS.oracle }}
+            >
+              AI Analysis
+            </p>
+          </div>
+          <p className="leading-relaxed" style={{ color: COLORS.text }}>
+            {reasoning}
+          </p>
+        </motion.div>
+      )}
 
       {/* Stats Grid */}
       <div className="mb-6 grid grid-cols-2 gap-4">

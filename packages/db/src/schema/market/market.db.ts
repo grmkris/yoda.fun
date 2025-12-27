@@ -97,6 +97,7 @@ export const market = pgTable("market", {
       Array<{ url: string; snippet: string }>
     >(),
   resolutionConfidence: integer("resolution_confidence"),
+  resolutionReasoning: text("resolution_reasoning"),
   ...baseEntityFields,
 });
 
