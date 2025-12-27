@@ -7,12 +7,12 @@ export const envSchema = z.object({
   BETTER_AUTH_SECRET: z.string(),
   // AI config
   XAI_API_KEY: z.string(),
-  GOOGLE_GEMINI_API_KEY: z.string().optional(),
-  EXA_API_KEY: z.string().optional(),
+  GOOGLE_GEMINI_API_KEY: z.string(),
+  EXA_API_KEY: z.string(),
   // Redis/Queue config
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.url(),
   // S3/MinIO config
-  S3_ENDPOINT: z.string().url(),
+  S3_ENDPOINT: z.url(),
   S3_ACCESS_KEY: z.string(),
   S3_SECRET_KEY: z.string(),
   S3_BUCKET: z.string(),

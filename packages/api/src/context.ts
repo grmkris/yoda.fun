@@ -9,6 +9,7 @@ import { createBetService } from "./services/bet-service";
 import { createFollowService } from "./services/follow-service";
 import { createLeaderboardService } from "./services/leaderboard-service";
 import { createProfileService } from "./services/profile-service";
+import { createRewardService } from "./services/reward-service";
 import { createWithdrawalService } from "./services/withdrawal-service";
 
 export interface CreateContextOptions {
@@ -43,6 +44,9 @@ export async function createContext({
   const betService = createBetService({
     deps: { db, logger },
   });
+  const rewardService = createRewardService({
+    deps: { db, balanceService },
+  });
 
   return {
     session,
@@ -56,6 +60,7 @@ export async function createContext({
     leaderboardService,
     profileService,
     followService,
+    rewardService,
   };
 }
 

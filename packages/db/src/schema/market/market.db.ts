@@ -2,6 +2,7 @@ import type { ResolutionStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   type BetId,
   type MarketId,
+  type MediaId,
   type SettlementBatchId,
   typeIdGenerator,
   type UserBalanceId,
@@ -69,6 +70,7 @@ export const market = pgTable("market", {
   description: text("description").notNull(),
   imageUrl: text("image_url"),
   thumbnailUrl: text("thumbnail_url"),
+  mediaId: typeId("media", "media_id").$type<MediaId>(),
   category: text("category"),
   tags: text("tags").array(),
   status: marketStatusEnum("status").notNull().default("PROCESSING"),

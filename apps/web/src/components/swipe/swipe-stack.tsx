@@ -187,33 +187,25 @@ function SwipeStackComponent<T>(
 
             return (
               <div key={index} style={cardStyles}>
-                {isTopCard ? (
-                  <SwipeCard
-                    data={card}
-                    disabled={disabled}
-                    onSwipe={(data, direction) => onSwipe?.(data, direction)}
-                    onSwipeLeft={(data) =>
-                      handleSwipe(index, onSwipeLeft, data)
-                    }
-                    onSwipeRight={(data) =>
-                      handleSwipe(index, onSwipeRight, data)
-                    }
-                  >
-                    {renderCard(card, index)}
-                  </SwipeCard>
-                ) : (
-                  <div style={{ position: "relative" }}>
-                    {renderCard(card, index)}
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: cosmicTint,
-                        borderRadius: "inherit",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  </div>
+                <SwipeCard
+                  data={card}
+                  disabled={!isTopCard || disabled}
+                  onSwipe={(data, direction) => onSwipe?.(data, direction)}
+                  onSwipeLeft={(data) => handleSwipe(index, onSwipeLeft, data)}
+                  onSwipeRight={(data) => handleSwipe(index, onSwipeRight, data)}
+                >
+                  {renderCard(card, index)}
+                </SwipeCard>
+                {stackIndex > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: cosmicTint,
+                      borderRadius: "inherit",
+                      pointerEvents: "none",
+                    }}
+                  />
                 )}
               </div>
             );

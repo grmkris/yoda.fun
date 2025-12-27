@@ -53,42 +53,6 @@ export function useToggleFollow() {
 }
 
 /**
- * Get a user's followers
- */
-export function useFollowers(
-  userId: UserId,
-  options?: { limit?: number; offset?: number }
-) {
-  return useQuery(
-    orpc.follow.followers.queryOptions({
-      input: {
-        userId,
-        limit: options?.limit,
-        offset: options?.offset,
-      },
-    })
-  );
-}
-
-/**
- * Get users that a user is following
- */
-export function useFollowing(
-  userId: UserId,
-  options?: { limit?: number; offset?: number }
-) {
-  return useQuery(
-    orpc.follow.following.queryOptions({
-      input: {
-        userId,
-        limit: options?.limit,
-        offset: options?.offset,
-      },
-    })
-  );
-}
-
-/**
  * Get follow counts for a user
  */
 export function useFollowCounts(userId: UserId) {

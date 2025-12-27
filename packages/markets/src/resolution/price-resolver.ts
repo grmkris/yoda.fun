@@ -2,7 +2,7 @@ import type { PriceStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   CoinGeckoPriceResponseSchema,
   type PriceResolutionResult,
-} from "../schemas";
+} from "@yoda.fun/shared/market.schema";
 
 const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 
@@ -79,10 +79,8 @@ export type PriceResolverService = ReturnType<
   typeof createPriceResolverService
 >;
 
-// Default service instance for production
 export const priceResolverService = createPriceResolverService({
   fetchPrice: fetchCoinGeckoPrice,
 });
 
-// Convenience export for backwards compatibility
 export const resolvePriceMarket = priceResolverService.resolvePriceMarket;

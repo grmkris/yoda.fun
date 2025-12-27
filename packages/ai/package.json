@@ -11,10 +11,6 @@
       "types": "./dist/ai-config.d.ts",
       "default": "./src/ai-config.ts"
     },
-    "./label-detection": {
-      "types": "./dist/label-detection.d.ts",
-      "default": "./src/label-detection.ts"
-    },
     "./image-generation": {
       "types": "./dist/image-generation.d.ts",
       "default": "./src/image-generation.ts"
@@ -39,7 +35,7 @@
     "@ai-sdk/google": "catalog:",
     "@ai-sdk/groq": "catalog:",
     "@ai-sdk/xai": "catalog:",
-    "@exalabs/ai-sdk": "^1.0.5",
+    "exa-js": "^1.4.8",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",

@@ -4,11 +4,13 @@ import { and, eq, sql } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import type { LeaderboardService } from "./leaderboard-service";
+import type { RewardService } from "./reward-service";
 
 interface SettlementServiceDeps {
   db: Database;
   logger: Logger;
   leaderboardService?: LeaderboardService;
+  rewardService?: RewardService;
 }
 
 type MarketResult = "YES" | "NO" | "INVALID";
@@ -23,7 +25,7 @@ export function createSettlementService({
 }: {
   deps: SettlementServiceDeps;
 }) {
-  const { db, logger, leaderboardService } = deps;
+  const { db, logger, leaderboardService, rewardService } = deps;
 
   async function processWinningBetInTx(
     tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -83,11 +85,19 @@ export function createSettlementService({
   }) {
     const { userId, won, profit } = options;
     if (leaderboardService) {
-      await leaderboardService.updateStatsOnSettlement({
+      const result = await leaderboardService.updateStatsOnSettlement({
         userId,
         won,
         profit,
       });
+
+      if (won && rewardService && result.newCurrentStreak > 0) {
+        try {
+          await rewardService.processWinStreakBonus(userId, result.newCurrentStreak);
+        } catch (error) {
+          logger.error({ error, userId }, "Failed to process win streak reward");
+        }
+      }
     }
   }
 

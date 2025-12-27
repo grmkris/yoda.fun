@@ -6,6 +6,7 @@ import { followRouter } from "./follow-router";
 import { leaderboardRouter } from "./leaderboard-router";
 import { marketRouter } from "./market-router";
 import { profileRouter } from "./profile-router";
+import { rewardRouter } from "./reward-router";
 import { withdrawalRouter } from "./withdrawal-router";
 
 export const appRouter = {
@@ -21,6 +22,7 @@ export const appRouter = {
   leaderboard: leaderboardRouter,
   profile: profileRouter,
   follow: followRouter,
+  reward: rewardRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

@@ -3,7 +3,7 @@ import {
   type SportsResolutionResult,
   type TheSportsDBEvent,
   TheSportsDBResponseSchema,
-} from "../schemas";
+} from "@yoda.fun/shared/market.schema";
 
 const THESPORTSDB_API_URL = "https://www.thesportsdb.com/api/v1/json/3";
 
@@ -12,11 +12,11 @@ const LEAGUE_IDS: Record<string, string> = {
   nfl: "4391",
   mlb: "4424",
   nhl: "4380",
-  soccer: "4328", // English Premier League as default
+  soccer: "4328",
   mma: "4443",
   boxing: "4470",
   tennis: "4464",
-  esports: "4572", // ESL
+  esports: "4572",
 };
 
 export async function fetchRecentEvents(

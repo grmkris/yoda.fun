@@ -23,7 +23,8 @@ export type TransactionType =
   | "WITHDRAWAL"
   | "BET_PLACED"
   | "PAYOUT"
-  | "REFUND";
+  | "REFUND"
+  | "REWARD";
 
 export function createBalanceService({ deps }: { deps: BalanceServiceDeps }) {
   const { db, logger } = deps;

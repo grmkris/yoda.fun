@@ -23,6 +23,10 @@
     "./resolution-types": {
       "types": "./dist/resolution-types.d.ts",
       "default": "./src/resolution-types.ts"
+    },
+    "./market.schema": {
+      "types": "./dist/market.schema.d.ts",
+      "default": "./src/market.schema.ts"
     }
   },
   "scripts": {

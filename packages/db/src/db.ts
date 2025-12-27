@@ -15,6 +15,10 @@ import * as configSchema from "./schema/config/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as marketSchema from "./schema/market/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as mediaSchema from "./schema/media/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as rewardsSchema from "./schema/rewards/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as socialSchema from "./schema/social/schema.db";
 
 const schema = {
@@ -23,6 +27,8 @@ const schema = {
   ...configSchema,
   ...marketSchema,
   ...socialSchema,
+  ...rewardsSchema,
+  ...mediaSchema,
 };
 export const DB_SCHEMA = schema;
 export type Database =

@@ -1,7 +1,11 @@
 import type { AiClient } from "@yoda.fun/ai";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
-import { createMarketGenerationService } from "@yoda.fun/markets/generation";
+import {
+  createMarketGenerationService,
+  getDistributionGuidance,
+  getTrendingTopics,
+} from "@yoda.fun/markets/generation";
 import type { QueueClient } from "@yoda.fun/queue";
 
 export interface MarketGenerationWorkerConfig {
@@ -41,6 +45,11 @@ export function createMarketGenerationWorker(
 
   logger.info({ msg: "Starting market generation worker" });
 
+  // Cache trending topics (refresh every 30 min)
+  let cachedTrendingTopics: Awaited<ReturnType<typeof getTrendingTopics>> = [];
+  let lastTrendingFetch = 0;
+  const TRENDING_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
   const worker = queue.createWorker<"generate-market">(
     "generate-market",
     async (job) => {
@@ -51,12 +60,40 @@ export function createMarketGenerationWorker(
         "Processing market generation job"
       );
 
+      // For scheduled jobs, use soft distribution guidance
+      let distributionGuidance = undefined;
+      if (trigger === "scheduled") {
+        distributionGuidance = await getDistributionGuidance(db);
+        logger.info(
+          { suggested: distributionGuidance.suggested },
+          "Using distribution guidance"
+        );
+      }
+
+      // Fetch trending topics (with caching)
+      const now = Date.now();
+      if (now - lastTrendingFetch > TRENDING_CACHE_TTL) {
+        try {
+          logger.info("Refreshing trending topics cache");
+          cachedTrendingTopics = await getTrendingTopics({ aiClient, logger });
+          lastTrendingFetch = now;
+          logger.info(
+            { topicCount: cachedTrendingTopics.length },
+            "Trending topics refreshed"
+          );
+        } catch (error) {
+          logger.warn({ error }, "Failed to fetch trending topics, using cache");
+        }
+      }
+
       // Generate and insert markets
       const { generated, inserted } =
         await marketGenerationService.generateAndInsertMarkets({
           count,
           categories,
           timeframe: getTimeframe(),
+          curatedTopics: cachedTrendingTopics,
+          distributionGuidance,
         });
 
       // Schedule resolution and image jobs for each new market

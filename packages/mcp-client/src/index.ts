@@ -2,6 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { MarketId } from "@yoda.fun/shared/typeid";
 import { parseUnits } from "viem";
 import { wrapFetchWithPayment } from "x402-fetch";
 import { z } from "zod";
@@ -63,7 +64,7 @@ server.registerTool(
   {
     description: "Get details of a specific prediction market",
     inputSchema: {
-      marketId: z.string(),
+      marketId: MarketId,
     },
   },
   async (args) => proxyToServer("get_market", args)
@@ -74,7 +75,7 @@ server.registerTool(
   {
     description: "Place a bet on a prediction market (requires x402 payment)",
     inputSchema: {
-      marketId: z.string(),
+      marketId: MarketId,
       vote: z.enum(["YES", "NO"]),
       amount: z.number().optional(),
     },

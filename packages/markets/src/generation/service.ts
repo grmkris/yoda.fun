@@ -4,14 +4,21 @@ import { DB_SCHEMA } from "@yoda.fun/db";
 import { desc } from "@yoda.fun/db/drizzle";
 import type { SelectMarket } from "@yoda.fun/db/schema";
 import type { Logger } from "@yoda.fun/logger";
+import type { CuratedTopic, DistributionGuidance } from "../prompts";
 import { MARKET_PROMPTS } from "../prompts";
 import {
   type GeneratedMarket,
   GeneratedMarketsResponseSchema,
   type GenerateMarketsInput,
   type GenerateMarketsResult,
-} from "../schemas";
+} from "@yoda.fun/shared/market.schema";
 import { type PreparedMarket, prepareMarket } from "./preparer";
+
+/** Extended input with trending topics and distribution guidance */
+export interface GenerateMarketsInputWithTrending extends GenerateMarketsInput {
+  curatedTopics?: CuratedTopic[];
+  distributionGuidance?: DistributionGuidance;
+}
 
 interface MarketGenerationServiceDeps {
   db: Database;
@@ -86,12 +93,17 @@ export function createMarketGenerationService(
   }
 
   const generateMarkets = async (
-    input: GenerateMarketsInput
+    input: GenerateMarketsInputWithTrending
   ): Promise<GenerateMarketsResult> => {
     const config = MARKET_PROMPTS.generation;
 
     logger.info(
-      { count: input.count, categories: input.categories },
+      {
+        count: input.count,
+        categories: input.categories,
+        hasDistributionGuidance: !!input.distributionGuidance,
+        hasCuratedTopics: !!input.curatedTopics?.length,
+      },
       "Generating markets with AI"
     );
 
@@ -103,6 +115,8 @@ export function createMarketGenerationService(
       existingMarketTitles: existingTitles,
       targetCount: input.count,
       timeframe: input.timeframe,
+      curatedTopics: input.curatedTopics,
+      distributionGuidance: input.distributionGuidance,
     });
 
     let lastError: string | undefined;
@@ -138,7 +152,9 @@ export function createMarketGenerationService(
   };
 
   return {
-    async generateAndInsertMarkets(input: GenerateMarketsInput): Promise<{
+    async generateAndInsertMarkets(
+      input: GenerateMarketsInputWithTrending
+    ): Promise<{
       generated: GenerateMarketsResult;
       inserted: SelectMarket[];
     }> {

@@ -52,7 +52,7 @@ export const SelectAccountSchema = createSelectSchema(account, {
   updatedAt: z.coerce.date(),
 });
 export const InsertAccountSchema = z.object({
-  accountId: z.string().min(NUMERIC_CONSTANTS.validationLimits.minStringLength),
+  accountId: AccountId,
   providerId: z
     .string()
     .min(NUMERIC_CONSTANTS.validationLimits.minStringLength),

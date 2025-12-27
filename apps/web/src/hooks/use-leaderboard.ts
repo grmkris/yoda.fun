@@ -42,21 +42,3 @@ export function useMyRank(options?: {
   );
 }
 
-/**
- * Fetch users near current user on leaderboard
- */
-export function useNearbyUsers(options?: {
-  period?: LeaderboardPeriod;
-  metric?: LeaderboardMetric;
-  range?: number;
-}) {
-  return useQuery(
-    orpc.leaderboard.nearby.queryOptions({
-      input: {
-        period: options?.period ?? "allTime",
-        metric: options?.metric ?? "profit",
-        range: options?.range,
-      },
-    })
-  );
-}

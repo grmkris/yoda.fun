@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Gift,
   Home,
   LayoutDashboard,
   LogOut,
@@ -29,6 +30,7 @@ const navItems = [
   { to: "/", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bets", label: "My Bets", icon: Ticket },
+  { to: "/rewards", label: "Rewards", icon: Gift },
   { to: "/deposit", label: "Deposit", icon: Wallet },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ] as const;

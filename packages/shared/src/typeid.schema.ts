@@ -10,9 +10,6 @@ export const idTypesMapNameToPrefix = {
   verification: "ver",
   walletAddress: "wal",
 
-  // ai related
-  aiGeneration: "aig",
-
   // prediction market related
   market: "mkt",
   bet: "bet",
@@ -26,10 +23,15 @@ export const idTypesMapNameToPrefix = {
   userStats: "ust",
   userProfile: "upr",
   follow: "flw",
-  activity: "act",
 
   // storage
+  media: "med",
   marketImage: "mig",
+
+  // rewards
+  reward: "rwd",
+  rewardClaim: "rwc",
+  referral: "ref",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -146,9 +148,16 @@ export type UserProfileId = z.infer<typeof UserProfileId>;
 export const FollowId = typeIdValidator("follow");
 export type FollowId = z.infer<typeof FollowId>;
 
-export const ActivityId = typeIdValidator("activity");
-export type ActivityId = z.infer<typeof ActivityId>;
-
 // Storage types
-export const MarketImageId = typeIdValidator("marketImage");
-export type MarketImageId = z.infer<typeof MarketImageId>;
+export const MediaId = typeIdValidator("media");
+export type MediaId = z.infer<typeof MediaId>;
+
+// Reward types
+export const RewardId = typeIdValidator("reward");
+export type RewardId = z.infer<typeof RewardId>;
+
+export const RewardClaimId = typeIdValidator("rewardClaim");
+export type RewardClaimId = z.infer<typeof RewardClaimId>;
+
+export const ReferralId = typeIdValidator("referral");
+export type ReferralId = z.infer<typeof ReferralId>;

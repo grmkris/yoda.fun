@@ -67,6 +67,7 @@
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",
     "hono": "catalog:",
+    "nanoid": "^5.1.6",
     "neverthrow": "^8.2.0",
     "posthog-node": "catalog:",
     "zod": "catalog:"

@@ -180,7 +180,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     {
       description: "Place a bet on a prediction market. Requires x402 payment.",
       inputSchema: {
-        marketId: z.string(),
+        marketId: MarketId,
         vote: z.enum(["YES", "NO"]),
         amount: z.number().optional(),
       },

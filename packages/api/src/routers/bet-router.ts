@@ -35,13 +35,25 @@ export const betRouter = {
       const result = await context.betService.placeBet(userId, input);
 
       return result.match(
-        (bet) => ({
-          success: true,
-          betId: bet.id,
-          marketId: bet.marketId,
-          vote: bet.vote,
-          message: `Vote placed successfully! You voted ${input.vote}.`,
-        }),
+        async (bet) => {
+          const betAmount = Number(bet.amount);
+          const betId = BetId.parse(bet.id);
+          Promise.all([
+            context.rewardService.processFirstBetBonus(userId, betId),
+            context.rewardService.processVolumeMilestone(userId, betAmount),
+            context.rewardService.processReferralBonus(userId),
+          ]).catch((error) => {
+            context.logger.error({ error, userId }, "Failed to process bet rewards");
+          });
+
+          return {
+            success: true,
+            betId: bet.id,
+            marketId: bet.marketId,
+            vote: bet.vote,
+            message: `Vote placed successfully! You voted ${input.vote}.`,
+          };
+        },
         (error) => {
           throw new ORPCError(
             error.type === "MARKET_NOT_FOUND" ? "NOT_FOUND" : "BAD_REQUEST",

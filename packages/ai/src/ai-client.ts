@@ -1,24 +1,15 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createXai } from "@ai-sdk/xai";
-import { webSearch as exaWebSearch } from "@exalabs/ai-sdk";
 import type { Logger } from "@yoda.fun/logger";
 import type { Environment } from "@yoda.fun/shared/services";
 import type { LanguageModel as LanguageModelType } from "ai";
-
-import {
-  generateImage,
-  generateText,
-  stepCountIs,
-  streamText,
-  wrapLanguageModel,
-} from "ai";
+import { generateImage, generateText, streamText, wrapLanguageModel } from "ai";
+import Exa from "exa-js";
 
 // TODO: Re-enable @posthog/ai when it supports AI SDK v6
 // import type { PostHog } from "posthog-node";
 import { type AIModelConfig, getModel } from "./ai-providers";
-
-const URL_PATTERN = /https?:\/\/[^\s)]+/g;
 
 export type LanguageModel = Exclude<LanguageModelType, string>;
 
@@ -29,6 +20,7 @@ export interface AiClientConfig {
     anthropicApiKey?: string;
     groqApiKey?: string;
     xaiApiKey: string;
+    exaApiKey?: string;
   };
   // TODO: Re-enable when @posthog/ai supports AI SDK v6
   // posthog?: PostHog;
@@ -143,28 +135,24 @@ export const createAiClient = (config: AiClientConfig): AiClient => {
       return googleProvider(modelId);
     },
 
-    // Exa search - encapsulated to handle AI SDK v6 type mismatch
     searchWithExa: async (query: string) => {
-      const model = getModel({
-        modelConfig: { provider: "xai", modelId: "grok-3-fast" },
-        providerConfig: {
-          provider: "xai",
-          apiKey: config.providerConfigs.xaiApiKey,
-        },
+      if (!config.providerConfigs.exaApiKey) {
+        throw new Error("Exa API key is required for searchWithExa");
+      }
+      const exa = new Exa(config.providerConfigs.exaApiKey);
+      const response = await exa.searchAndContents(query, {
+        numResults: 5,
+        text: { maxCharacters: 500 },
       });
-
-      const { text, sources } = await generateText({
-        model,
-        tools: {
-          // biome-ignore lint/suspicious/noExplicitAny: Exa SDK peer dep on AI SDK v5
-          exa_search: exaWebSearch() as any,
-        },
-        prompt: `Search for: "${query}"\n\nFind relevant and recent information.`,
-        stopWhen: stepCountIs(3),
-      });
-
-      const results = extractExaSources(sources, text);
-      return { text, sources: results };
+      type ExaResult = (typeof response.results)[number];
+      return {
+        text: response.results.map((r: ExaResult) => r.text ?? "").join("\n\n"),
+        sources: response.results.map((r: ExaResult) => ({
+          url: r.url,
+          title: r.title ?? "Exa result",
+          snippet: r.text?.slice(0, 200) ?? "",
+        })),
+      };
     },
     generateText,
     streamText,
@@ -193,39 +181,6 @@ export interface ExaSearchResult {
   snippet: string;
 }
 
-function extractExaSources(
-  sources: Awaited<ReturnType<typeof generateText>>["sources"],
-  text: string
-): ExaSearchResult[] {
-  const results: ExaSearchResult[] = [];
-
-  if (sources) {
-    for (const source of sources) {
-      if (source.sourceType === "url" && source.url) {
-        results.push({
-          url: source.url,
-          title: source.title ?? "Exa result",
-          snippet: text.slice(0, 200),
-        });
-      }
-    }
-  }
-
-  // Fallback: extract URLs from text if no sources
-  if (results.length === 0) {
-    const urls = text.match(URL_PATTERN) ?? [];
-    for (const url of urls.slice(0, 5)) {
-      results.push({
-        url,
-        title: "Exa result",
-        snippet: text.slice(0, 200),
-      });
-    }
-  }
-
-  return results;
-}
-
 export interface AiClient {
   getProviderConfig: () => AiClientConfig["providerConfigs"];
   getModel: (aiConfig: AIModelConfig) => LanguageModel;
@@ -237,7 +192,6 @@ export interface AiClient {
   getXaiTools: () => XaiTools;
   getGoogleTools: () => GoogleTools;
   getGoogleModel: (modelId: string) => ReturnType<GoogleProvider>;
-  // Exa search - encapsulated to handle AI SDK v6 type mismatch
   searchWithExa: (
     query: string
   ) => Promise<{ text: string; sources: ExaSearchResult[] }>;

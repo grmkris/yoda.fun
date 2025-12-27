@@ -8,7 +8,7 @@ import {
   type SearchResult,
   SearchResultItemSchema,
   type WebSearchResolutionResult,
-} from "../schemas";
+} from "@yoda.fun/shared/market.schema";
 
 const XaiSearchOutputSchema = z.object({
   webResults: z.array(SearchResultItemSchema),
@@ -239,7 +239,6 @@ export async function resolveWebSearchMarket(
   const { searchQuery, successIndicators } = strategy;
   const startDate = getSearchStartDate(30);
 
-  // Exa disabled - waiting for AI SDK v6 support
   const [xaiResults, googleResult] = await Promise.allSettled([
     searchWithXai(aiClient, searchQuery, startDate),
     searchWithGoogle(aiClient, searchQuery),

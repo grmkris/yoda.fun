@@ -1,4 +1,4 @@
-import type { GeneratedMarket } from "../schemas";
+import type { GeneratedMarket } from "@yoda.fun/shared/market.schema";
 import { calculateMarketDates } from "./duration-utils";
 
 export interface PreparedMarket {

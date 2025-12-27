@@ -3,15 +3,26 @@ import { z } from "zod";
 export const BET_AMOUNTS = ["0.10", "0.25", "0.50", "1.00", "5.00"] as const;
 
 export const MARKET_CATEGORIES = [
+  // Entertainment (split from generic "entertainment")
+  "movies",
+  "tv",
+  "music",
+  "celebrities",
+  "gaming",
+  // Core
   "sports",
-  "entertainment",
-  "tech",
-  "crypto",
   "politics",
+  "tech",
+  "crypto", // CAPPED at 5% (~12/day)
+  // Social/Viral
+  "viral",
   "memes",
+  // Misc
+  "weather",
   "other",
 ] as const;
-
+export const MarketCategory = z.enum(MARKET_CATEGORIES);
+export type MarketCategory = z.infer<typeof MarketCategory>;
 export const DURATION_UNITS = ["hours", "days", "months"] as const;
 
 export const TIMEFRAME_PRESETS = ["immediate", "short", "medium"] as const;
