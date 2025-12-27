@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "minio-eg4wkg0480c04og400osksws.37.60.232.68.sslip.io",
       },
+      {
+        protocol: "https",
+        hostname: "storage.yoda.fun",
+      },
     ],
   },
 };
