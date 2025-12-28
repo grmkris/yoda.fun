@@ -4,6 +4,7 @@ import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import type { GenerateMarketImageJob } from "./jobs/generate-market-image-job";
 import type { GenerateMarketJob } from "./jobs/generate-market-job";
+import type { ProcessAvatarImageJob } from "./jobs/process-avatar-image-job";
 import type { ProcessWithdrawalJob } from "./jobs/process-withdrawal-job";
 import type { ResolveMarketJob } from "./jobs/resolve-market-job";
 
@@ -16,6 +17,7 @@ export interface JobData {
   "resolve-market": ResolveMarketJob;
   "generate-market": GenerateMarketJob;
   "generate-market-image": GenerateMarketImageJob;
+  "process-avatar-image": ProcessAvatarImageJob;
   "process-withdrawal": ProcessWithdrawalJob;
 }
 
@@ -26,6 +28,11 @@ export interface JobResult {
     success: boolean;
     marketId: string;
     imageUrl?: string;
+  };
+  "process-avatar-image": {
+    success: boolean;
+    userId: string;
+    avatarKey: string;
   };
   "process-withdrawal": {
     success: boolean;
@@ -89,6 +96,13 @@ export function createQueueClient(config: QueueConfig) {
         defaultJobOptions,
       }
     ),
+    "process-avatar-image": new Queue<ProcessAvatarImageJob>(
+      "process-avatar-image",
+      {
+        connection,
+        defaultJobOptions,
+      }
+    ),
     "process-withdrawal": new Queue<ProcessWithdrawalJob>(
       "process-withdrawal",
       {
@@ -141,6 +155,13 @@ export function createQueueClient(config: QueueConfig) {
         const job = await queues["generate-market-image"].add(
           queueName,
           data as GenerateMarketImageJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else if (queueName === "process-avatar-image") {
+        const job = await queues["process-avatar-image"].add(
+          queueName,
+          data as ProcessAvatarImageJob,
           jobOptions
         );
         jobId = job.id;

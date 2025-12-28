@@ -1,6 +1,7 @@
 import type { Auth } from "@yoda.fun/auth";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
+import type { QueueClient } from "@yoda.fun/queue";
 import type { StorageClient } from "@yoda.fun/storage";
 import type { Context as HonoContext } from "hono";
 import type { PostHog } from "posthog-node";
@@ -19,6 +20,7 @@ export interface CreateContextOptions {
   logger: Logger;
   posthog?: PostHog;
   storage?: StorageClient;
+  queue?: QueueClient;
 }
 
 export async function createContext({
@@ -28,6 +30,7 @@ export async function createContext({
   logger,
   posthog,
   storage,
+  queue,
 }: CreateContextOptions) {
   const session = await auth.api.getSession({
     headers: context.req.raw.headers,
@@ -54,6 +57,7 @@ export async function createContext({
     logger,
     posthog,
     storage,
+    queue,
     betService,
     balanceService,
     withdrawalService,

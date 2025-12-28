@@ -33,12 +33,12 @@ export async function processMarketImage(
   const thumbnailKey = `markets/${imageId}_thumb.webp`;
 
   await Promise.all([
-    config.storage.upload({
+    config.storage.uploadPublic({
       key: imageKey,
       data: webpBuffer,
       contentType: "image/webp",
     }),
-    config.storage.upload({
+    config.storage.uploadPublic({
       key: thumbnailKey,
       data: thumbnailBuffer,
       contentType: "image/webp",
@@ -49,4 +49,28 @@ export async function processMarketImage(
     imageUrl: imageKey,
     thumbnailUrl: thumbnailKey,
   };
+}
+
+const DEFAULT_AVATAR_SIZE = 256;
+
+export async function processAvatarImage(
+  imageBuffer: Buffer,
+  userId: string,
+  config: ImageProcessingConfig
+): Promise<{ avatarKey: string }> {
+  const quality = config.webpQuality ?? DEFAULT_WEBP_QUALITY;
+  const key = `avatars/${userId}.webp`;
+
+  const processedBuffer = await sharp(imageBuffer)
+    .resize(DEFAULT_AVATAR_SIZE, DEFAULT_AVATAR_SIZE, { fit: "cover" })
+    .webp({ quality })
+    .toBuffer();
+
+  await config.storage.uploadPublic({
+    key,
+    data: processedBuffer,
+    contentType: "image/webp",
+  });
+
+  return { avatarKey: key };
 }

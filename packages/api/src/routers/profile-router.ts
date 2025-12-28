@@ -5,9 +5,6 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
 
 export const profileRouter = {
-  /**
-   * Get a user's public profile by userId
-   */
   getById: publicProcedure
     .input(z.object({ userId: UserId }))
     .handler(async ({ context, input }) => {
@@ -27,9 +24,6 @@ export const profileRouter = {
       return profile;
     }),
 
-  /**
-   * Get a user's public profile by username
-   */
   getByUsername: publicProcedure
     .input(z.object({ username: z.string().min(1).max(50) }))
     .handler(async ({ context, input }) => {
@@ -49,9 +43,6 @@ export const profileRouter = {
       return profile;
     }),
 
-  /**
-   * Get current user's own profile
-   */
   me: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
 
@@ -63,32 +54,6 @@ export const profileRouter = {
     return profile;
   }),
 
-  /**
-   * Update current user's profile
-   */
-  update: protectedProcedure
-    .input(
-      z.object({
-        bio: z.string().max(160).optional(),
-        avatarUrl: z.string().url().optional(),
-        isPublic: z.boolean().optional(),
-        showStats: z.boolean().optional(),
-        showBetHistory: z.boolean().optional(),
-        twitterHandle: z.string().max(50).optional(),
-        telegramHandle: z.string().max(50).optional(),
-      })
-    )
-    .handler(async ({ context, input }) => {
-      const userId = UserId.parse(context.session.user.id);
-
-      const updated = await context.profileService.updateProfile(userId, input);
-
-      return updated;
-    }),
-
-  /**
-   * Set/claim a unique username
-   */
   setUsername: protectedProcedure
     .input(
       z.object({
@@ -122,9 +87,45 @@ export const profileRouter = {
       return { username: result.username };
     }),
 
-  /**
-   * Get a user's bet history (if visible)
-   */
+  uploadAvatar: protectedProcedure
+    .input(
+      z.object({
+        image: z.string().min(1, "Image data is required"),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      const userId = UserId.parse(context.session.user.id);
+
+      if (!context.storage) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Storage not configured",
+        });
+      }
+
+      if (!context.queue) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Queue not configured",
+        });
+      }
+
+      // Upload raw image to private bucket
+      const sourceKey = `temp/avatars/${userId}-${Date.now()}`;
+      const imageBuffer = Buffer.from(input.image, "base64");
+      await context.storage.upload({
+        key: sourceKey,
+        data: imageBuffer,
+        contentType: "image/png",
+      });
+
+      // Queue processing job
+      await context.queue.addJob("process-avatar-image", {
+        userId,
+        sourceKey,
+      });
+
+      return { status: "processing" as const };
+    }),
+
   bets: publicProcedure
     .input(
       z.object({

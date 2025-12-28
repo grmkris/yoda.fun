@@ -18,7 +18,7 @@ import type { StorageClient } from "@yoda.fun/storage";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
 
-function withSignedImageUrl<T extends SelectMarket>(
+function withPublicImageUrl<T extends SelectMarket>(
   market: T,
   storage?: StorageClient
 ): T {
@@ -27,23 +27,21 @@ function withSignedImageUrl<T extends SelectMarket>(
   }
   return {
     ...market,
-    imageUrl: market.imageUrl
-      ? storage.getSignedUrl({ key: market.imageUrl, expiresIn: 3600 })
-      : null,
+    imageUrl: market.imageUrl ? storage.getPublicUrl(market.imageUrl) : null,
     thumbnailUrl: market.thumbnailUrl
-      ? storage.getSignedUrl({ key: market.thumbnailUrl, expiresIn: 3600 })
+      ? storage.getPublicUrl(market.thumbnailUrl)
       : null,
   };
 }
 
-function withSignedImageUrls<T extends SelectMarket>(
+function withPublicImageUrls<T extends SelectMarket>(
   markets: T[],
   storage?: StorageClient
 ): T[] {
   if (!storage) {
     return markets;
   }
-  return markets.map((m) => withSignedImageUrl(m, storage));
+  return markets.map((m) => withPublicImageUrl(m, storage));
 }
 
 const MAX_MARKETS_PER_PAGE = 100;
@@ -107,7 +105,7 @@ export const marketRouter = {
         .offset(input.offset);
 
       return {
-        markets: withSignedImageUrls(markets, context.storage),
+        markets: withPublicImageUrls(markets, context.storage),
         limit: input.limit,
         offset: input.offset,
       };
@@ -143,7 +141,7 @@ export const marketRouter = {
         : null;
 
       return {
-        ...withSignedImageUrl(market, context.storage),
+        ...withPublicImageUrl(market, context.storage),
         userBet,
       };
     }),
@@ -206,7 +204,7 @@ export const marketRouter = {
       const lastItem = items.at(-1);
 
       return {
-        markets: withSignedImageUrls(items, context.storage),
+        markets: withPublicImageUrls(items, context.storage),
         nextCursor:
           hasMore && lastItem ? lastItem.createdAt.toISOString() : undefined,
       };

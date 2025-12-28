@@ -4,6 +4,8 @@ import type { S3Client } from "bun";
 
 export interface StorageConfig {
   s3Client: S3Client;
+  publicS3Client?: S3Client;
+  publicUrl?: string;
   env: Environment;
   logger?: Logger;
 }
@@ -196,12 +198,57 @@ export function createStorageClient(config: StorageConfig) {
     }
   }
 
+  /**
+   * Upload a file to the public bucket
+   * Returns the S3 key (not URL)
+   */
+  async function uploadPublic(
+    options: UploadOptions
+  ): Promise<{ key: string }> {
+    const { key, data, contentType } = options;
+
+    if (!config.publicS3Client) {
+      throw new Error("Public S3 client not configured");
+    }
+
+    try {
+      logger?.debug({
+        msg: "Uploading file to public bucket",
+        key,
+        contentType,
+      });
+
+      await config.publicS3Client.write(key, data, {
+        type: contentType,
+      });
+
+      logger?.info({ msg: "File uploaded to public bucket", key });
+
+      return { key };
+    } catch (error) {
+      logger?.error({ msg: "Public file upload failed", key, error });
+      throw new Error(`Failed to upload file to public bucket: ${key}`);
+    }
+  }
+
+  /**
+   * Get a stable public URL for a key in the public bucket
+   */
+  function getPublicUrl(key: string): string {
+    if (!config.publicUrl) {
+      throw new Error("Public URL not configured");
+    }
+    return `${config.publicUrl}/${key}`;
+  }
+
   return {
     upload,
+    uploadPublic,
     download,
     delete: deleteFile,
     listObjects,
     getSignedUrl,
+    getPublicUrl,
     getUploadUrl,
     exists,
   };

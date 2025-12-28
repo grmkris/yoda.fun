@@ -5,9 +5,6 @@ import type { UserId } from "@yoda.fun/shared/typeid";
 import { toast } from "sonner";
 import { client, orpc } from "@/utils/orpc";
 
-/**
- * Fetch a user's public profile by userId
- */
 export function useProfile(userId: UserId) {
   return useQuery(
     orpc.profile.getById.queryOptions({
@@ -16,9 +13,6 @@ export function useProfile(userId: UserId) {
   );
 }
 
-/**
- * Fetch a user's public profile by username
- */
 export function useProfileByUsername(username: string) {
   return useQuery(
     orpc.profile.getByUsername.queryOptions({
@@ -27,48 +21,10 @@ export function useProfileByUsername(username: string) {
   );
 }
 
-/**
- * Fetch current user's own profile
- */
 export function useMyProfile() {
   return useQuery(orpc.profile.me.queryOptions({}));
 }
 
-/**
- * Update current user's profile
- */
-export function useUpdateProfile() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: {
-      bio?: string;
-      avatarUrl?: string;
-      isPublic?: boolean;
-      showStats?: boolean;
-      showBetHistory?: boolean;
-      twitterHandle?: string;
-      telegramHandle?: string;
-    }) => client.profile.update(input),
-    onSuccess: () => {
-      toast.success("Profile updated!");
-
-      // Invalidate profile queries
-      queryClient.invalidateQueries({
-        queryKey: orpc.profile.me.queryOptions({}).queryKey,
-      });
-    },
-    onError: (error) => {
-      const message =
-        error instanceof Error ? error.message : "Failed to update profile";
-      toast.error(message);
-    },
-  });
-}
-
-/**
- * Fetch a user's bet history (if visible)
- */
 export function useProfileBets(
   userId: UserId,
   options?: { limit?: number; offset?: number }
@@ -84,9 +40,6 @@ export function useProfileBets(
   );
 }
 
-/**
- * Set/claim a unique username
- */
 export function useSetUsername() {
   const queryClient = useQueryClient();
 
@@ -102,6 +55,31 @@ export function useSetUsername() {
     onError: (error) => {
       const message =
         error instanceof Error ? error.message : "Failed to set username";
+      toast.error(message);
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (imageBase64: string) =>
+      client.profile.uploadAvatar({ image: imageBase64 }),
+    onSuccess: () => {
+      toast.success("Avatar uploading... will appear shortly");
+      // Start polling for the new avatar
+      const pollInterval = setInterval(() => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.profile.me.queryOptions({}).queryKey,
+        });
+      }, 2000);
+      // Stop polling after 30 seconds
+      setTimeout(() => clearInterval(pollInterval), 30_000);
+    },
+    onError: (error) => {
+      const message =
+        error instanceof Error ? error.message : "Failed to upload avatar";
       toast.error(message);
     },
   });

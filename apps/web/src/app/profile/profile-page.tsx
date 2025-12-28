@@ -11,6 +11,7 @@ import {
   TrendingDown,
   TrendingUp,
   Trophy,
+  Upload,
   User,
   Wallet,
   X,
@@ -20,16 +21,18 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
 import { useLeaderboard, useMyRank } from "@/hooks/use-leaderboard";
-import { useMyProfile, useUpdateProfile } from "@/hooks/use-profile";
+import { useUploadAvatar } from "@/hooks/use-profile";
+import { useIsAuthenticated } from "@/hooks/use-wallet";
 import { authClient } from "@/lib/auth-client";
 import { DepositSection } from "./deposit-section";
+import { ProfileConnectPrompt } from "./profile-connect-prompt";
 
 // ═══════════════════════════════════════════════════════════════
 // PROFILE HEADER (with inline editing)
@@ -37,8 +40,8 @@ import { DepositSection } from "./deposit-section";
 function ProfileHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const { data: profileData } = useMyProfile();
-  const updateProfile = useUpdateProfile();
+  const uploadAvatar = useUploadAvatar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
@@ -47,8 +50,31 @@ function ProfileHeader() {
 
   const startEditing = () => {
     setName(session?.user?.name ?? "");
-    setAvatarUrl(profileData?.profile?.avatarUrl ?? "");
+    setAvatarUrl(session?.user?.image ?? "");
     setIsEditing(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        return;
+      }
+      const base64 = result.split(",")[1];
+      // Upload starts background processing - avatar will appear via session refresh
+      uploadAvatar.mutate(base64, {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const cancelEditing = () => {
@@ -61,16 +87,13 @@ function ProfileHeader() {
       if (name !== session?.user?.name) {
         await authClient.updateUser({ name });
       }
-      updateProfile.mutate({ avatarUrl: avatarUrl || undefined });
       setIsEditing(false);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const currentAvatarUrl = isEditing
-    ? avatarUrl
-    : profileData?.profile?.avatarUrl;
+  const currentAvatarUrl = isEditing ? avatarUrl : session?.user?.image;
 
   return (
     <motion.div
@@ -87,14 +110,26 @@ function ProfileHeader() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {/* Avatar */}
-          <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full"
+          <input
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelect}
+            ref={fileInputRef}
+            type="file"
+          />
+          <button
+            className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all"
+            disabled={!isEditing || uploadAvatar.isPending}
+            onClick={() => isEditing && fileInputRef.current?.click()}
             style={{
               background: currentAvatarUrl
                 ? undefined
                 : "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
               boxShadow: "0 0 30px oklch(0.65 0.25 290 / 30%)",
+              cursor: isEditing ? "pointer" : "default",
+              opacity: uploadAvatar.isPending ? 0.5 : 1,
             }}
+            type="button"
           >
             {currentAvatarUrl ? (
               <Image
@@ -107,7 +142,15 @@ function ProfileHeader() {
             ) : (
               <User className="h-8 w-8 text-white" />
             )}
-          </div>
+            {isEditing && (
+              <div
+                className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity hover:opacity-100"
+                style={{ background: "oklch(0 0 0 / 50%)" }}
+              >
+                <Upload className="h-5 w-5 text-white" />
+              </div>
+            )}
+          </button>
 
           {/* Name & Username */}
           {isEditing ? (
@@ -119,13 +162,9 @@ function ProfileHeader() {
                 placeholder="Display name"
                 value={name}
               />
-              <Input
-                className="max-w-xs"
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="Avatar URL (optional)"
-                type="url"
-                value={avatarUrl}
-              />
+              <p className="text-xs" style={{ color: "oklch(0.60 0.04 280)" }}>
+                Click avatar to upload image
+              </p>
             </div>
           ) : (
             <div>
@@ -823,6 +862,13 @@ function ActivityFeed() {
 // MAIN PROFILE PAGE
 // ═══════════════════════════════════════════════════════════════
 export function ProfilePage() {
+  const { isAnonymous, isLoading } = useIsAuthenticated();
+
+  // Gate: anonymous users must link account to view profile
+  if (isAnonymous && !isLoading) {
+    return <ProfileConnectPrompt />;
+  }
+
   return (
     <div className="container mx-auto space-y-6 p-4 pb-8">
       <ProfileHeader />

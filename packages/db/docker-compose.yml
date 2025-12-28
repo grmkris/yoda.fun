@@ -62,6 +62,8 @@ services:
       /bin/sh -c "
       mc alias set local http://minio:9000 minioadmin minioadmin;
       mc mb --ignore-existing local/yoda-fun-storage;
+      mc mb --ignore-existing local/yoda-fun-public;
+      mc anonymous set download local/yoda-fun-public;
       exit 0;
       "
     restart: "no"

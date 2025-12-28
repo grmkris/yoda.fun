@@ -29,6 +29,7 @@ import {
 import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
 import { createFarcasterWebhookRoutes } from "@/routes/farcaster-webhook";
+import { createAvatarImageWorker } from "@/workers/avatar-image.worker";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketImageWorker } from "@/workers/market-image.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
@@ -63,9 +64,23 @@ const s3Client = new S3Client({
   bucket: env.S3_BUCKET,
 });
 
+const publicS3Client = new S3Client({
+  accessKeyId: env.S3_ACCESS_KEY,
+  secretAccessKey: env.S3_SECRET_KEY,
+  endpoint: env.S3_ENDPOINT,
+  bucket: env.S3_PUBLIC_BUCKET,
+});
+
 const storage = createStorageClient({
   s3Client,
+  publicS3Client,
+  publicUrl: env.S3_PUBLIC_URL,
   env: env.APP_ENV,
+  logger,
+});
+
+const queue: QueueClient = createQueueClient({
+  url: env.REDIS_URL,
   logger,
 });
 
@@ -120,7 +135,7 @@ logger.info({
   msg: "Farcaster webhook endpoint enabled at /webhooks/farcaster",
 });
 
-export const apiHandler = new OpenAPIHandler(appRouter, {
+const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],
@@ -128,7 +143,7 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
   ],
 });
 
-export const rpcHandler = new RPCHandler(appRouter);
+const rpcHandler = new RPCHandler(appRouter);
 
 app.use("/*", async (c, next) => {
   const context = await createContext({
@@ -138,6 +153,7 @@ app.use("/*", async (c, next) => {
     logger,
     posthog,
     storage,
+    queue,
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
@@ -163,11 +179,6 @@ app.use("/*", async (c, next) => {
 
 app.get("/", (c) => c.text("OK"));
 app.get("/health", (c) => c.text("OK"));
-
-const queue: QueueClient = createQueueClient({
-  url: env.REDIS_URL,
-  logger,
-});
 
 const cacheRedis = new RedisClient(env.REDIS_URL);
 const cache = createRedisCache(cacheRedis);
@@ -214,6 +225,14 @@ const imageWorker = createMarketImageWorker({
 });
 logger.info({ msg: "Market image worker started" });
 
+const avatarWorker = createAvatarImageWorker({
+  queue,
+  db,
+  logger,
+  storage,
+});
+logger.info({ msg: "Avatar image worker started" });
+
 // Seed initial markets if database is empty
 const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
 
@@ -254,6 +273,7 @@ process.on("SIGTERM", async () => {
   await resolutionWorker.close();
   await generationWorker.close();
   await imageWorker.close();
+  await avatarWorker.close();
   await queue.close();
   await shutdownPostHog();
   process.exit(0);
