@@ -1,16 +1,13 @@
 import type { AiClient } from "@yoda.fun/ai";
 import { withTrace } from "@yoda.fun/ai/observability";
 import type { Cache } from "@yoda.fun/cache";
-import { cachified } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
-import { TRENDING_CACHE } from "@yoda.fun/markets/config";
 import {
-  createMarketGenerationService,
-  getDistributionGuidance,
+  DEFAULT_TOPICS,
+  generateAndInsertMarkets,
   getTrendingTopics,
 } from "@yoda.fun/markets/generation";
-import type { CuratedTopic } from "@yoda.fun/markets/prompts";
 import type { QueueClient } from "@yoda.fun/queue";
 
 export interface MarketGenerationWorkerConfig {
@@ -32,6 +29,11 @@ const getTimeframe = () => {
   return "medium";
 };
 
+const pickRandomFromArray = <T>(arr: T[], count: number): T[] => {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
+
 /**
  * Create and start the market generation worker
  * Processes scheduled and manual market generation jobs
@@ -43,57 +45,67 @@ export function createMarketGenerationWorker(
 } {
   const { queue, db, logger, aiClient, cache } = config;
 
-  const marketGenerationService = createMarketGenerationService({
-    db,
-    logger,
-    aiClient,
-  });
-
   logger.info({ msg: "Starting market generation worker" });
 
   const worker = queue.createWorker<"generate-market">(
     "generate-market",
     async (job) => {
-      const { count, categories, trigger } = job;
+      const { count, trigger } = job;
       const traceId = crypto.randomUUID();
 
       return await withTrace({ traceId }, async () => {
         logger.info(
-          { count, categories, trigger, traceId },
+          { count, trigger, traceId },
           "Processing market generation job"
         );
 
-        let distributionGuidance:
-          | Awaited<ReturnType<typeof getDistributionGuidance>>
-          | undefined;
-        if (trigger === "scheduled") {
-          distributionGuidance = await getDistributionGuidance(db);
-          logger.info(
-            { suggested: distributionGuidance.suggested },
-            "Using distribution guidance"
-          );
-        }
+        // Get last used categories to rotate through them
+        const lastUsedIds = ((await cache.get("last-research-categories")) ??
+          []) as string[];
+        const unused = DEFAULT_TOPICS.filter(
+          (t) => !lastUsedIds.includes(t.id)
+        );
 
-        const curatedTopics = await cachified<CuratedTopic[]>({
-          key: "trending-topics",
-          cache,
-          ttl: TRENDING_CACHE.TTL_MS,
-          staleWhileRevalidate: TRENDING_CACHE.SWR_MS,
-          getFreshValue() {
-            logger.info({}, "Fetching fresh trending topics");
-            return getTrendingTopics({ aiClient, logger });
+        // Pick from unused, or reset if all used
+        const topics =
+          unused.length >= 4
+            ? pickRandomFromArray(unused, 4)
+            : pickRandomFromArray(DEFAULT_TOPICS, 4);
+
+        // Store for next time
+        const topicsIds = topics.map((t) => t.id);
+        await cache.set("last-research-categories", {
+          value: topicsIds,
+          metadata: {
+            createdTime: Date.now(),
           },
         });
 
-        const { generated, inserted } =
-          await marketGenerationService.generateAndInsertMarkets({
-            count,
-            categories,
-            timeframe: getTimeframe(),
-            curatedTopics,
-            distributionGuidance,
-          });
+        logger.info(
+          { categories: topics.map((t) => t.category) },
+          "Researching trending topics"
+        );
 
+        // Fresh trending research (no caching)
+        const trendingTopics = await getTrendingTopics({
+          aiClient,
+          logger,
+          config: { topics },
+        });
+
+        // Generate markets from trending topics
+        const { generated, inserted } = await generateAndInsertMarkets({
+          db,
+          aiClient,
+          logger,
+          input: {
+            count,
+            timeframe: getTimeframe(),
+            trendingTopics,
+          },
+        });
+
+        // Queue image generation and resolution for each market
         for (const market of inserted) {
           await queue.addJob("generate-market-image", {
             marketId: market.id,
@@ -141,7 +153,6 @@ export function createMarketGenerationWorker(
         logger.error({
           msg: "Market generation failed after all retries",
           count: job.count,
-          categories: job.categories,
           trigger: job.trigger,
           error: error.message,
         });

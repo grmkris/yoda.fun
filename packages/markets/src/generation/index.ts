@@ -1,7 +1,8 @@
-// biome-ignore lint/performance/noBarrelFile: barrel file
-export * from "./distribution";
-export * from "./duration-utils";
-export * from "./image-service";
-export * from "./preparer";
-export * from "./service";
-export * from "./trending-research";
+// Public API for market generation
+export { generateAndInsertMarkets } from "./service";
+export { getTrendingTopics } from "./trending-research";
+export { getDistributionGuidance, selectNextCategory } from "./distribution";
+export { createImageService, type ImageService } from "./image-service";
+
+// Types for tests
+export type { TopicConfig, ResearchConfig } from "./trending-research";

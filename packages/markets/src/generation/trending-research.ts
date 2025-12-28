@@ -1,174 +1,182 @@
-import type { AiClient } from "@yoda.fun/ai";
-import { generateText, Output } from "@yoda.fun/ai";
+import { type AiClient, generateText } from "@yoda.fun/ai";
 import type { Logger } from "@yoda.fun/logger";
-import { z } from "zod";
 import { WORKFLOW_MODELS } from "../config";
-import type { CuratedTopic } from "../prompts";
 
-interface TrendingResearchDeps {
+// ============================================================================
+// Types
+// ============================================================================
+
+interface TopicConfig {
+  id: string;
+  category: string;
+  querySeeds: string[];
+}
+
+interface ResearchConfig {
+  topics: TopicConfig[];
+  windowHours?: number;
+  previousTopics?: string[];
+}
+
+interface GetTrendingTopicsParams {
   aiClient: AiClient;
   logger: Logger;
+  config: ResearchConfig;
 }
 
-interface RawTrendingData {
-  scheduled: string;
-  twitter: string;
-  news: string;
+// ============================================================================
+// Default Topics
+// ============================================================================
+
+const DEFAULT_TOPICS: TopicConfig[] = [
+  {
+    id: "politics",
+    category: "politics",
+    querySeeds: [
+      "election scheduled this week",
+      "parliament vote date",
+      "central bank rate decision",
+    ],
+  },
+  {
+    id: "sports",
+    category: "sports",
+    querySeeds: [
+      "NBA games today tomorrow",
+      "NFL games this week",
+      "Premier League fixtures",
+      "UFC fights scheduled",
+    ],
+  },
+  {
+    id: "entertainment",
+    category: "entertainment",
+    querySeeds: [
+      "movies releasing this week",
+      "TV show premieres finales",
+      "album release dates",
+    ],
+  },
+  {
+    id: "tech",
+    category: "tech",
+    querySeeds: [
+      "tech product launches",
+      "Apple Google Microsoft announcements",
+    ],
+  },
+  {
+    id: "weather",
+    category: "weather",
+    querySeeds: [
+      "severe weather warnings",
+      "hurricane forecast",
+      "temperature records",
+    ],
+  },
+  {
+    id: "crypto",
+    category: "crypto",
+    querySeeds: [
+      "crypto network upgrades",
+      "token unlocks",
+      "SEC crypto decisions",
+    ],
+  },
+  {
+    id: "viral",
+    category: "viral",
+    querySeeds: [
+      "celebrity news today",
+      "viral trending stories",
+      "breaking news",
+    ],
+  },
+];
+
+// ============================================================================
+// Prompt Builder
+// ============================================================================
+
+function buildResearchPrompt(
+  topics: TopicConfig[],
+  windowHours: number,
+  previousTopics: string[]
+): string {
+  const now = new Date();
+  const windowEnd = new Date(now.getTime() + windowHours * 60 * 60 * 1000);
+
+  return `You are a news researcher for Yoda.fun prediction markets.
+BROWSE THE WEB. Do not rely on memory.
+
+CURRENT TIME: ${now.toISOString()}
+WINDOW: FROM now UNTIL ${windowEnd.toISOString()} (next ${windowHours} hours)
+
+CRITICAL: Only include FUTURE events. Do NOT include events that already happened.
+Today is ${now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+
+TOPICS TO RESEARCH:
+${topics.map((t) => `- ${t.category}: ${t.querySeeds.join(", ")}`).join("\n")}
+${
+  previousTopics.length > 0
+    ? `
+ALREADY RESEARCHED (skip these):
+${previousTopics.map((t) => `- ${t}`).join("\n")}
+`
+    : ""
+}
+REQUIREMENTS:
+- Event must happen AFTER ${now.toISOString()} (in the future)
+- Include WHO, WHAT, WHEN, WHERE
+- Use reputable sources (official sites, major news outlets)
+- No opinion pieces or speculation
+
+For each topic found:
+- topic: What the event/topic is (concise, specific)
+- category: One of movies, tv, music, celebrities, gaming, sports, politics, tech, crypto, viral, memes, weather, other
+- eventDate: ISO date string when it happens (if known)
+- whyGood: Why this makes a good prediction market (betting angle, what can people bet on)
+
+Find 10-20 UPCOMING events with clear betting potential.`;
 }
 
-const CuratedTopicsSchema = z.object({
-  topics: z.array(
-    z.object({
-      topic: z.string(),
-      category: z.string(),
-      eventDate: z.string().optional(),
-      whyGood: z.string(),
-    })
-  ),
-});
+// ============================================================================
+// Main Entry Point
+// ============================================================================
 
-export async function researchTrendingTopics(
-  deps: TrendingResearchDeps
-): Promise<RawTrendingData> {
-  const { aiClient, logger } = deps;
+export async function getTrendingTopics(
+  params: GetTrendingTopicsParams
+): Promise<string> {
+  const { aiClient, logger, config } = params;
+  const { topics } = config;
+  const windowHours = config.windowHours ?? 72;
+  const previousTopics = config.previousTopics ?? [];
+
+  logger.info(
+    {
+      topicCount: topics.length,
+      windowHours,
+      previousCount: previousTopics.length,
+    },
+    "Starting trending research"
+  );
 
   const model = aiClient.getGoogleModel(
     WORKFLOW_MODELS.trending.googleSearch.modelId
   );
-  const xaiModel = aiClient.getModel(WORKFLOW_MODELS.trending.xSearch);
   const { googleSearch } = aiClient.getGoogleTools();
-  const { xSearch } = aiClient.getXaiTools();
 
-  // Exa: Scheduled events with clear dates
-  const exaQueries = [
-    "NBA NFL NHL MLB sports games schedule today tomorrow this week",
-    "movies releasing this week box office predictions theater",
-    "TV show premieres finales streaming Netflix HBO this week",
-    "tech product launches announcements Apple Google this week",
-  ];
+  const prompt = buildResearchPrompt(topics, windowHours, previousTopics);
 
-  // xSearch: Twitter/X real-time buzz - spicy drama-focused queries
-  const twitterQueries = [
-    "ratio this L cope seethe drama today",
-    "this aged poorly prediction wrong receipts",
-    "calling it now prediction thread bet",
-    "screenshotting this for later receipts",
-    "biggest W biggest L of the day",
-    "main character of the day twitter",
-  ];
-
-  // Google: General news with outcomes
-  const googlePrompt = `What are today's top news with clear outcomes?
-- Political events, votes, elections
-- Court rulings and verdicts
-- Weather events and records
-- Award ceremonies
-List specific events with dates.`;
-
-  logger.info({}, "Starting 3-source trending research");
-
-  const [exaResults, twitterResults, googleResult] = await Promise.all([
-    // Exa searches
-    Promise.all(
-      exaQueries.map((q) =>
-        aiClient
-          .searchWithExa(q)
-          .then((r) => r.text)
-          .catch(() => "")
-      )
-    ),
-    // xSearch (Twitter)
-    Promise.all(
-      twitterQueries.map((q) =>
-        generateText({
-          model: xaiModel,
-          tools: { xSearch: xSearch({}) },
-          prompt: q,
-        })
-          .then((r) => r.text)
-          .catch(() => "")
-      )
-    ),
-    // Google search
-    generateText({
-      model,
-      tools: { google_search: googleSearch({}) },
-      prompt: googlePrompt,
-    })
-      .then((r) => r.text)
-      .catch(() => ""),
-  ]);
-
-  logger.info(
-    {
-      exaCount: exaResults.filter(Boolean).length,
-      twitterCount: twitterResults.filter(Boolean).length,
-      hasGoogle: !!googleResult,
-    },
-    "Trending research complete"
-  );
-
-  return {
-    scheduled: exaResults.join("\n\n"),
-    twitter: twitterResults.join("\n\n"),
-    news: googleResult,
-  };
-}
-
-export async function curateBestTopics(
-  rawData: RawTrendingData,
-  deps: TrendingResearchDeps
-): Promise<CuratedTopic[]> {
-  const { aiClient } = deps;
-  const model = aiClient.getGoogleModel(
-    WORKFLOW_MODELS.trending.curation.modelId
-  );
-
-  const prompt = `Select TOP 20 prediction market topics from this data.
-
-## SCHEDULED EVENTS (from Exa - sports, movies, TV, tech)
-${rawData.scheduled || "None"}
-
-## TWITTER/X TRENDING (viral, memes, celebrities)
-${rawData.twitter || "None"}
-
-## NEWS (politics, weather, announcements)
-${rawData.news || "None"}
-
-## CRITERIA
-- Clear YES/NO outcome, happening in 24-72h
-- Engaging for casual users (not just crypto traders!)
-- Diverse mix across categories
-- Categories: movies, tv, music, celebrities, gaming, sports, politics, tech, crypto, viral, memes, weather, other
-
-## PRIORITIZE SPICY TOPICS
-- Drama, beef, rivalries (sports rivalries, celebrity feuds, brand wars)
-- "Called it" moments - predictions people are already making
-- Main character energy - someone having their moment (good or bad)
-- Things people will argue about in group chats
-- Underdog vs favorite dynamics
-- Controversy or hot takes that will generate debate
-
-## AVOID BORING TOPICS
-- Generic announcements without stakes ("X company announces Y")
-- Obvious outcomes with no tension (Taylor Swift album going #1)
-- Topics only crypto traders care about
-- Anything that wouldn't get quote tweeted
-
-Return JSON: { topics: [{ topic, category, eventDate?, whyGood }] }`;
-
-  const result = await aiClient.generateText({
+  const result = await generateText({
     model,
-    output: Output.object({ schema: CuratedTopicsSchema }),
+    tools: { google_search: googleSearch({}) },
     prompt,
   });
 
-  return result.output?.topics ?? [];
+  return result.text;
 }
 
-export async function getTrendingTopics(
-  deps: TrendingResearchDeps
-): Promise<CuratedTopic[]> {
-  const rawData = await researchTrendingTopics(deps);
-  return curateBestTopics(rawData, deps);
-}
+// Export types and defaults
+export type { TopicConfig, ResearchConfig, GetTrendingTopicsParams };
+export { DEFAULT_TOPICS };

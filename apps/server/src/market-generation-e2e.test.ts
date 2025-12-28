@@ -1,10 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
-  createMarketGenerationService,
+  DEFAULT_TOPICS,
+  generateAndInsertMarkets,
   getTrendingTopics,
-  selectNextCategory,
 } from "@yoda.fun/markets/generation";
 import { createTestSetup, type TestSetup } from "test/test.setup";
+
+const pickRandomFromArray = <T>(arr: T[], count: number): T[] => {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
 
 describe("Market Generation E2E", () => {
   let testEnv: TestSetup;
@@ -17,30 +22,36 @@ describe("Market Generation E2E", () => {
     await testEnv.close();
   });
 
-  test("full pipeline: trending research → distribution → generation", async () => {
+  test("full pipeline: trending research → generation", async () => {
     const { db, aiClient, logger } = testEnv.deps;
 
-    // 1. Test trending research
+    // 1. Pick random categories to research
     console.log("\n=== TRENDING RESEARCH ===");
-    const topics = await getTrendingTopics({ aiClient, logger });
-    console.log("Curated Topics:");
-    for (const t of topics.slice(0, 5)) {
-      console.log(`  - [${t.category}] ${t.topic}`);
-    }
+    const topics = pickRandomFromArray(DEFAULT_TOPICS, 4);
+    console.log(
+      "Researching categories:",
+      topics.map((t) => t.category)
+    );
 
-    // 2. Test distribution
-    console.log("\n=== CATEGORY DISTRIBUTION ===");
-    const category = await selectNextCategory(db);
-    console.log(`Selected category: ${category}`);
+    // 2. Fetch fresh trending topics
+    const trendingTopics = await getTrendingTopics({
+      aiClient,
+      logger,
+      config: { topics },
+    });
+    console.log("Trending Topics:", trendingTopics.slice(0, 500));
 
-    // 3. Generate markets
+    // 3. Generate markets from trending topics
     console.log("\n=== GENERATED MARKETS ===");
-    const service = createMarketGenerationService({ db, logger, aiClient });
-    const result = await service.generateAndInsertMarkets({
-      count: 3,
-      categories: [category],
-      timeframe: "short",
-      curatedTopics: topics,
+    const result = await generateAndInsertMarkets({
+      db,
+      aiClient,
+      logger,
+      input: {
+        count: 3,
+        timeframe: "short",
+        trendingTopics,
+      },
     });
 
     for (const market of result.generated.markets) {
@@ -54,6 +65,5 @@ describe("Market Generation E2E", () => {
     }
 
     expect(result.generated.markets.length).toBeGreaterThan(0);
-    expect(result.generated.markets[0]?.category).toBe(category);
   }, 180_000);
 });

@@ -1,20 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PortoConnectButton } from "@/components/porto-connect-button";
-import { useSession } from "@/components/session-provider";
+import { UsernameNudgeModal } from "@/components/username-nudge-modal";
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
 
-  // Redirect to dashboard if already authenticated
+  // Handle post-authentication flow
   useEffect(() => {
-    if (session?.user) {
-      router.push("/dashboard");
+    if (session?.user && !session.user.isAnonymous) {
+      // User is authenticated with wallet - check if they need to set username
+      if (!session.user.username) {
+        setShowUsernameModal(true);
+      } else {
+        router.push("/dashboard");
+      }
     }
   }, [session, router]);
+
+  const handleUsernameComplete = () => {
+    setShowUsernameModal(false);
+    router.push("/dashboard");
+  };
 
   return (
     <div className="container mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4">
@@ -30,6 +42,11 @@ export default function LoginPage() {
           <PortoConnectButton />
         </div>
       </div>
+
+      <UsernameNudgeModal
+        onComplete={handleUsernameComplete}
+        open={showUsernameModal}
+      />
     </div>
   );
 }

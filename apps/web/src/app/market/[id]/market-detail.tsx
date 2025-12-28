@@ -22,10 +22,10 @@ import { Countdown } from "@/components/countdown";
 import { UserBetStatus } from "@/components/market/user-bet-status";
 import { ResolutionDetails } from "@/components/resolution/resolution-details";
 import { ResolutionMethodPreview } from "@/components/resolution/resolution-method-preview";
-import { useSession } from "@/components/session-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarket } from "@/hooks/use-market";
 import { usePlaceBet } from "@/hooks/use-place-bet";
+import { authClient } from "@/lib/auth-client";
 
 interface MarketDetailProps {
   marketId: MarketId;
@@ -420,7 +420,7 @@ function BettingSection({
 }
 
 export function MarketDetail({ marketId }: MarketDetailProps) {
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const { data: market, isLoading, error, refetch } = useMarket(marketId);
   const placeBet = usePlaceBet();
   const [copied, setCopied] = useState(false);

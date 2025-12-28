@@ -1,21 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
-import { createMarketGenerationService } from "@yoda.fun/markets/generation";
+import { generateAndInsertMarkets } from "@yoda.fun/markets/generation";
 import { createTestSetup, type TestSetup } from "test/test.setup";
 
 describe("Market Generation Service", () => {
   let testEnv: TestSetup;
-  let marketGenerationService: ReturnType<typeof createMarketGenerationService>;
 
   beforeAll(async () => {
     testEnv = await createTestSetup();
-
-    marketGenerationService = createMarketGenerationService({
-      db: testEnv.deps.db,
-      logger: testEnv.deps.logger,
-      aiClient: testEnv.deps.aiClient,
-    });
   }, 60_000);
 
   afterAll(async () => {
@@ -24,9 +17,12 @@ describe("Market Generation Service", () => {
 
   describe("generateAndInsertMarkets", () => {
     test("generates and inserts markets with correct structure", async () => {
-      const result = await marketGenerationService.generateAndInsertMarkets({
-        count: 2,
-        timeframe: "immediate",
+      const { db, aiClient, logger } = testEnv.deps;
+      const result = await generateAndInsertMarkets({
+        db,
+        aiClient,
+        logger,
+        input: { count: 2, timeframe: "immediate" },
       });
 
       expect(result.generated.markets.length).toBeGreaterThanOrEqual(1);
@@ -47,9 +43,12 @@ describe("Market Generation Service", () => {
     }, 120_000);
 
     test("returns model version and token usage", async () => {
-      const result = await marketGenerationService.generateAndInsertMarkets({
-        count: 1,
-        timeframe: "immediate",
+      const { db, aiClient, logger } = testEnv.deps;
+      const result = await generateAndInsertMarkets({
+        db,
+        aiClient,
+        logger,
+        input: { count: 1, timeframe: "immediate" },
       });
 
       expect(result.generated.modelVersion).toBeTruthy();
@@ -57,9 +56,12 @@ describe("Market Generation Service", () => {
     }, 120_000);
 
     test("inserts markets into database with correct fields", async () => {
-      const result = await marketGenerationService.generateAndInsertMarkets({
-        count: 1,
-        timeframe: "immediate",
+      const { db, aiClient, logger } = testEnv.deps;
+      const result = await generateAndInsertMarkets({
+        db,
+        aiClient,
+        logger,
+        input: { count: 1, timeframe: "immediate" },
       });
 
       expect(result.inserted.length).toBeGreaterThanOrEqual(1);
@@ -87,11 +89,14 @@ describe("Market Generation Service", () => {
     }, 120_000);
 
     test("calculates resolution buffer correctly", async () => {
+      const { db, aiClient, logger } = testEnv.deps;
       const now = Date.now();
 
-      const result = await marketGenerationService.generateAndInsertMarkets({
-        count: 1,
-        timeframe: "immediate",
+      const result = await generateAndInsertMarkets({
+        db,
+        aiClient,
+        logger,
+        input: { count: 1, timeframe: "immediate" },
       });
 
       const market = result.inserted[0];

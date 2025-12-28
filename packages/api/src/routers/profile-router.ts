@@ -87,6 +87,42 @@ export const profileRouter = {
     }),
 
   /**
+   * Set/claim a unique username
+   */
+  setUsername: protectedProcedure
+    .input(
+      z.object({
+        username: z
+          .string()
+          .min(3, "Username must be at least 3 characters")
+          .max(20, "Username must be at most 20 characters")
+          .regex(
+            /^[a-zA-Z0-9_]+$/,
+            "Username can only contain letters, numbers, and underscores"
+          ),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      const userId = UserId.parse(context.session.user.id);
+
+      const result = await context.profileService.setUsername(
+        userId,
+        input.username
+      );
+
+      if (!result.success) {
+        throw new ORPCError("CONFLICT", {
+          message:
+            result.error === "USERNAME_TAKEN"
+              ? "This username is already taken"
+              : "Failed to set username",
+        });
+      }
+
+      return { username: result.username };
+    }),
+
+  /**
    * Get a user's bet history (if visible)
    */
   bets: publicProcedure

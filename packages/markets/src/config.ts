@@ -7,8 +7,10 @@ export const WORKFLOW_MODELS = {
   },
   trending: {
     googleSearch: { provider: "google", modelId: "gemini-2.5-flash" },
-    xSearch: { provider: "xai", modelId: "grok-3-mini" },
-    curation: { provider: "google", modelId: "gemini-2.5-flash" },
+    xSearch: {
+      provider: "xai",
+      modelId: "grok-4-1-fast-non-reasoning",
+    } satisfies AIModelConfig,
   },
   resolution: {
     webSearch: { provider: "google", modelId: "gemini-2.5-flash" },

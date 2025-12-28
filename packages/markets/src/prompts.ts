@@ -20,7 +20,7 @@ export interface MarketGenerationContext {
   targetCount: number;
   timeframe: TimeframePreset;
   /** Curated trending topics from research phase */
-  curatedTopics?: CuratedTopic[];
+  trendingTopics?: string;
   /** Soft distribution guidance (categories to prioritize/avoid) */
   distributionGuidance?: DistributionGuidance;
 }
@@ -119,15 +119,9 @@ ${ctx.distributionGuidance.atCap.length ? `DO NOT generate: ${ctx.distributionGu
         sections.push(`- Focus on categories: ${ctx.categories.join(", ")}`);
       }
 
-      if (ctx.curatedTopics?.length) {
+      if (ctx.trendingTopics) {
         sections.push(`## TRENDING TOPICS (use these, add your own angle)
-${ctx.curatedTopics
-  .slice(0, 15)
-  .map(
-    (t) =>
-      `- ${t.topic} (${t.category})${t.eventDate ? ` - ${t.eventDate}` : ""}: ${t.whyGood}`
-  )
-  .join("\n")}
+${ctx.trendingTopics}
 
 Don't just use these verbatim - find the SPICY ANGLE. What's the debate? What's the take?`);
       }

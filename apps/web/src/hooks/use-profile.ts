@@ -83,3 +83,26 @@ export function useProfileBets(
     })
   );
 }
+
+/**
+ * Set/claim a unique username
+ */
+export function useSetUsername() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (username: string) =>
+      client.profile.setUsername({ username }),
+    onSuccess: () => {
+      toast.success("Username set!");
+      queryClient.invalidateQueries({
+        queryKey: orpc.profile.me.queryOptions({}).queryKey,
+      });
+    },
+    onError: (error) => {
+      const message =
+        error instanceof Error ? error.message : "Failed to set username";
+      toast.error(message);
+    },
+  });
+}

@@ -14,9 +14,9 @@ import {
   Wallet,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "@/components/session-provider";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
@@ -126,7 +126,7 @@ function SidebarNavItem({
 // ─────────────────────────────────────────────────────────────
 function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   const router = useRouter();
-  const { data: session, isPending } = useSession();
+  const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
     return (
@@ -316,28 +316,20 @@ function DesktopSidebar({ className }: { className?: string }) {
           borderBottom: "1px solid oklch(0.65 0.25 290 / 10%)",
         }}
       >
-        <AnimatePresence mode="wait">
-          {!isCollapsed && (
-            <motion.div
-              animate={{ opacity: 1 }}
-              className="font-bold font-heading text-xl tracking-tight"
-              exit={{ opacity: 0 }}
-              initial={{ opacity: 0 }}
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-              transition={{ duration: 0.15 }}
-            >
-              yoda.fun
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Link href="/">
+          <Image
+            alt="yoda.fun"
+            className={cn(
+              "transition-all duration-200",
+              isCollapsed ? "h-7 w-7" : "h-9 w-9"
+            )}
+            height={isCollapsed ? 28 : 36}
+            src="/favicon/logo.png"
+            width={isCollapsed ? 28 : 36}
+          />
+        </Link>
 
-        <SidebarCollapseToggle />
+        {!isCollapsed && <SidebarCollapseToggle />}
       </div>
 
       {/* Navigation */}
@@ -384,18 +376,15 @@ function MobileSidebar() {
             borderBottom: "1px solid oklch(0.65 0.25 290 / 10%)",
           }}
         >
-          <div
-            className="font-bold font-heading text-xl tracking-tight"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            yoda.fun
-          </div>
+          <Link href="/" onClick={() => setOpen(false)}>
+            <Image
+              alt="yoda.fun"
+              className="h-9 w-9"
+              height={36}
+              src="/favicon/logo.png"
+              width={36}
+            />
+          </Link>
         </div>
 
         {/* Navigation */}

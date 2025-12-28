@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { SidebarTrigger } from "./sidebar/sidebar-trigger";
 
 export default function Header() {
@@ -17,18 +18,13 @@ export default function Header() {
         <SidebarTrigger />
 
         {/* Logo */}
-        <div
-          className="font-bold font-heading text-xl tracking-tight"
-          style={{
-            background:
-              "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
-          yoda.fun
-        </div>
+        <Image
+          alt="yoda.fun"
+          className="h-8 w-8"
+          height={32}
+          src="/favicon/logo.png"
+          width={32}
+        />
 
         {/* Spacer for symmetry */}
         <div className="w-10" />

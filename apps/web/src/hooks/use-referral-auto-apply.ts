@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSession } from "@/components/session-provider";
+import { authClient } from "@/lib/auth-client";
 import { useApplyReferralCode } from "./use-rewards";
 
 const REFERRAL_CODE_KEY = "referral_code";
 
 export function useReferralAutoApply() {
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
   const applyMutation = useApplyReferralCode();
   const hasAttempted = useRef(false);
 

@@ -16,8 +16,8 @@
     "auth:generate": "cli generate"
   },
   "dependencies": {
-    "@bull-board/api": "^6.16.1",
-    "@bull-board/hono": "^6.16.1",
+    "@bull-board/api": "^6.16.2",
+    "@bull-board/hono": "^6.16.2",
     "@hono/mcp": "^0.2.2",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "@orpc/openapi": "catalog:",

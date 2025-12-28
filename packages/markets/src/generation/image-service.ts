@@ -29,7 +29,11 @@ export function createImageService(deps: ImageServiceDeps) {
       orderBy: desc(DB_SCHEMA.media.createdAt),
     });
 
-    return (match?.id as MediaId) ?? null;
+    if (!match) {
+      return null;
+    }
+
+    return match.id as MediaId;
   }
 
   async function createImageMedia(
@@ -53,7 +57,7 @@ export function createImageService(deps: ImageServiceDeps) {
       throw new Error("Failed to insert media record");
     }
 
-    return inserted.id as MediaId;
+    return inserted.id;
   }
 
   async function linkMediaToMarket(
@@ -63,8 +67,7 @@ export function createImageService(deps: ImageServiceDeps) {
     await db
       .update(DB_SCHEMA.market)
       .set({ mediaId })
-      // biome-ignore lint/suspicious/noExplicitAny: drizzle type mismatch
-      .where(eq(DB_SCHEMA.market.id, marketId as any));
+      .where(eq(DB_SCHEMA.market.id, marketId));
   }
 
   return {

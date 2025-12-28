@@ -140,7 +140,7 @@ export const createAiClient = (config: AiClientConfig): AiClient => {
         throw new Error("Exa API key is required for searchWithExa");
       }
       const exa = new Exa(config.providerConfigs.exaApiKey);
-      const response = await exa.searchAndContents(query, {
+      const response = await exa.getContents(query, {
         numResults: 5,
         text: { maxCharacters: 500 },
       });

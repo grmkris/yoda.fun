@@ -1,35 +1,14 @@
 "use client";
 
-import { QueryClientProvider, useMutation } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect, useState } from "react";
 import { env } from "@/env";
 import { useReferralAutoApply } from "@/hooks/use-referral-auto-apply";
-import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
+import { AuthProvider } from "./auth-provider";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
 import { Web3Provider } from "./web3-provider";
-
-function AuthProvider({ children }: { children: React.ReactNode }) {
-  const signIn = useMutation({
-    mutationFn: () => authClient.signIn.anonymous(),
-    onSuccess: async (data) => {
-      const session = await authClient.getSession();
-      console.log(data, session);
-    },
-  });
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
-
-  useEffect(() => {
-    if (!(signIn.isPending || isAuthenticating)) {
-      setIsAuthenticating(true);
-      signIn.mutate();
-    }
-  }, [signIn]);
-
-  return <>{children}</>;
-}
 
 function ReferralAutoApply({ children }: { children: React.ReactNode }) {
   useReferralAutoApply();

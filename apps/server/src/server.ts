@@ -28,6 +28,7 @@ import {
 } from "@/lib/posthog";
 import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
+import { createFarcasterWebhookRoutes } from "@/routes/farcaster-webhook";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketImageWorker } from "@/workers/market-image.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
@@ -111,6 +112,13 @@ if (envConfig.depositWalletAddress) {
 // MCP endpoint for AI agents (proper SDK pattern)
 app.all("/mcp", (c) => handleMcpRequest(c, { db, logger }));
 logger.info({ msg: "MCP endpoint enabled at /mcp" });
+
+// Farcaster webhook endpoint
+const farcasterWebhookRoutes = createFarcasterWebhookRoutes({ logger });
+app.route("/webhooks", farcasterWebhookRoutes);
+logger.info({
+  msg: "Farcaster webhook endpoint enabled at /webhooks/farcaster",
+});
 
 export const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
