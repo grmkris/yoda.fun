@@ -1,8 +1,8 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import { count, gte, sql } from "@yoda.fun/db/drizzle";
+import { count, gte } from "@yoda.fun/db/drizzle";
 import { MARKET_CATEGORIES } from "@yoda.fun/shared/market.schema";
-import { CATEGORY_DISTRIBUTION, CRYPTO_DAILY_CAP } from "../config";
+import { CATEGORY_DISTRIBUTION } from "../config";
 
 export type MarketCategory = (typeof MARKET_CATEGORIES)[number];
 
@@ -51,30 +51,12 @@ export async function getCategoryDistribution(
   });
 }
 
-export async function isCryptoAllowed(db: Database): Promise<boolean> {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-  const result = await db
-    .select({ count: count() })
-    .from(DB_SCHEMA.market)
-    .where(
-      sql`${DB_SCHEMA.market.category} = 'crypto' AND ${DB_SCHEMA.market.createdAt} >= ${oneDayAgo}`
-    );
-
-  return (result[0]?.count ?? 0) < CRYPTO_DAILY_CAP;
-}
-
 export async function selectNextCategory(
   db: Database
 ): Promise<MarketCategory> {
   const distribution = await getCategoryDistribution(db);
-  const cryptoAllowed = await isCryptoAllowed(db);
 
-  const available = distribution.filter(
-    (d) => d.category !== "crypto" || cryptoAllowed
-  );
-
-  const withWeights = available.map((d) => ({
+  const withWeights = distribution.map((d) => ({
     ...d,
     weight: Math.max(0.01, d.deficit + 0.1),
   }));
@@ -98,7 +80,6 @@ export async function getDistributionGuidance(db: Database): Promise<{
   suggested: string;
 }> {
   const distribution = await getCategoryDistribution(db);
-  const cryptoAllowed = await isCryptoAllowed(db);
 
   const deficits = distribution
     .filter((d) => d.deficit > 0.02)
@@ -106,12 +87,8 @@ export async function getDistributionGuidance(db: Database): Promise<{
     .slice(0, 5)
     .map((d) => ({ category: d.category, deficit: d.deficit }));
 
-  const atCap: MarketCategory[] = cryptoAllowed ? [] : ["crypto"];
-
   const prioritize = deficits.map((d) => d.category).join(", ");
-  const suggested =
-    (prioritize ? `Prioritize: ${prioritize}. ` : "") +
-    (atCap.length ? `Avoid: ${atCap.join(", ")} (at daily cap).` : "");
+  const suggested = prioritize ? `Prioritize: ${prioritize}.` : "";
 
-  return { deficits, atCap, suggested };
+  return { deficits, atCap: [], suggested };
 }

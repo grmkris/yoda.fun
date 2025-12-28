@@ -1,9 +1,16 @@
 "use client";
 
+import { User } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { BalanceDisplay } from "@/components/balance-display";
+import { RewardsModal } from "@/components/rewards/rewards-modal";
+import { authClient } from "@/lib/auth-client";
 import { SidebarTrigger } from "./sidebar/sidebar-trigger";
 
 export default function Header() {
+  const { data: session } = authClient.useSession();
+
   return (
     <header
       className="sticky top-0 z-40 lg:hidden"
@@ -13,21 +20,41 @@ export default function Header() {
         borderBottom: "1px solid oklch(0.65 0.25 290 / 15%)",
       }}
     >
-      <div className="flex h-14 items-center justify-between px-4">
-        {/* Hamburger menu (mobile only) */}
+      <div className="flex h-14 items-center justify-between px-3">
+        {/* Left: Hamburger menu */}
         <SidebarTrigger />
 
-        {/* Logo */}
-        <Image
-          alt="yoda.fun"
-          className="h-8 w-8"
-          height={32}
-          src="/favicon/logo.png"
-          width={32}
-        />
+        {/* Center: Logo */}
+        <Link className="absolute left-1/2 -translate-x-1/2" href="/">
+          <Image
+            alt="yoda.fun"
+            className="h-8 w-8"
+            height={32}
+            src="/favicon/logo.png"
+            width={32}
+          />
+        </Link>
 
-        {/* Spacer for symmetry */}
-        <div className="w-10" />
+        {/* Right: Balance, Rewards, Profile */}
+        <div className="flex items-center gap-2">
+          {session && <BalanceDisplay />}
+          <RewardsModal compact />
+          <Link
+            className="flex h-8 w-8 items-center justify-center"
+            href={session ? "/profile" : "/login"}
+          >
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-full"
+              style={{
+                background: session
+                  ? "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))"
+                  : "oklch(0.25 0.02 270)",
+              }}
+            >
+              <User className="h-3.5 w-3.5 text-white" />
+            </div>
+          </Link>
+        </div>
       </div>
     </header>
   );

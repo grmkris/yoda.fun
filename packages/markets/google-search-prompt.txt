@@ -20,8 +20,7 @@ Search for information across ALL of these topics:
 13. Predictions people are making, 'calling it now'
 14. Things that 'aged poorly', receipts being posted
 15. Main character of the day viral moments
-16. Crypto predictions bitcoin/ethereum/solana
-17. Sports hot takes for tonight's games
+16. Sports hot takes for tonight's games
 
 ## Purpose
 Finding newsworthy events with outcomes that can be objectively verified through official sources.
@@ -38,7 +37,7 @@ Prioritize: (1) official announcements with specific dates, (2) court/government
 ## Output Requirements
 Return a synthesized list of the BEST findings across all topics:
 - topic: Clear, specific topic name (not vague)
-- category: movies | tv | music | celebrities | gaming | sports | politics | tech | crypto | viral | memes | weather | other
+- category: movies | tv | music | celebrities | gaming | sports | politics | tech | viral | memes | weather | other
 - eventDate: When it happens (ISO date if known)
 - marketPotential: One sentence - why this is good for betting
 - confidence: 0-100 (how confident this is real, timely, verifiable)

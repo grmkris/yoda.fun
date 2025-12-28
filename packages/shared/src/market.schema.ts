@@ -67,15 +67,6 @@ export const DEFAULT_TOPICS: TopicConfig[] = [
     ],
   },
   {
-    id: "crypto",
-    category: "crypto",
-    querySeeds: [
-      "crypto network upgrades",
-      "token unlocks",
-      "SEC crypto decisions",
-    ],
-  },
-  {
     id: "viral",
     category: "viral",
     querySeeds: [
@@ -91,7 +82,7 @@ export const SPICE_LEVELS = ["mild", "medium", "spicy"] as const;
 export type SpiceLevel = (typeof SPICE_LEVELS)[number];
 
 export const MARKET_CATEGORIES = [
-  // Entertainment (split from generic "entertainment")
+  // Entertainment
   "movies",
   "tv",
   "music",
@@ -101,7 +92,6 @@ export const MARKET_CATEGORIES = [
   "sports",
   "politics",
   "tech",
-  "crypto", // CAPPED at 5% (~12/day)
   // Social/Viral
   "viral",
   "memes",

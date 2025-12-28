@@ -11,6 +11,7 @@ import { GameCard, type MarketCard } from "./game-card";
 export function CardSwiperSection() {
   const [swipedCount, setSwipedCount] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const stackRef = useRef<SwipeStackRef>(null);
 
   const {
@@ -114,12 +115,30 @@ export function CardSwiperSection() {
           <SwipeStack
             cards={allMarkets}
             className="min-h-[500px]"
-            disabled={isBlocked}
+            disabled={isBlocked || !!expandedCardId}
             maxVisibleCards={5}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             ref={stackRef}
-            renderCard={(card) => <GameCard card={card} />}
+            renderCard={(card) => (
+              <GameCard
+                card={card}
+                isExpanded={expandedCardId === card.id}
+                onToggleExpand={() =>
+                  setExpandedCardId((prev) =>
+                    prev === card.id ? null : card.id
+                  )
+                }
+                onVoteNo={() => {
+                  setExpandedCardId(null);
+                  stackRef.current?.swipeLeft();
+                }}
+                onVoteYes={() => {
+                  setExpandedCardId(null);
+                  stackRef.current?.swipeRight();
+                }}
+              />
+            )}
           />
         )}
       </div>

@@ -66,15 +66,15 @@ Your markets need to GO VIRAL. Think Twitter main character energy, not Bloomber
 - Write like you're posting a hot take at 2am, not filing a report
 - Titles should feel like TAKES, not neutral questions
 - Slight chaos is good - overly polished = boring = no engagement
-- Channel the energy of CT (crypto twitter) meets stan twitter meets sports gambling degenerates
+- Channel the energy of stan twitter meets sports gambling degenerates
 - If a market wouldn't get quote tweeted, it's too boring
 
 ENERGY CHECK:
 - "Will the Lakers win tonight?" (sounds like a homework question)
 + "Lakers revenge game or are they actually cooked?" (has stakes, has a take)
 
-- "Will Bitcoin reach $100,000?" (boring, been asked 1000x)
-+ "BTC 100k before New Year or we're all ngmi" (urgency, community, slang)
+- "Will the album go platinum?" (boring, nobody cares)
++ "Does this album go platinum in a month or is streaming killing records?" (urgency, debate)
 
 - "Will Taylor Swift's album debut at #1?" (who cares, obviously yes)
 + "Taylor drops Friday - does she outsell her own record or has the era peaked?" (controversy, specific angle)`);
@@ -101,8 +101,7 @@ FORMULA OPTIONS:
 - Markets MUST have objective, verifiable resolution criteria
 - NO markets about death, serious illness, tragedy, or harm
 - NO markets that bettors could manipulate
-- Controversial takes are good, genuinely offensive content is not
-- Crypto markets should be SPICY not just "will X hit Y price" (boring)`);
+- Controversial takes are good, genuinely offensive content is not`);
 
       sections.push(`## CONTEXT
 - Current date: ${ctx.currentDate}
@@ -141,7 +140,7 @@ For each market:
 
 2. **description**: 1-2 sentences of context. Set up the stakes. Why should someone care RIGHT NOW?
 
-3. **category**: movies | tv | music | celebrities | gaming | sports | politics | tech | crypto | viral | memes | weather | other
+3. **category**: movies | tv | music | celebrities | gaming | sports | politics | tech | viral | memes | weather | other
 
 4. **resolutionCriteria**: Plain English for how an AI will resolve this. Be SPECIFIC:
    - Name the team/person/entity
@@ -150,7 +149,7 @@ For each market:
 
    Examples:
    - "Resolves YES if the Los Angeles Lakers defeat the Boston Celtics in their scheduled NBA game"
-   - "Resolves YES if Bitcoin price exceeds $100,000 USD on CoinGecko at any point before resolution"
+   - "Resolves YES if the movie grosses over $100M domestic opening weekend per Box Office Mojo"
    - "Resolves YES if MrBeast's next YouTube video reaches 100M views within 24 hours of upload"
 
 5. **whyViral**: One sentence on why people will share, argue about, or screenshot this market. If you can't articulate this, the market is too boring.
@@ -165,7 +164,7 @@ ${getDurationGuidance(ctx.timeframe)}
 
 8. **betAmount**: 0.10 | 0.25 | 0.50 | 1.00 | 5.00
    - Spicier markets = lower amounts (more accessible for meme bets)
-   - Serious sports/crypto = can go higher`);
+   - Serious sports = can go higher`);
 
       sections.push(`## EXAMPLES BY CATEGORY
 
@@ -177,15 +176,6 @@ ${getDurationGuidance(ctx.timeframe)}
 - "LeBron drops 40 tonight or father time finally wins?"
   -> whyViral: The age debate is eternal engagement bait
   -> spiceLevel: medium
-
-**CRYPTO** (not just price targets)
-- "ETH flips BTC market cap this cycle or that cope is dead forever?"
-  -> whyViral: The flippening debate never dies
-  -> spiceLevel: spicy
-
-- "Solana stays up for 7 days straight or we get another 'planned maintenance'?"
-  -> whyViral: SOL downtime is a meme, defenders will cope
-  -> spiceLevel: spicy
 
 **CELEBRITIES/VIRAL**
 - "MrBeast next video: 100M views in 24hrs or the algorithm finally nerfed him?"
@@ -215,7 +205,7 @@ ${getDurationGuidance(ctx.timeframe)}
 - Anything that sounds like a textbook question
 - Formal language ("The outcome shall be determined by...")
 - Topics nobody has emotional stakes in
-- Price predictions without context (just "$X hits $Y" is lazy)
+- Predictions without context or stakes
 - Anything you'd see on a boring prediction market for normies
 - Questions where the answer is obviously yes or obviously no
 - Anything mean-spirited toward individuals (banter about public figures in their public role is fine)`);

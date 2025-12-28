@@ -8,6 +8,7 @@ import { MiniAppReady } from "@/components/miniapp-ready";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
 import { SidebarProvider } from "@/components/sidebar/sidebar-context";
+import { TopBar } from "@/components/top-bar";
 import { env } from "@/env";
 
 const fredoka = Fredoka({
@@ -80,6 +81,7 @@ export default function RootLayout({
             strategy="beforeInteractive"
           />
         )}
+        <meta content="69519aadc63ad876c9081746" name="base:app_id" />
       </head>
       <body
         className={`${fredoka.variable} ${nunito.variable} ${righteous.variable} antialiased`}
@@ -90,6 +92,7 @@ export default function RootLayout({
             <div className="flex h-svh bg-cosmic-subtle">
               <AppSidebar />
               <div className="flex flex-1 flex-col overflow-hidden">
+                <TopBar />
                 <Header />
                 <main className="flex-1 overflow-auto">{children}</main>
               </div>

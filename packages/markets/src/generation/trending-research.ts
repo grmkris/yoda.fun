@@ -51,7 +51,7 @@ REQUIREMENTS:
 
 For each topic found:
 - topic: What the event/topic is (concise, specific)
-- category: One of movies, tv, music, celebrities, gaming, sports, politics, tech, crypto, viral, memes, weather, other
+- category: One of movies, tv, music, celebrities, gaming, sports, politics, tech, viral, memes, weather, other
 - eventDate: ISO date string when it happens (if known)
 - whyGood: Why this makes a good prediction market (betting angle, what can people bet on)
 
