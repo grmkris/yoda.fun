@@ -113,6 +113,7 @@
         "@ai-sdk/google": "catalog:",
         "@ai-sdk/groq": "catalog:",
         "@ai-sdk/xai": "catalog:",
+        "@yoda.fun/db": "workspace:*",
         "@yoda.fun/logger": "workspace:*",
         "@yoda.fun/shared": "workspace:*",
         "@yoda.fun/storage": "workspace:*",
@@ -194,6 +195,7 @@
       "name": "@yoda.fun/db",
       "dependencies": {
         "@electric-sql/pglite": "catalog:",
+        "@yoda.fun/db": "workspace:*",
         "@yoda.fun/logger": "workspace:*",
         "@yoda.fun/shared": "workspace:*",
         "drizzle-orm": "catalog:",

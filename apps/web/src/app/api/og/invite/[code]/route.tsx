@@ -126,11 +126,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
               fontSize: 22,
               color: COLORS.textMuted,
               marginBottom: 36,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
+              letterSpacing: "0.1em",
             }}
           >
-            See the future
+            See the future. Bet on it.
           </div>
 
           {/* Invite code - astronomical coordinates style */}

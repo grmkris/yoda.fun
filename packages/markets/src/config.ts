@@ -1,3 +1,26 @@
+import type { AIModelConfig } from "@yoda.fun/ai";
+
+export const WORKFLOW_MODELS = {
+  generation: {
+    // grok-4-latest is better for creative/witty output vs fast-reasoning
+    markets: { provider: "xai", modelId: "grok-4-latest" },
+  },
+  trending: {
+    googleSearch: { provider: "google", modelId: "gemini-2.5-flash" },
+    xSearch: { provider: "xai", modelId: "grok-3-mini" },
+    curation: { provider: "google", modelId: "gemini-2.5-flash" },
+  },
+  resolution: {
+    webSearch: { provider: "google", modelId: "gemini-2.5-flash" },
+    xaiSearch: { provider: "xai", modelId: "grok-4-fast" },
+    analysis: { provider: "xai", modelId: "grok-4-fast" },
+    basic: { provider: "google", modelId: "gemini-2.5-flash" },
+  },
+  image: {
+    promptGen: { provider: "google", modelId: "gemini-2.5-flash" },
+  },
+} as const satisfies Record<string, Record<string, AIModelConfig>>;
+
 export const MARKET_GENERATION = {
   BATCH_SIZE: 8,
   CRON: "*/30 * * * *",

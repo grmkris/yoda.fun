@@ -32,6 +32,9 @@ export const idTypesMapNameToPrefix = {
   reward: "rwd",
   rewardClaim: "rwc",
   referral: "ref",
+
+  // observability
+  aiEvent: "aie",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -161,3 +164,7 @@ export type RewardClaimId = z.infer<typeof RewardClaimId>;
 
 export const ReferralId = typeIdValidator("referral");
 export type ReferralId = z.infer<typeof ReferralId>;
+
+// Observability types
+export const AiEventId = typeIdValidator("aiEvent");
+export type AiEventId = z.infer<typeof AiEventId>;

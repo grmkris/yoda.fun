@@ -14,9 +14,14 @@
     "./image-generation": {
       "types": "./dist/image-generation.d.ts",
       "default": "./src/image-generation.ts"
+    },
+    "./observability": {
+      "types": "./dist/observability.d.ts",
+      "default": "./src/observability.ts"
     }
   },
   "scripts": {
+    "dev": "cd ../../apps/server && AI_SDK_DEVTOOLS_PORT=4985 bunx @ai-sdk/devtools",
     "build": "tsdown",
     "lint": "bun ultracite check",
     "fix": "bun ultracite fix",
@@ -36,6 +41,7 @@
     "@ai-sdk/groq": "catalog:",
     "@ai-sdk/xai": "catalog:",
     "exa-js": "^2.0.12",
+    "@yoda.fun/db": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",

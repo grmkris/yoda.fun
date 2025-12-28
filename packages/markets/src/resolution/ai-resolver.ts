@@ -4,6 +4,7 @@ import {
   AIResolutionSchema,
   type MarketForResolution,
 } from "@yoda.fun/shared/resolution-types";
+import { WORKFLOW_MODELS } from "../config";
 
 export interface AIResolutionOptions {
   searchHint?: string;
@@ -37,10 +38,7 @@ Based on the current date and available information, determine if the market out
 
 Provide your analysis with confidence level (0-100) and reasoning.`;
 
-  const model = aiClient.getModel({
-    provider: "google",
-    modelId: "gemini-2.5-flash",
-  });
+  const model = aiClient.getModel(WORKFLOW_MODELS.resolution.basic);
 
   const response = await aiClient.generateText({
     model,

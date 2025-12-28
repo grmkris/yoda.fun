@@ -1,4 +1,5 @@
 import type { AiClient } from "@yoda.fun/ai";
+import { withTrace } from "@yoda.fun/ai/observability";
 import type { Cache } from "@yoda.fun/cache";
 import { cachified } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
@@ -54,87 +55,86 @@ export function createMarketGenerationWorker(
     "generate-market",
     async (job) => {
       const { count, categories, trigger } = job;
+      const traceId = crypto.randomUUID();
 
-      logger.info(
-        { count, categories, trigger },
-        "Processing market generation job"
-      );
-
-      // For scheduled jobs, use soft distribution guidance
-      let distributionGuidance:
-        | Awaited<ReturnType<typeof getDistributionGuidance>>
-        | undefined;
-      if (trigger === "scheduled") {
-        distributionGuidance = await getDistributionGuidance(db);
+      return await withTrace({ traceId }, async () => {
         logger.info(
-          { suggested: distributionGuidance.suggested },
-          "Using distribution guidance"
+          { count, categories, trigger, traceId },
+          "Processing market generation job"
         );
-      }
 
-      const curatedTopics = await cachified<CuratedTopic[]>({
-        key: "trending-topics",
-        cache,
-        ttl: TRENDING_CACHE.TTL_MS,
-        staleWhileRevalidate: TRENDING_CACHE.SWR_MS,
-        getFreshValue() {
-          logger.info({}, "Fetching fresh trending topics");
-          return getTrendingTopics({ aiClient, logger });
-        },
-      });
-
-      const { generated, inserted } =
-        await marketGenerationService.generateAndInsertMarkets({
-          count,
-          categories,
-          timeframe: getTimeframe(),
-          curatedTopics,
-          distributionGuidance,
-        });
-
-      // Schedule resolution and image jobs for each new market
-      for (const market of inserted) {
-        // Queue image generation
-        await queue.addJob("generate-market-image", {
-          marketId: market.id,
-          title: market.title,
-          description: market.description ?? "",
-          category: market.category ?? "other",
-        });
-
-        // Schedule resolution
-        const delayMs =
-          new Date(market.resolutionDeadline).getTime() - Date.now();
-
-        if (delayMs > 0) {
-          await queue.addJob(
-            "resolve-market",
-            { marketId: market.id },
-            { delay: delayMs }
-          );
-
+        let distributionGuidance:
+          | Awaited<ReturnType<typeof getDistributionGuidance>>
+          | undefined;
+        if (trigger === "scheduled") {
+          distributionGuidance = await getDistributionGuidance(db);
           logger.info(
-            {
-              marketId: market.id,
-              resolutionDeadline: market.resolutionDeadline,
-              delayMs,
-            },
-            "Scheduled resolution job"
+            { suggested: distributionGuidance.suggested },
+            "Using distribution guidance"
           );
         }
-      }
 
-      logger.info(
-        {
-          requested: count,
-          generated: generated.markets.length,
-          inserted: inserted.length,
-          trigger,
-        },
-        "Market generation job completed"
-      );
+        const curatedTopics = await cachified<CuratedTopic[]>({
+          key: "trending-topics",
+          cache,
+          ttl: TRENDING_CACHE.TTL_MS,
+          staleWhileRevalidate: TRENDING_CACHE.SWR_MS,
+          getFreshValue() {
+            logger.info({}, "Fetching fresh trending topics");
+            return getTrendingTopics({ aiClient, logger });
+          },
+        });
 
-      return { success: true, marketsCreated: inserted.length };
+        const { generated, inserted } =
+          await marketGenerationService.generateAndInsertMarkets({
+            count,
+            categories,
+            timeframe: getTimeframe(),
+            curatedTopics,
+            distributionGuidance,
+          });
+
+        for (const market of inserted) {
+          await queue.addJob("generate-market-image", {
+            marketId: market.id,
+            title: market.title,
+            description: market.description ?? "",
+            category: market.category ?? "other",
+          });
+
+          const delayMs =
+            new Date(market.resolutionDeadline).getTime() - Date.now();
+
+          if (delayMs > 0) {
+            await queue.addJob(
+              "resolve-market",
+              { marketId: market.id },
+              { delay: delayMs }
+            );
+
+            logger.info(
+              {
+                marketId: market.id,
+                resolutionDeadline: market.resolutionDeadline,
+                delayMs,
+              },
+              "Scheduled resolution job"
+            );
+          }
+        }
+
+        logger.info(
+          {
+            requested: count,
+            generated: generated.markets.length,
+            inserted: inserted.length,
+            trigger,
+          },
+          "Market generation job completed"
+        );
+
+        return { success: true, marketsCreated: inserted.length };
+      });
     },
     {
       onFailed: (job, error) => {

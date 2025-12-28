@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito, Righteous } from "next/font/google";
 import "../index.css";
+import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import Script from "next/script";
 import Header from "@/components/header";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
 import { SidebarProvider } from "@/components/sidebar/sidebar-context";
+import { env } from "@/env";
 
 const fredoka = Fredoka({
   variable: "--font-heading",
@@ -26,21 +28,22 @@ const righteous = Righteous({
 });
 
 export const metadata: Metadata = {
-  title: "yoda.fun - AI Prediction Markets",
+  metadataBase: new URL(SERVICE_URLS[env.NEXT_PUBLIC_ENV].web),
+  title: "yoda.fun — See the Future, Stake Your Claim",
   description:
-    "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+    "The future is tradeable. Pick your side on sports, crypto, politics, and culture. Win real money when you're right. Instant payouts.",
   openGraph: {
-    title: "yoda.fun - AI Prediction Markets",
+    title: "yoda.fun — See the Future, Stake Your Claim",
     description:
-      "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+      "The future is tradeable. Pick your side on sports, crypto, politics, and culture. Win real money when you're right. Instant payouts.",
     images: ["/api/og"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "yoda.fun - AI Prediction Markets",
+    title: "yoda.fun — See the Future, Stake Your Claim",
     description:
-      "Bet on real-world outcomes with AI-generated markets. Sports, politics, crypto, and more.",
+      "The future is tradeable. Pick your side on sports, crypto, politics, and culture. Win real money when you're right. Instant payouts.",
     images: ["/api/og"],
   },
 };

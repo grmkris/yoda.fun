@@ -2,6 +2,13 @@ import { Output } from "ai";
 import Replicate from "replicate";
 import { z } from "zod";
 import type { AiClient } from "./ai-client";
+import type { AIModelConfig } from "./ai-providers";
+
+// Mirror of WORKFLOW_MODELS.image.promptGen from @yoda.fun/markets
+const IMAGE_PROMPT_MODEL: AIModelConfig = {
+  provider: "google",
+  modelId: "gemini-2.5-flash",
+};
 
 export interface MarketImageContext {
   title: string;
@@ -46,10 +53,7 @@ export async function generateImagePromptWithTags(
   };
 
   const style = categoryStyles[market.category] || categoryStyles.other;
-  const model = aiClient.getModel({
-    provider: "google",
-    modelId: "gemini-2.0-flash",
-  });
+  const model = aiClient.getModel(IMAGE_PROMPT_MODEL);
 
   const result = await aiClient.generateText({
     model,
@@ -177,4 +181,19 @@ export async function fetchImageBuffer(url: string): Promise<Buffer> {
   }
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
+}
+
+/**
+ * Generate image using a pre-generated AI prompt
+ * (Fixes bug where AI-generated prompts were being ignored)
+ */
+export async function generateMarketImageWithPrompt(
+  prompt: string,
+  config: ImageGenerationConfig
+): Promise<string | null> {
+  const replicate = new Replicate({ auth: config.replicateApiKey });
+  const output = (await replicate.run("google/nano-banana", {
+    input: { prompt, aspect_ratio: "2:3", output_format: "png" },
+  })) as { url: () => Promise<string> };
+  return output.url();
 }

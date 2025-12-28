@@ -1,6 +1,7 @@
 import { type AiClient, Output, stepCountIs } from "@yoda.fun/ai";
 import type { MarketForResolution } from "@yoda.fun/shared/resolution-types";
 import { z } from "zod";
+import { WORKFLOW_MODELS } from "../config";
 import { fetchCoinGeckoPrice } from "./price-resolver";
 import { fetchRecentEvents } from "./sports-resolver";
 
@@ -29,7 +30,11 @@ export interface AgenticResolutionResult {
 }
 
 function buildSystemPrompt(market: MarketForResolution): string {
+  const today = new Date().toISOString().split("T")[0];
+
   return `You are a prediction market resolution agent. Your job is to determine if a market resolved YES, NO, or INVALID.
+
+**Today's date is ${today}** - use this as your reference point when evaluating if events have occurred.
 
 ## Market to Resolve
 Title: ${market.title}
@@ -100,7 +105,9 @@ async function getSportsResult(team: string, sport: string): Promise<string> {
 
 async function webSearch(aiClient: AiClient, query: string): Promise<string> {
   const tools = aiClient.getGoogleTools();
-  const model = aiClient.getGoogleModel("gemini-2.5-flash");
+  const model = aiClient.getGoogleModel(
+    WORKFLOW_MODELS.resolution.webSearch.modelId
+  );
 
   const { output } = await aiClient.generateText({
     model,
@@ -117,7 +124,7 @@ export async function resolveWithAgent(
   market: MarketForResolution,
   aiClient: AiClient
 ): Promise<AgenticResolutionResult> {
-  const model = aiClient.getModel({ provider: "xai", modelId: "grok-4-fast" });
+  const model = aiClient.getModel(WORKFLOW_MODELS.resolution.analysis);
   const toolsUsed: string[] = [];
   const sources: Array<{ url: string; snippet: string }> = [];
 

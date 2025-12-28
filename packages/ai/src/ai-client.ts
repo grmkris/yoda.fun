@@ -1,15 +1,15 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createXai } from "@ai-sdk/xai";
+import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
 import type { Environment } from "@yoda.fun/shared/services";
 import type { LanguageModel as LanguageModelType } from "ai";
 import { generateImage, generateText, streamText, wrapLanguageModel } from "ai";
 import Exa from "exa-js";
 
-// TODO: Re-enable @posthog/ai when it supports AI SDK v6
-// import type { PostHog } from "posthog-node";
 import { type AIModelConfig, getModel } from "./ai-providers";
+import { wrapGenerateText } from "./observability";
 
 export type LanguageModel = Exclude<LanguageModelType, string>;
 
@@ -22,9 +22,9 @@ export interface AiClientConfig {
     xaiApiKey: string;
     exaApiKey?: string;
   };
-  // TODO: Re-enable when @posthog/ai supports AI SDK v6
-  // posthog?: PostHog;
   environment: Environment;
+  /** Optional: Pass database to enable AI observability logging */
+  db?: Database;
 }
 
 // biome-ignore lint/performance/noBarrelFile: main package entry point
@@ -154,7 +154,9 @@ export const createAiClient = (config: AiClientConfig): AiClient => {
         })),
       };
     },
-    generateText,
+    generateText: config.db
+      ? wrapGenerateText(generateText, config.db, config.logger)
+      : generateText,
     streamText,
     generateImage,
     getProviderConfig: () => config.providerConfigs,

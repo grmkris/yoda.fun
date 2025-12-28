@@ -51,7 +51,7 @@ export function GET() {
             lineHeight: 1.2,
           }}
         >
-          AI-Powered Prediction Markets
+          See the Future, Stake Your Claim
         </div>
 
         {/* Description */}
@@ -63,8 +63,7 @@ export function GET() {
             maxWidth: 800,
           }}
         >
-          Bet on real-world outcomes with AI-generated markets. Sports,
-          politics, crypto, and more.
+          The future is tradeable. Pick your side and win when you're right.
         </div>
 
         {/* Features */}

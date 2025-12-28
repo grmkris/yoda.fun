@@ -2,27 +2,31 @@
 
 import { QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { env } from "@/env";
 import { useReferralAutoApply } from "@/hooks/use-referral-auto-apply";
 import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
-import { useSession } from "./session-provider";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
 import { Web3Provider } from "./web3-provider";
 
-function AutoAnonymousAuth({ children }: { children: React.ReactNode }) {
-  const { data: session, isPending } = useSession();
+function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = useMutation({
     mutationFn: () => authClient.signIn.anonymous(),
+    onSuccess: async (data) => {
+      const session = await authClient.getSession();
+      console.log(data, session);
+    },
   });
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
-    if (!(isPending || session || signIn.isPending)) {
+    if (!(signIn.isPending || isAuthenticating)) {
+      setIsAuthenticating(true);
       signIn.mutate();
     }
-  }, [isPending, session, signIn.isPending]);
+  }, [signIn]);
 
   return <>{children}</>;
 }
@@ -43,9 +47,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       >
         {env.NEXT_PUBLIC_ENV === "dev" && <ReactQueryDevtools />}
         <Web3Provider>
-          <AutoAnonymousAuth>
+          <AuthProvider>
             <ReferralAutoApply>{children}</ReferralAutoApply>
-          </AutoAnonymousAuth>
+          </AuthProvider>
         </Web3Provider>
         <Toaster richColors />
       </ThemeProvider>

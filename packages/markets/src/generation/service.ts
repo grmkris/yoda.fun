@@ -10,6 +10,7 @@ import {
   type GenerateMarketsInput,
   type GenerateMarketsResult,
 } from "@yoda.fun/shared/market.schema";
+import { WORKFLOW_MODELS } from "../config";
 import type { CuratedTopic, DistributionGuidance } from "../prompts";
 import { MARKET_PROMPTS } from "../prompts";
 import { type PreparedMarket, prepareMarket } from "./preparer";
@@ -62,8 +63,8 @@ export function createMarketGenerationService(
     lastError?: string
   ): Promise<GenerateMarketsResult> {
     const startTime = Date.now();
-    const config = MARKET_PROMPTS.generation;
-    const model = aiClient.getModel(config.model);
+    const modelConfig = WORKFLOW_MODELS.generation.markets;
+    const model = aiClient.getModel(modelConfig);
     const prompt = buildPrompt(input.count, attempt, lastError);
 
     const response = await aiClient.generateText({
@@ -71,6 +72,9 @@ export function createMarketGenerationService(
       output: Output.object({ schema: GeneratedMarketsResponseSchema }),
       system: systemPrompt,
       prompt,
+      // Creative settings for more varied/spicy titles
+      temperature: 0.9,
+      topP: 0.95,
     });
 
     const durationMs = Date.now() - startTime;
@@ -86,7 +90,7 @@ export function createMarketGenerationService(
 
     return {
       markets: response.output.markets,
-      modelVersion: config.model.modelId,
+      modelVersion: modelConfig.modelId,
       tokensUsed: response.usage?.totalTokens ?? 0,
       durationMs,
     };
@@ -95,8 +99,6 @@ export function createMarketGenerationService(
   const generateMarkets = async (
     input: GenerateMarketsInputWithTrending
   ): Promise<GenerateMarketsResult> => {
-    const config = MARKET_PROMPTS.generation;
-
     logger.info(
       {
         count: input.count,
@@ -109,7 +111,7 @@ export function createMarketGenerationService(
 
     const existingTitles = await fetchExistingTitles();
     const currentDate = new Date().toISOString().split("T")[0] ?? "";
-    const systemPrompt = config.systemPrompt({
+    const systemPrompt = MARKET_PROMPTS.generation.systemPrompt({
       currentDate,
       categories: input.categories,
       existingMarketTitles: existingTitles,

@@ -2,7 +2,7 @@ import type { AiClient } from "@yoda.fun/ai";
 import {
   fetchImageBuffer,
   generateImagePromptWithTags,
-  generateMarketImageUrl,
+  generateMarketImageWithPrompt,
 } from "@yoda.fun/ai/image-generation";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
@@ -75,10 +75,10 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         // Generate new image
         logger.info({ marketId }, "Generating new image via Replicate");
 
-        const sourceUrl = await generateMarketImageUrl(
-          { title, description, category },
-          { replicateApiKey }
-        );
+        // Use the AI-generated prompt (not buildImagePrompt fallback)
+        const sourceUrl = await generateMarketImageWithPrompt(prompt, {
+          replicateApiKey,
+        });
 
         if (!sourceUrl) {
           logger.warn({ marketId }, "Image generation returned null");

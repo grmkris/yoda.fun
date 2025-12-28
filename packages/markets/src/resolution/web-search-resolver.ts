@@ -9,6 +9,7 @@ import type {
   WebSearchStrategy,
 } from "@yoda.fun/shared/resolution-types";
 import { z } from "zod";
+import { WORKFLOW_MODELS } from "../config";
 
 const XaiSearchOutputSchema = z.object({
   webResults: z.array(SearchResultItemSchema),
@@ -45,7 +46,9 @@ async function searchWithXai(
 
   try {
     const tools = aiClient.getXaiTools();
-    const model = aiClient.getXaiResponsesModel("grok-4-fast");
+    const model = aiClient.getXaiResponsesModel(
+      WORKFLOW_MODELS.resolution.xaiSearch.modelId
+    );
 
     const { output } = await aiClient.generateText({
       model,
@@ -100,7 +103,9 @@ async function searchWithGoogle(
 ): Promise<SearchResult> {
   try {
     const tools = aiClient.getGoogleTools();
-    const model = aiClient.getGoogleModel("gemini-2.5-flash");
+    const model = aiClient.getGoogleModel(
+      WORKFLOW_MODELS.resolution.webSearch.modelId
+    );
 
     const { output } = await aiClient.generateText({
       model,
@@ -214,7 +219,7 @@ async function analyzeSearchResults(
     };
   }
 
-  const model = aiClient.getModel({ provider: "xai", modelId: "grok-4-fast" });
+  const model = aiClient.getModel(WORKFLOW_MODELS.resolution.analysis);
 
   const { output } = await aiClient.generateText({
     model,

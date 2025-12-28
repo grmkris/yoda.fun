@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "yoda.fun",
     short_name: "yoda.fun",
-    description: "my pwa app",
+    description: "See the future. Stake your claim. Win real money.",
     start_url: "/new",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#000000",
+    background_color: "#0f0a1a",
+    theme_color: "#8b5cf6",
     icons: [
       {
         src: "/favicon/web-app-manifest-192x192.png",

@@ -2,6 +2,7 @@ import type { AiClient } from "@yoda.fun/ai";
 import { generateText, Output } from "@yoda.fun/ai";
 import type { Logger } from "@yoda.fun/logger";
 import { z } from "zod";
+import { WORKFLOW_MODELS } from "../config";
 import type { CuratedTopic } from "../prompts";
 
 interface TrendingResearchDeps {
@@ -31,11 +32,10 @@ export async function researchTrendingTopics(
 ): Promise<RawTrendingData> {
   const { aiClient, logger } = deps;
 
-  const model = aiClient.getGoogleModel("gemini-2.5-flash");
-  const xaiModel = aiClient.getModel({
-    provider: "xai",
-    modelId: "grok-3-mini",
-  });
+  const model = aiClient.getGoogleModel(
+    WORKFLOW_MODELS.trending.googleSearch.modelId
+  );
+  const xaiModel = aiClient.getModel(WORKFLOW_MODELS.trending.xSearch);
   const { googleSearch } = aiClient.getGoogleTools();
   const { xSearch } = aiClient.getXaiTools();
 
@@ -120,7 +120,9 @@ export async function curateBestTopics(
   deps: TrendingResearchDeps
 ): Promise<CuratedTopic[]> {
   const { aiClient } = deps;
-  const model = aiClient.getGoogleModel("gemini-2.5-flash");
+  const model = aiClient.getGoogleModel(
+    WORKFLOW_MODELS.trending.curation.modelId
+  );
 
   const prompt = `Select TOP 20 prediction market topics from this data.
 

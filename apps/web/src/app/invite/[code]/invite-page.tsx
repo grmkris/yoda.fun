@@ -201,7 +201,7 @@ export function InvitePage({ code }: InvitePageProps) {
             style={{ color: "oklch(0.75 0.03 280)" }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            Join the future of prediction markets
+            See the future. Bet on it.
           </motion.p>
 
           <motion.div

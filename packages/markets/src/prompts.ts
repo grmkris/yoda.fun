@@ -1,22 +1,4 @@
-import type { AIModelConfig } from "@yoda.fun/ai";
 import type { TimeframePreset } from "@yoda.fun/shared/market.schema";
-
-const MODELS = {
-  XAI_GROK_4_LATEST: {
-    provider: "xai",
-    modelId: "grok-4-latest",
-  } as const satisfies AIModelConfig,
-
-  XAI_GROK_4_1_FAST_REASONING: {
-    provider: "xai",
-    modelId: "grok-4-1-fast-reasoning",
-  } as const satisfies AIModelConfig,
-
-  GOOGLE_GEMINI_2_5_FLASH_THINKING: {
-    provider: "google",
-    modelId: "gemini-flash-latest",
-  } as const satisfies AIModelConfig,
-} as const;
 
 export interface CuratedTopic {
   topic: string;
@@ -73,7 +55,6 @@ function getDurationGuidance(timeframe: TimeframePreset): string {
 
 export const MARKET_PROMPTS = {
   generation: {
-    model: MODELS.XAI_GROK_4_1_FAST_REASONING,
     systemPrompt: (ctx: MarketGenerationContext): string => {
       const sections: string[] = [];
 
@@ -154,7 +135,7 @@ Don't just use these verbatim - find the SPICY ANGLE. What's the debate? What's 
       if (ctx.existingMarketTitles?.length) {
         sections.push(`## AVOID DUPLICATES (don't create similar)
 ${ctx.existingMarketTitles
-  .slice(0, 100)
+  .slice(0, 20)
   .map((t) => `- ${t}`)
   .join("\n")}`);
       }
@@ -259,7 +240,6 @@ If any answer is "no", make it spicier or pick a different topic.`);
   },
 
   resolution: {
-    model: MODELS.XAI_GROK_4_1_FAST_REASONING,
     systemPrompt: (ctx: MarketResolutionContext): string => {
       const sections: string[] = [];
 

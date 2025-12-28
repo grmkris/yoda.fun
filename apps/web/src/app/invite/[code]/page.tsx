@@ -11,17 +11,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: "You're Invited | yoda.fun",
-    description: "Bet on real-world outcomes with AI-generated markets.",
+    description:
+      "The future is tradeable. Pick your side and win when you're right.",
     openGraph: {
       title: "You're Invited to yoda.fun",
-      description: "Bet on real-world outcomes with AI-generated markets.",
+      description:
+        "The future is tradeable. Pick your side and win when you're right.",
       images: [`/api/og/invite/${upperCode}`],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: "You're Invited to yoda.fun",
-      description: "Bet on real-world outcomes with AI-generated markets.",
+      description:
+        "The future is tradeable. Pick your side and win when you're right.",
       images: [`/api/og/invite/${upperCode}`],
     },
   };

@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "dev": "bun db:studio",
     "build": "tsdown",
     "lint": "bun ultracite check",
     "fix": "bun ultracite fix",

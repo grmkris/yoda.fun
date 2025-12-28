@@ -172,8 +172,7 @@ logger.info({ msg: "Bull-Board UI available at /admin/queues" });
 const aiClient = createAiClient({
   logger,
   environment: env.APP_ENV,
-  // TODO: Re-enable when @posthog/ai supports AI SDK v6
-  // posthog,
+  db, // Enable AI observability logging
   providerConfigs: {
     xaiApiKey: env.XAI_API_KEY,
     googleGeminiApiKey: env.GOOGLE_GEMINI_API_KEY,
