@@ -27,7 +27,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex justify-center">
-          <PortoConnectButton className="w-full" size="lg" />
+          <PortoConnectButton />
         </div>
       </div>
     </div>

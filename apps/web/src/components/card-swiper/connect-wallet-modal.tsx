@@ -84,11 +84,7 @@ export function ConnectWalletModal({
             </p>
           </div>
 
-          {/* Connect button */}
-          <PortoConnectButton
-            className="h-14 w-full rounded-2xl font-bold font-heading text-lg"
-            size="lg"
-          />
+          <PortoConnectButton />
         </div>
 
         <DialogFooter>

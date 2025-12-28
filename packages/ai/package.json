@@ -35,7 +35,7 @@
     "@ai-sdk/google": "catalog:",
     "@ai-sdk/groq": "catalog:",
     "@ai-sdk/xai": "catalog:",
-    "exa-js": "^1.4.8",
+    "exa-js": "^2.0.12",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",

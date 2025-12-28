@@ -94,7 +94,7 @@ function ConnectWalletPrompt() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center">
-        <PortoConnectButton size="lg" />
+        <PortoConnectButton />
       </CardContent>
     </Card>
   );

@@ -19,6 +19,8 @@
     "@posthog/react": "^1.5.2",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@reown/appkit": "^1.8.15",
+    "@reown/appkit-adapter-wagmi": "^1.8.15",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@takumi-rs/image-response": "^0.60.8",
     "@tanstack/react-form": "^1.27.6",
