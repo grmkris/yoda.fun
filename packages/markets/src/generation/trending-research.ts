@@ -1,102 +1,20 @@
 import { type AiClient, generateText } from "@yoda.fun/ai";
 import type { Logger } from "@yoda.fun/logger";
+import type {
+  ResearchConfig,
+  TopicConfig,
+} from "@yoda.fun/shared/market.schema";
 import { WORKFLOW_MODELS } from "../config";
-
-// ============================================================================
-// Types
-// ============================================================================
-
-interface TopicConfig {
-  id: string;
-  category: string;
-  querySeeds: string[];
-}
-
-interface ResearchConfig {
-  topics: TopicConfig[];
-  windowHours?: number;
-  previousTopics?: string[];
-}
-
-interface GetTrendingTopicsParams {
-  aiClient: AiClient;
-  logger: Logger;
-  config: ResearchConfig;
-}
-
-// ============================================================================
-// Default Topics
-// ============================================================================
-
-const DEFAULT_TOPICS: TopicConfig[] = [
-  {
-    id: "politics",
-    category: "politics",
-    querySeeds: [
-      "election scheduled this week",
-      "parliament vote date",
-      "central bank rate decision",
-    ],
-  },
-  {
-    id: "sports",
-    category: "sports",
-    querySeeds: [
-      "NBA games today tomorrow",
-      "NFL games this week",
-      "Premier League fixtures",
-      "UFC fights scheduled",
-    ],
-  },
-  {
-    id: "entertainment",
-    category: "entertainment",
-    querySeeds: [
-      "movies releasing this week",
-      "TV show premieres finales",
-      "album release dates",
-    ],
-  },
-  {
-    id: "tech",
-    category: "tech",
-    querySeeds: [
-      "tech product launches",
-      "Apple Google Microsoft announcements",
-    ],
-  },
-  {
-    id: "weather",
-    category: "weather",
-    querySeeds: [
-      "severe weather warnings",
-      "hurricane forecast",
-      "temperature records",
-    ],
-  },
-  {
-    id: "crypto",
-    category: "crypto",
-    querySeeds: [
-      "crypto network upgrades",
-      "token unlocks",
-      "SEC crypto decisions",
-    ],
-  },
-  {
-    id: "viral",
-    category: "viral",
-    querySeeds: [
-      "celebrity news today",
-      "viral trending stories",
-      "breaking news",
-    ],
-  },
-];
 
 // ============================================================================
 // Prompt Builder
 // ============================================================================
+
+export interface GetTrendingTopicsParams {
+  aiClient: AiClient;
+  logger: Logger;
+  config: ResearchConfig;
+}
 
 function buildResearchPrompt(
   topics: TopicConfig[],
@@ -176,7 +94,3 @@ export async function getTrendingTopics(
 
   return result.text;
 }
-
-// Export types and defaults
-export type { TopicConfig, ResearchConfig, GetTrendingTopicsParams };
-export { DEFAULT_TOPICS };

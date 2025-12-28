@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import {
-  DEFAULT_TOPICS,
   generateAndInsertMarkets,
   getTrendingTopics,
 } from "@yoda.fun/markets/generation";
+import { DEFAULT_TOPICS } from "@yoda.fun/shared/market.schema";
 import { createTestSetup, type TestSetup } from "test/test.setup";
 
 const pickRandomFromArray = <T>(arr: T[], count: number): T[] => {

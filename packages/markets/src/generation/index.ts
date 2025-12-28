@@ -1,8 +1,8 @@
 // Public API for market generation
-export { generateAndInsertMarkets } from "./service";
-export { getTrendingTopics } from "./trending-research";
+
+// biome-ignore lint/performance/noBarrelFile: <TODO>
 export { getDistributionGuidance, selectNextCategory } from "./distribution";
 export { createImageService, type ImageService } from "./image-service";
-
+export { generateAndInsertMarkets } from "./service";
 // Types for tests
-export type { TopicConfig, ResearchConfig } from "./trending-research";
+export { getTrendingTopics } from "./trending-research";

@@ -1,5 +1,91 @@
 import { z } from "zod";
 
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface TopicConfig {
+  id: string;
+  category: string;
+  querySeeds: string[];
+}
+
+export interface ResearchConfig {
+  topics: TopicConfig[];
+  windowHours?: number;
+  previousTopics?: string[];
+}
+
+// ============================================================================
+// Default Topics
+// ============================================================================
+
+export const DEFAULT_TOPICS: TopicConfig[] = [
+  {
+    id: "politics",
+    category: "politics",
+    querySeeds: [
+      "election scheduled this week",
+      "parliament vote date",
+      "central bank rate decision",
+    ],
+  },
+  {
+    id: "sports",
+    category: "sports",
+    querySeeds: [
+      "NBA games today tomorrow",
+      "NFL games this week",
+      "Premier League fixtures",
+      "UFC fights scheduled",
+    ],
+  },
+  {
+    id: "entertainment",
+    category: "entertainment",
+    querySeeds: [
+      "movies releasing this week",
+      "TV show premieres finales",
+      "album release dates",
+    ],
+  },
+  {
+    id: "tech",
+    category: "tech",
+    querySeeds: [
+      "tech product launches",
+      "Apple Google Microsoft announcements",
+    ],
+  },
+  {
+    id: "weather",
+    category: "weather",
+    querySeeds: [
+      "severe weather warnings",
+      "hurricane forecast",
+      "temperature records",
+    ],
+  },
+  {
+    id: "crypto",
+    category: "crypto",
+    querySeeds: [
+      "crypto network upgrades",
+      "token unlocks",
+      "SEC crypto decisions",
+    ],
+  },
+  {
+    id: "viral",
+    category: "viral",
+    querySeeds: [
+      "celebrity news today",
+      "viral trending stories",
+      "breaking news",
+    ],
+  },
+];
+
 export const BET_AMOUNTS = ["0.10", "0.25", "0.50", "1.00", "5.00"] as const;
 export const SPICE_LEVELS = ["mild", "medium", "spicy"] as const;
 export type SpiceLevel = (typeof SPICE_LEVELS)[number];

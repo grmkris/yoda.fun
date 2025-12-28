@@ -4,11 +4,11 @@ import type { Cache } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
 import type { Logger } from "@yoda.fun/logger";
 import {
-  DEFAULT_TOPICS,
   generateAndInsertMarkets,
   getTrendingTopics,
 } from "@yoda.fun/markets/generation";
 import type { QueueClient } from "@yoda.fun/queue";
+import { DEFAULT_TOPICS } from "@yoda.fun/shared/market.schema";
 
 export interface MarketGenerationWorkerConfig {
   queue: QueueClient;
