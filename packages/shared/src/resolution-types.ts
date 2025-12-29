@@ -65,6 +65,10 @@ export const MarketForResolutionSchema = z.object({
   description: z.string(),
   category: z.string().nullable(),
   resolutionCriteria: z.string().nullable(),
+  // Temporal context - critical for accurate resolution
+  createdAt: z.coerce.date(),
+  votingEndsAt: z.coerce.date(),
+  resolutionDeadline: z.coerce.date(),
 });
 export type MarketForResolution = z.infer<typeof MarketForResolutionSchema>;
 

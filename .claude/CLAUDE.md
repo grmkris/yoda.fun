@@ -126,7 +126,6 @@ Most formatting and common issues are automatically fixed by Biome. Run `npx ult
 
 ## Monorepo Structure
 
-Standard TypeScript monorepo layout:
 - `packages/db` - Drizzle schema, migrations
 - `packages/api` - ORPC routers, services, context
 - `packages/auth` - better-auth config

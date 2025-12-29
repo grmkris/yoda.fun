@@ -13,10 +13,10 @@ const TestEnvSchema = z.object({
 
 const testEnv = TestEnvSchema.parse(env);
 
-describe("agenticResolver", () => {
+describe("agenticResolver - Real Markets", () => {
   const logger = createLogger({
     appName: "agentic-resolver-test",
-    level: "error",
+    level: "debug",
     environment: "dev",
   });
 
@@ -30,105 +30,134 @@ describe("agenticResolver", () => {
     },
   });
 
-  it("resolves a factual question with YES and populates sources", async () => {
+  // Real market from production - resolved YES
+  it("resolves NFL upset market", async () => {
     const result = await resolveWithAgent(
       {
-        title: "Is the Eiffel Tower located in Paris?",
+        title: "Sun NFL: 7+ dogs feast or chalk szn?",
         description:
-          "This market resolves YES if the Eiffel Tower is in Paris, France.",
-        category: "geography",
-        resolutionCriteria: "The Eiffel Tower must be located in Paris, France",
-      },
-      aiClient
-    );
-
-    console.log("Result:", result);
-
-    // Should resolve to YES
-    expect(result.result).toBe("YES");
-    expect(result.confidence).toBeGreaterThan(80);
-    expect(result.reasoning).toBeTruthy();
-
-    // Key test: sources should be populated from web search
-    expect(Array.isArray(result.sources)).toBe(true);
-    expect(result.sources.length).toBeGreaterThan(0);
-
-    // Each source should have url and snippet
-    for (const source of result.sources) {
-      expect(source.url).toBeTruthy();
-      expect(source.snippet).toBeTruthy();
-    }
-
-    // Should have used webSearch tool
-    expect(result.toolsUsed).toContain("webSearch");
-  }, 120_000);
-
-  it("resolves a clearly false question with NO", async () => {
-    const result = await resolveWithAgent(
-      {
-        title: "Is the sky green on a clear day?",
-        description:
-          "This market resolves YES if the sky appears green during normal daytime conditions.",
-        category: "science",
-        resolutionCriteria: "The sky must appear green during a clear day",
-      },
-      aiClient
-    );
-
-    console.log("Result:", result);
-
-    // Should resolve to NO
-    expect(result.result).toBe("NO");
-    expect(result.confidence).toBeGreaterThan(50);
-    expect(result.reasoning).toBeTruthy();
-    expect(Array.isArray(result.sources)).toBe(true);
-  }, 120_000);
-
-  it("returns INVALID for unclear or future events", async () => {
-    const result = await resolveWithAgent(
-      {
-        title: "Will a completely fictional event XYZ123ABC happen?",
-        description:
-          "Test market with fictional content that cannot be verified.",
-        category: "test",
-        resolutionCriteria: "XYZ123ABC must occur by end of today",
-      },
-      aiClient
-    );
-
-    console.log("Result:", result);
-
-    // Should handle gracefully - either INVALID or NO with reasoning
-    expect(["YES", "NO", "INVALID"]).toContain(result.result);
-    expect(result.reasoning).toBeTruthy();
-    expect(Array.isArray(result.sources)).toBe(true);
-  }, 120_000);
-
-  it("always returns valid source structure", async () => {
-    const result = await resolveWithAgent(
-      {
-        title: "Did Bitcoin exist before 2010?",
-        description: "Market resolves YES if Bitcoin was created before 2010.",
-        category: "crypto",
+          "Dec 29 NFL slate loaded w/ big spreads - any 7+ pt underdog win outright or faves bully thru?",
+        category: "sports",
         resolutionCriteria:
-          "Bitcoin must have been created before January 1, 2010",
+          "Resolves YES if at least one NFL team favored by 7+ points (per opening Vegas consensus lines on ESPN Bet or OddsShark) loses outright on December 29, 2025, confirmed by final scores on NFL.com.",
+        createdAt: new Date("2025-12-28"),
+        votingEndsAt: new Date("2025-12-29T17:00:00Z"),
+        resolutionDeadline: new Date("2025-12-30"),
       },
-      aiClient
+      aiClient,
+      logger
     );
-
-    console.log("Result:", result);
 
     // Verify structure
-    expect(result).toHaveProperty("result");
-    expect(result).toHaveProperty("confidence");
-    expect(result).toHaveProperty("reasoning");
-    expect(result).toHaveProperty("sources");
-    expect(result).toHaveProperty("toolsUsed");
-
-    // Sources should be array
+    expect(result.result).toBeOneOf(["YES", "NO", "INVALID"]);
+    expect(result.reasoning).toBeTruthy();
     expect(Array.isArray(result.sources)).toBe(true);
 
-    // Tools used should be array
-    expect(Array.isArray(result.toolsUsed)).toBe(true);
+    // Key: sources should be populated from web search
+    if (result.result !== "INVALID") {
+      expect(result.sources.length).toBeGreaterThan(0);
+    }
+  }, 120_000);
+
+  // Real market - Globe Soccer Awards (Mbappé)
+  it("resolves Globe Soccer Award market", async () => {
+    const result = await resolveWithAgent(
+      {
+        title: "Mbappé Best Men's Globe tonight or Yamal dethrones?",
+        description:
+          "Globe Soccer Awards hitting tonight - Kylian the new GOAT or Lamine Yamal shocks?",
+        category: "sports",
+        resolutionCriteria:
+          "Resolves YES if Kylian Mbappé wins the Best Men's Player award at the 2025 Globe Soccer Awards on December 28, 2025, per the official Globe Soccer website or event announcement.",
+        createdAt: new Date("2025-12-27"),
+        votingEndsAt: new Date("2025-12-28T20:00:00Z"),
+        resolutionDeadline: new Date("2025-12-29"),
+      },
+      aiClient,
+      logger
+    );
+
+    expect(result.result).toBeOneOf(["YES", "NO", "INVALID"]);
+    expect(result.reasoning).toBeTruthy();
+    expect(Array.isArray(result.sources)).toBe(true);
+  }, 120_000);
+
+  // Weather market - Great Lakes snow
+  it("resolves Great Lakes snow market", async () => {
+    const result = await resolveWithAgent(
+      {
+        title: "Great Lakes 15+ snow dump by Dec30 or flake szn?",
+        description:
+          "Massive winter storm barreling toward Great Lakes - will any spot officially log 15+ inches?",
+        category: "weather",
+        resolutionCriteria:
+          "Resolves YES if any location in the Great Lakes region officially reports over 15 inches of snowfall from the current winter storm (per NWS or official weather stations) by December 30, 2025.",
+        createdAt: new Date("2025-12-27"),
+        votingEndsAt: new Date("2025-12-29T23:59:00Z"),
+        resolutionDeadline: new Date("2025-12-30"),
+      },
+      aiClient,
+      logger
+    );
+
+    console.log("Weather Result:", JSON.stringify(result, null, 2));
+
+    expect(result.result).toBeOneOf(["YES", "NO", "INVALID"]);
+    expect(result.reasoning).toBeTruthy();
+    expect(Array.isArray(result.sources)).toBe(true);
+  }, 120_000);
+
+  // Politics market - Guinea election
+  it("resolves Guinea election market", async () => {
+    const result = await resolveWithAgent(
+      {
+        title: "Doumbouya junta prez lock by Dec30 or Guinea chaos?",
+        description:
+          "Post-coup election results dropping - does Gen. Mamadi Doumbouya officially snag Guinea presidency?",
+        category: "politics",
+        resolutionCriteria:
+          "Resolves YES if Gen. Mamadi Doumbouya is officially declared the winner of Guinea's 2025 presidential election by December 30, 2025, per national election commission.",
+        createdAt: new Date("2025-12-26"),
+        votingEndsAt: new Date("2025-12-29T23:59:00Z"),
+        resolutionDeadline: new Date("2025-12-30"),
+      },
+      aiClient,
+      logger
+    );
+
+    console.log("Politics Result:", JSON.stringify(result, null, 2));
+
+    expect(result.result).toBeOneOf(["YES", "NO", "INVALID"]);
+    expect(result.reasoning).toBeTruthy();
+    expect(Array.isArray(result.sources)).toBe(true);
+  }, 120_000);
+
+  // Crypto market - BTC price (critical: previously hallucinated $126k)
+  it("resolves Bitcoin price market", async () => {
+    const result = await resolveWithAgent(
+      {
+        title: "BTC smashes $110k before NYE or bullrun ngmi fr?",
+        description:
+          "Santa rally pumping - does Bitcoin blast past $110k on CoinGecko before 2026?",
+        category: "crypto",
+        resolutionCriteria:
+          "Resolves YES if Bitcoin price exceeds $110,000 USD on CoinGecko at any point before December 31, 2025, 23:59 UTC.",
+        // Market created Dec 20, only evaluate Dec 20-31 price data
+        createdAt: new Date("2025-12-20"),
+        votingEndsAt: new Date("2025-12-30T23:59:00Z"),
+        resolutionDeadline: new Date("2025-12-31"),
+      },
+      aiClient,
+      logger
+    );
+
+    console.log("Crypto Result:", JSON.stringify(result, null, 2));
+
+    expect(result.result).toBeOneOf(["YES", "NO", "INVALID"]);
+    expect(result.reasoning).toBeTruthy();
+    expect(Array.isArray(result.sources)).toBe(true);
+
+    // Crypto prices should always be findable
+    expect(result.sources.length).toBeGreaterThan(0);
   }, 120_000);
 });

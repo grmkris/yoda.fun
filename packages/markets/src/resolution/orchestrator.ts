@@ -29,7 +29,14 @@ export interface ResolutionResult {
 
 export type MarketToResolve = Pick<
   SelectMarket,
-  "id" | "title" | "description" | "category" | "resolutionCriteria"
+  | "id"
+  | "title"
+  | "description"
+  | "category"
+  | "resolutionCriteria"
+  | "createdAt"
+  | "votingEndsAt"
+  | "resolutionDeadline"
 >;
 
 export async function resolveMarket(
@@ -40,7 +47,7 @@ export async function resolveMarket(
 
   logger.info({ marketId: market.id, title: market.title }, "Resolving market");
 
-  const resolution = await resolveWithAgent(market, aiClient);
+  const resolution = await resolveWithAgent(market, aiClient, logger);
 
   logger.info(
     {

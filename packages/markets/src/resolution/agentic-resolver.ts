@@ -1,4 +1,5 @@
 import { type AiClient, Output, stepCountIs } from "@yoda.fun/ai";
+import type { Logger } from "@yoda.fun/logger";
 import type { MarketForResolution } from "@yoda.fun/shared/resolution-types";
 import { z } from "zod";
 import { WORKFLOW_MODELS } from "../config";
@@ -29,10 +30,19 @@ export interface AgenticResolutionResult {
 
 function buildSystemPrompt(market: MarketForResolution): string {
   const today = new Date().toISOString().split("T")[0];
+  const createdAt = market.createdAt.toISOString().split("T")[0];
+  const votingEnds = market.votingEndsAt.toISOString().split("T")[0];
+  const deadline = market.resolutionDeadline.toISOString().split("T")[0];
 
   return `You are a prediction market resolution agent. Your job is to determine if a market resolved YES, NO, or INVALID.
 
-**Today's date is ${today}** - use this as your reference point when evaluating if events have occurred.
+## CRITICAL TEMPORAL CONTEXT
+- Today's date: ${today}
+- Market created: ${createdAt}
+- Voting ends: ${votingEnds}
+- Resolution deadline: ${deadline}
+- **ONLY evaluate events between ${createdAt} and ${deadline}**
+- Events before market creation are IRRELEVANT to resolution
 
 ## Market to Resolve
 Title: ${market.title}
@@ -44,21 +54,36 @@ Category: ${market.category ?? "general"}
 You have access to **webSearch** to search the web for news, scores, prices, and any other information needed to resolve this market.
 
 ## Resolution Rules
-- **YES**: Clear evidence the event happened or condition is met
-- **NO**: Clear evidence the event did NOT happen or condition is NOT met
+- **YES**: Clear evidence the event happened or condition is met WITHIN the market timeframe
+- **NO**: Clear evidence the event did NOT happen or condition is NOT met by the deadline
 - **INVALID**: Cannot determine, event hasn't occurred yet, or insufficient information
 
-## Instructions
-1. Read the resolution criteria carefully
-2. ALWAYS use webSearch to find current information - do not rely on memory
-3. Search for specific facts: scores, prices, announcements, news
-4. Compare the data against the criteria
-5. Make a decision with confidence level (0-100)
+## ANTI-HALLUCINATION RULES (CRITICAL)
+1. NEVER fabricate data. If search returns no clear result, return INVALID
+2. NEVER claim prices, scores, or events without direct source evidence
+3. If sources conflict or are unclear, return INVALID
+4. Quote EXACT numbers and dates from sources in your reasoning
+5. Confidence > 90 requires multiple corroborating sources
+6. If you cannot find data for the SPECIFIC timeframe (${createdAt} to ${deadline}), return INVALID
 
-Be decisive. If you find clear evidence, resolve YES or NO.`;
+## Instructions
+1. Read the resolution criteria and timeframe carefully
+2. ALWAYS use webSearch to find current information - do not rely on memory
+3. Include the DATE RANGE in your search queries (e.g., "Bitcoin price December 2025")
+4. Search for specific facts: scores, prices, announcements, news
+5. Verify the data falls within the market timeframe
+6. Make a decision with confidence level (0-100)
+
+Be decisive when you have clear evidence. Return INVALID when evidence is unclear or missing.`;
 }
 
-async function webSearch(aiClient: AiClient, query: string): Promise<string> {
+async function webSearch(
+  aiClient: AiClient,
+  query: string,
+  logger?: Logger
+): Promise<string> {
+  logger?.debug({ query }, "webSearch: executing query");
+
   const tools = aiClient.getGoogleTools();
   const model = aiClient.getGoogleModel(
     WORKFLOW_MODELS.resolution.webSearch.modelId
@@ -72,13 +97,29 @@ async function webSearch(aiClient: AiClient, query: string): Promise<string> {
     stopWhen: stepCountIs(4),
   });
 
-  return JSON.stringify({ query, results: output.results.slice(0, 5) });
+  const results = output.results.slice(0, 5);
+  logger?.debug(
+    { query, resultCount: results.length, results: results.map((r) => r.title) },
+    "webSearch: results found"
+  );
+
+  return JSON.stringify({ query, results });
 }
 
 export async function resolveWithAgent(
   market: MarketForResolution,
-  aiClient: AiClient
+  aiClient: AiClient,
+  logger?: Logger
 ): Promise<AgenticResolutionResult> {
+  logger?.info(
+    {
+      title: market.title,
+      category: market.category,
+      criteria: market.resolutionCriteria,
+    },
+    "resolveWithAgent: starting resolution"
+  );
+
   const model = aiClient.getModel(WORKFLOW_MODELS.resolution.analysis);
   const toolsUsed: string[] = [];
   const sources: Array<{ url: string; snippet: string }> = [];
@@ -96,10 +137,13 @@ export async function resolveWithAgent(
         inputSchema: z.object({ query: z.string() }),
         execute: async ({ query }) => {
           toolsUsed.push("webSearch");
-          const result = await webSearch(aiClient, query);
+          const result = await webSearch(aiClient, query, logger);
           const parsed = JSON.parse(result);
+          // Only add sources with valid URLs (filter out errors/empty)
           for (const r of parsed.results?.slice(0, 3) ?? []) {
-            sources.push({ url: r.url, snippet: r.title });
+            if (r.url && r.title && !r.url.includes("error")) {
+              sources.push({ url: r.url, snippet: r.title });
+            }
           }
           return result;
         },
@@ -107,6 +151,17 @@ export async function resolveWithAgent(
     },
     stopWhen: stepCountIs(8),
   });
+
+  logger?.info(
+    {
+      result: output.result,
+      confidence: output.confidence,
+      reasoning: output.reasoning,
+      sourcesCount: sources.length,
+      toolsUsed: [...new Set(toolsUsed)],
+    },
+    "resolveWithAgent: resolution complete"
+  );
 
   return {
     result: output.result,

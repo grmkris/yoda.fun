@@ -63,38 +63,39 @@ export const MARKET_PROMPTS = {
 Your markets need to GO VIRAL. Think Twitter main character energy, not Bloomberg terminal. You're writing for people who screenshot their trades and post L's.`);
 
       sections.push(`## THE VIBE
-- Write like you're posting a hot take at 2am, not filing a report
-- Titles should feel like TAKES, not neutral questions
-- Slight chaos is good - overly polished = boring = no engagement
-- Channel the energy of stan twitter meets sports gambling degenerates
-- If a market wouldn't get quote tweeted, it's too boring
+- Write like you're hosting a sports talk radio debate - provocative but accessible
+- Titles should feel like CHALLENGES or DEBATES, not neutral questions
+- Create tension by questioning assumptions or adding doubt
+- Make readers want to pick a side immediately
+- If a market doesn't spark debate, it's too boring
 
 ENERGY CHECK:
-- "Will the Lakers win tonight?" (sounds like a homework question)
-+ "Lakers revenge game or are they actually cooked?" (has stakes, has a take)
+- "Will the Lakers win tonight?" ❌ (homework question)
++ "Can the Lakers pull off the upset or are they in over their heads?" ✓
 
-- "Will the album go platinum?" (boring, nobody cares)
-+ "Does this album go platinum in a month or is streaming killing records?" (urgency, debate)
+- "Will Bitcoin hit $100k?" ❌ (boring, no angle)
++ "Is Bitcoin about to smash $100k or is this rally running on fumes?" ✓
 
-- "Will Taylor Swift's album debut at #1?" (who cares, obviously yes)
-+ "Taylor drops Friday - does she outsell her own record or has the era peaked?" (controversy, specific angle)`);
+- "Will Taylor Swift's album debut at #1?" ❌ (obviously yes, no tension)
++ "Can Taylor outsell her own record or has the streaming era peaked?" ✓`);
 
       sections.push(`## TITLE RULES
 1. MAX 80 chars - punchy, not a paragraph
 2. Must have an ANGLE or TAKE, not just "will X happen"
-3. Use internet-native language naturally:
-   - "or nah", "actually", "lowkey", "fr", "no shot", "cooked", "based"
-   - "poverty franchise", "main character", "the timeline", "ratio"
+3. Use natural, provocative language:
+   - Frame as challenges: "Can X really...", "Is X capable of..."
+   - Add doubt/tension: "...or is it all hype?", "...or is the run over?"
+   - Question assumptions: "Is X about to...", "Does X still have what it takes?"
 4. Create TENSION - frame it as a debate, not a question
 5. Reference specific moments/context when possible
 6. End with "?" but make it rhetorical/provocative
 
 FORMULA OPTIONS:
-- "[Bold claim] or [opposite take]?"
-- "[Thing] actually [hot take] or am I crazy?"
-- "[Event] - [outcome A] or [outcome B] era?"
-- "No shot [thing happens]... right?"
-- "[Person/team] redemption arc or biggest L of [timeframe]?"`);
+- "Can [X] really [achievement] or is [doubt]?"
+- "Is [X] about to [thing] or is it all hype?"
+- "[X] breaks [target] or is the [momentum] fading?"
+- "Does [person/team] still have what it takes to [goal]?"
+- "[Bold claim] - or is [alternative reality]?"`);
 
       sections.push(`## CRITICAL RULES
 - Markets MUST be binary (YES or NO outcome only)
@@ -169,36 +170,44 @@ ${getDurationGuidance(ctx.timeframe)}
       sections.push(`## EXAMPLES BY CATEGORY
 
 **SPORTS** (not just "will team win")
-- "Chiefs actually run it back or dynasty officially dead?"
-  -> whyViral: Every NFL fan has a take on dynasty fatigue
+- "Can the Chiefs really three-peat or is dynasty fatigue finally setting in?"
+  -> whyViral: Every NFL fan has a take on dynasty sustainability
   -> spiceLevel: spicy
 
-- "LeBron drops 40 tonight or father time finally wins?"
+- "Is 40-year-old LeBron still capable of dropping 40 tonight?"
   -> whyViral: The age debate is eternal engagement bait
   -> spiceLevel: medium
 
 **CELEBRITIES/VIRAL**
-- "MrBeast next video: 100M views in 24hrs or the algorithm finally nerfed him?"
+- "Does MrBeast hit 100M views in 24hrs or has the algorithm finally caught up?"
   -> whyViral: Everyone watches his numbers
   -> spiceLevel: medium
 
-- "Elon tweets something unhinged before market close or he's on his meds today?"
+- "Elon tweets something unhinged before market close or is he keeping it together today?"
   -> whyViral: It's literally a daily occurrence, fun to bet on
   -> spiceLevel: spicy
 
 **MOVIES/TV**
-- "Dune 3 announcement this week or Denis is making us suffer?"
+- "Dune 3 announcement this week or is Denis making us wait even longer?"
   -> whyViral: Anticipation + parasocial with director
   -> spiceLevel: mild
 
-- "Squid Game S2 beats S1 premiere numbers or lightning doesn't strike twice?"
+- "Can Squid Game S2 match the original's premiere numbers or was it lightning in a bottle?"
   -> whyViral: Sequel expectations are always debated
   -> spiceLevel: medium
 
-**MEMES/META**
-- "A new 'is X real' meme format takes over this week or we're stuck with brainrot?"
-  -> whyViral: Self-referential internet culture
-  -> spiceLevel: mild`);
+**CRYPTO** (not just "will X hit Y")
+- "Bitcoin breaks $120k before NYE or is the rally losing momentum?"
+  -> whyViral: Price predictions always spark debate
+  -> spiceLevel: medium
+
+- "Is ETH finally ready for $5k or stuck in consolidation forever?"
+  -> whyViral: ETH maximalists vs skeptics
+  -> spiceLevel: spicy
+
+- "Solana hits $300 this week or is the SOL hype cycle cooling off?"
+  -> whyViral: SOL community is extremely vocal
+  -> spiceLevel: medium`);
 
       sections.push(`## HARD AVOID - INSTANT REJECTION
 - Generic "Will X happen?" without a take or angle

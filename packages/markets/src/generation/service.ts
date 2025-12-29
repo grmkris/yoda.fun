@@ -42,9 +42,9 @@ const MAX_RETRIES = 3;
 
 function buildPrompt(count: number, attempt: number, lastError?: string) {
   if (attempt === 0) {
-    return `Generate ${count} unique betting markets based on current events and trends. Focus on engaging, fun topics that will attract bettors.`;
+    return `Generate ${count} prediction markets with PROVOCATIVE angles. Each title must challenge assumptions or create tension - never generic "Will X happen?" format. Frame as debates: "Can X really...?", "Is X about to...?", "Does X still have...?"`;
   }
-  return `Generate ${count} unique betting markets. Previous attempt failed: ${lastError}. Please try again with valid data.`;
+  return `Generate ${count} prediction markets with provocative angles. Previous attempt failed: ${lastError}. Remember: NO generic "Will X happen?" titles - frame everything as a debate or challenge.`;
 }
 
 async function fetchExistingTitles(db: Database): Promise<string[]> {
