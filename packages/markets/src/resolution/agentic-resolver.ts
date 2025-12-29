@@ -99,7 +99,11 @@ async function webSearch(
 
   const results = output.results.slice(0, 5);
   logger?.debug(
-    { query, resultCount: results.length, results: results.map((r) => r.title) },
+    {
+      query,
+      resultCount: results.length,
+      results: results.map((r) => r.title),
+    },
     "webSearch: results found"
   );
 
