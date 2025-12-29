@@ -39,7 +39,7 @@ export const marketResultEnum = pgEnum("market_result", [
   "INVALID",
 ]);
 
-export const betVoteEnum = pgEnum("bet_vote", ["YES", "NO"]);
+export const betVoteEnum = pgEnum("bet_vote", ["YES", "NO", "SKIP"]);
 
 export const betStatusEnum = pgEnum("bet_status", [
   "ACTIVE",
@@ -117,15 +117,15 @@ export const bet = pgTable(
       .references(() => market.id, { onDelete: "cascade" })
       .$type<MarketId>(),
     vote: betVoteEnum("vote").notNull(),
-    amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+    // Points-based: YES/NO costs 3, SKIP costs 0-1
+    pointsSpent: integer("points_spent").notNull().default(0),
+    pointsReturned: integer("points_returned").default(0),
     status: betStatusEnum("status").notNull().default("ACTIVE"),
-    payout: numeric("payout", { precision: 10, scale: 2 }),
     // Settlement tracking
     settlementStatus: settlementStatusEnum("settlement_status")
       .notNull()
       .default("PENDING"),
     settledAt: createTimestampField("settled_at"),
-    settlementTxHash: text("settlement_tx_hash"),
     settlementBatchId: typeId(
       "settlementBatch",
       "settlement_batch_id"
@@ -148,17 +148,9 @@ export const userBalance = pgTable("user_balance", {
     .unique()
     .references(() => user.id, { onDelete: "cascade" })
     .$type<UserId>(),
-  availableBalance: numeric("available_balance", { precision: 12, scale: 2 })
-    .notNull()
-    .default("0.00"),
-  pendingBalance: numeric("pending_balance", { precision: 12, scale: 2 })
-    .notNull()
-    .default("0.00"),
-  totalDeposited: numeric("total_deposited", { precision: 12, scale: 2 })
-    .notNull()
-    .default("0.00"),
-  totalWithdrawn: numeric("total_withdrawn", { precision: 12, scale: 2 })
-    .notNull()
-    .default("0.00"),
+  // Points-based economy (integer, not decimal)
+  points: integer("points").notNull().default(0),
+  // Track total points purchased with USDC for analytics
+  totalPointsPurchased: integer("total_points_purchased").notNull().default(0),
   ...baseEntityFields,
 });

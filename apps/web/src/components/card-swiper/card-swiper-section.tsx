@@ -38,7 +38,7 @@ export function CardSwiperSection() {
     }
   }, [remaining, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleSwipe = (card: MarketCard, vote: "YES" | "NO") => {
+  const handleSwipe = (card: MarketCard, vote: "YES" | "NO" | "SKIP") => {
     setSwipedCount((prev) => prev + 1);
     placeBet.mutate(
       { marketId: card.id, vote },
@@ -54,6 +54,7 @@ export function CardSwiperSection() {
 
   const handleSwipeLeft = (card: MarketCard) => handleSwipe(card, "NO");
   const handleSwipeRight = (card: MarketCard) => handleSwipe(card, "YES");
+  const handleSwipeDown = (card: MarketCard) => handleSwipe(card, "SKIP");
 
   if (isLoading) {
     return (
@@ -117,6 +118,7 @@ export function CardSwiperSection() {
             className="min-h-[500px]"
             disabled={isBlocked || !!expandedCardId}
             maxVisibleCards={5}
+            onSwipeDown={handleSwipeDown}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             ref={stackRef}
@@ -124,6 +126,10 @@ export function CardSwiperSection() {
               <GameCard
                 card={card}
                 isExpanded={expandedCardId === card.id}
+                onSkip={() => {
+                  setExpandedCardId(null);
+                  stackRef.current?.swipeDown();
+                }}
                 onToggleExpand={() =>
                   setExpandedCardId((prev) =>
                     prev === card.id ? null : card.id

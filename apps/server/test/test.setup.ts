@@ -1,11 +1,11 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
-import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createBetService } from "@yoda.fun/api/services/bet-service";
+import { createDailyService } from "@yoda.fun/api/services/daily-service";
 import { createFollowService } from "@yoda.fun/api/services/follow-service";
 import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
+import { createPointsService } from "@yoda.fun/api/services/points-service";
 import { createProfileService } from "@yoda.fun/api/services/profile-service";
 import { createRewardService } from "@yoda.fun/api/services/reward-service";
-import { createWithdrawalService } from "@yoda.fun/api/services/withdrawal-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
@@ -39,8 +39,8 @@ export interface TestSetup {
     redis: Awaited<ReturnType<typeof createTestRedisSetup>>;
     queue: QueueClient;
     betService: ReturnType<typeof createBetService>;
-    balanceService: ReturnType<typeof createBalanceService>;
-    withdrawalService: ReturnType<typeof createWithdrawalService>;
+    pointsService: ReturnType<typeof createPointsService>;
+    dailyService: ReturnType<typeof createDailyService>;
     leaderboardService: ReturnType<typeof createLeaderboardService>;
     profileService: ReturnType<typeof createProfileService>;
     followService: ReturnType<typeof createFollowService>;
@@ -175,16 +175,18 @@ export async function createTestSetup(): Promise<TestSetup> {
     },
   });
 
-  const betService = createBetService({ deps: { db, logger } });
-  const balanceService = createBalanceService({ deps: { db, logger } });
-  const withdrawalService = createWithdrawalService({ deps: { db, logger } });
+  const pointsService = createPointsService({ deps: { db, logger } });
+  const dailyService = createDailyService({
+    deps: { db, logger, pointsService },
+  });
+  const betService = createBetService({ deps: { db, logger, dailyService } });
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const profileService = createProfileService({ deps: { db, logger } });
   const followService = createFollowService({
     deps: { db, logger, profileService },
   });
   const rewardService = createRewardService({
-    deps: { db, balanceService },
+    deps: { db, pointsService },
   });
   logger.info({
     msg: "Test environment setup complete",
@@ -197,8 +199,8 @@ export async function createTestSetup(): Promise<TestSetup> {
       "queue",
       "ai",
       "betService",
-      "balanceService",
-      "withdrawalService",
+      "pointsService",
+      "dailyService",
     ],
   });
 
@@ -230,8 +232,8 @@ export async function createTestSetup(): Promise<TestSetup> {
       redis,
       queue,
       betService,
-      balanceService,
-      withdrawalService,
+      pointsService,
+      dailyService,
       leaderboardService,
       profileService,
       followService,

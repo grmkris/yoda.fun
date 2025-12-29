@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import type { Context } from "@yoda.fun/api/context";
-import type { BalanceService } from "@yoda.fun/api/services/balance-service";
+import type { PointsService } from "@yoda.fun/api/services/points-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import type { QueueClient } from "@yoda.fun/queue";
@@ -29,8 +29,8 @@ export async function createTestContext(props: {
     storage: deps.storage,
     queue: undefined,
     betService: deps.betService,
-    balanceService: deps.balanceService,
-    withdrawalService: deps.withdrawalService,
+    pointsService: deps.pointsService,
+    dailyService: deps.dailyService,
     leaderboardService: deps.leaderboardService,
     profileService: deps.profileService,
     followService: deps.followService,
@@ -47,8 +47,8 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     storage: testEnv.deps.storage,
     queue: undefined,
     betService: testEnv.deps.betService,
-    balanceService: testEnv.deps.balanceService,
-    withdrawalService: testEnv.deps.withdrawalService,
+    pointsService: testEnv.deps.pointsService,
+    dailyService: testEnv.deps.dailyService,
     leaderboardService: testEnv.deps.leaderboardService,
     profileService: testEnv.deps.profileService,
     followService: testEnv.deps.followService,
@@ -124,12 +124,12 @@ export function createEndedTestMarket(
   });
 }
 
-export async function fundUserBalance(
-  balanceService: BalanceService,
+export async function fundUserPoints(
+  pointsService: PointsService,
   userId: UserId,
   amount: number
 ): Promise<void> {
-  await balanceService.creditBalance(userId, amount, "DEPOSIT", {
+  await pointsService.creditPoints(userId, amount, "REWARD", {
     source: "test",
   });
 }
@@ -138,14 +138,14 @@ interface CreateTestBetOptions {
   db: Database;
   userId: UserId;
   marketId: MarketId;
-  vote: "YES" | "NO";
-  amount?: string;
+  vote: "YES" | "NO" | "SKIP";
+  pointsSpent?: number;
 }
 
 export async function createTestBet(
   options: CreateTestBetOptions
 ): Promise<typeof DB_SCHEMA.bet.$inferSelect> {
-  const { db, userId, marketId, vote, amount = "10.00" } = options;
+  const { db, userId, marketId, vote, pointsSpent = 3 } = options;
 
   const betRecords = await db
     .insert(DB_SCHEMA.bet)
@@ -153,7 +153,7 @@ export async function createTestBet(
       userId,
       marketId,
       vote,
-      amount,
+      pointsSpent,
       status: "ACTIVE",
     })
     .returning();
@@ -204,7 +204,7 @@ export async function createTestUserWithFunds(
 
   const userId = UserId.parse(signUpResult.user.id);
 
-  await fundUserBalance(deps.balanceService, userId, initialBalance);
+  await fundUserPoints(deps.pointsService, userId, initialBalance);
 
   return {
     id: signUpResult.user.id,
@@ -243,31 +243,17 @@ export async function waitForQueueJob<T extends JobType>(
   throw new Error(`Job timed out after ${maxWaitMs}ms`);
 }
 
-export async function verifyBalanceIntegrity(
+export async function verifyPointsIntegrity(
   db: Database,
   expectedTotal: number
 ): Promise<{ valid: boolean; actual: number; expected: number }> {
   const balances = await db.select().from(DB_SCHEMA.userBalance);
 
-  const totalBalances = balances.reduce(
-    (sum, b) => sum + Number(b.availableBalance) + Number(b.pendingBalance),
-    0
-  );
-
-  const withdrawals = await db.select().from(DB_SCHEMA.withdrawal);
-  const totalWithdrawn = withdrawals
-    .filter((w) => w.status === "COMPLETED")
-    .reduce((sum, w) => sum + Number(w.amount), 0);
-
-  const pendingWithdrawn = withdrawals
-    .filter((w) => w.status === "PENDING")
-    .reduce((sum, w) => sum + Number(w.amount), 0);
-
-  const actual = totalBalances + totalWithdrawn + pendingWithdrawn;
+  const totalPoints = balances.reduce((sum, b) => sum + b.points, 0);
 
   return {
-    valid: Math.abs(actual - expectedTotal) < 0.01,
-    actual,
+    valid: totalPoints === expectedTotal,
+    actual: totalPoints,
     expected: expectedTotal,
   };
 }

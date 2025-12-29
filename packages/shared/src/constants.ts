@@ -76,3 +76,28 @@ export const NUMERIC_CONSTANTS = {
     millisecondsPerSecond: 1000,
   },
 };
+
+// Points economy constants
+export const POINTS_CONFIG = {
+  // Starting balance for new users
+  startingPoints: 30,
+  // Daily points (tap to claim)
+  dailyPoints: 5,
+  // Vote costs
+  voteCost: 3, // YES/NO costs 3 points
+  skipCost: 1, // SKIP costs 1 point after free skips
+  // Free skips per day
+  freeSkipsPerDay: 3,
+  // Correct prediction returns this many points (break even)
+  correctReturn: 3,
+} as const;
+
+// Point pack tiers for USDC purchase
+export const POINT_PACKS = [
+  { tier: "starter", usdc: 5, points: 50 },
+  { tier: "standard", usdc: 10, points: 120 },
+  { tier: "pro", usdc: 20, points: 280 },
+  { tier: "whale", usdc: 50, points: 800 },
+] as const;
+
+export type PointPackTier = (typeof POINT_PACKS)[number]["tier"];

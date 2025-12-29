@@ -7,9 +7,8 @@ import { typeIdGenerator, type UserId } from "@yoda.fun/shared/typeid";
 // x402 payment prices for different tools
 export const TOOL_PRICES: Record<string, number> = {
   place_bet: 0.01, // $0.01 service fee
-  get_balance: 0.001, // $0.001
+  get_points: 0.001, // $0.001
   get_bet_history: 0.001, // $0.001
-  request_withdrawal: 0.01, // $0.01
 };
 
 // Free tools that don't require x402 payment
@@ -92,18 +91,18 @@ export async function getOrCreateAgentUser(
       isPrimary: true,
     });
 
-    // Create balance record with signup bonus
+    // Create balance record with signup bonus (30 starting points)
     await tx.insert(DB_SCHEMA.userBalance).values({
       userId,
-      availableBalance: "10.00",
-      totalDeposited: "10.00",
+      points: 30,
+      totalPointsPurchased: 0,
     });
 
     // Create transaction record
     await tx.insert(DB_SCHEMA.transaction).values({
       userId,
-      type: "DEPOSIT",
-      amount: "10.00",
+      type: "SIGNUP_BONUS",
+      points: 30,
       status: "COMPLETED",
       metadata: { reason: "agent_signup_bonus" },
     });

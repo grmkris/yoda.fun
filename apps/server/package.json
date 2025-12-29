@@ -13,7 +13,8 @@
     "fix:unsafe": "ultracite fix --unsafe",
     "test": "bun test --preload ./test/test.setup.ts",
     "test:watch": "bun test --watch --preload ./test/test.setup.ts",
-    "auth:generate": "cli generate"
+    "auth:generate": "cli generate",
+    "migrate:market-images": "bun run src/scripts/migrate-market-images.ts"
   },
   "dependencies": {
     "@bull-board/api": "^6.16.2",

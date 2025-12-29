@@ -87,6 +87,26 @@ export const profileRouter = {
       return { username: result.username };
     }),
 
+  checkUsernameAvailability: publicProcedure
+    .input(
+      z.object({
+        username: z
+          .string()
+          .min(3, "Username must be at least 3 characters")
+          .max(20, "Username must be at most 20 characters")
+          .regex(
+            /^[a-zA-Z0-9_]+$/,
+            "Username can only contain letters, numbers, and underscores"
+          ),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      const result = await context.profileService.isUsernameAvailable(
+        input.username
+      );
+      return result;
+    }),
+
   uploadAvatar: protectedProcedure
     .input(
       z.object({

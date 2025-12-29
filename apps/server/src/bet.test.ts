@@ -7,7 +7,7 @@ import {
   createEndedTestMarket,
   createTestContext,
   createTestMarket,
-  fundUserBalance,
+  fundUserPoints,
 } from "test/test-helpers";
 
 describe("Bet Router", () => {
@@ -29,7 +29,7 @@ describe("Bet Router", () => {
       const market = await createTestMarket(testEnv.deps.db, {
         betAmount: "10.00",
       });
-      await fundUserBalance(testEnv.deps.balanceService, userId, 50);
+      await fundUserPoints(testEnv.deps.pointsService, userId, 50);
 
       const context = await createTestContext({
         token: testEnv.users.authenticated.token,
@@ -47,11 +47,11 @@ describe("Bet Router", () => {
       expect(result.marketId).toBe(market.id);
       expect(result.vote).toBe("YES");
 
-      // Verify balance was deducted
-      const balanceResult = await call(appRouter.balance.get, undefined, {
+      // Verify points were deducted (3 points per vote)
+      const pointsResult = await call(appRouter.points.get, undefined, {
         context,
       });
-      expect(balanceResult.available).toBe(40); // 50 - 10
+      expect(pointsResult.points).toBe(47); // 50 - 3
     });
 
     test("throws error when insufficient balance", async () => {
@@ -81,7 +81,7 @@ describe("Bet Router", () => {
       const market = await createTestMarket(testEnv.deps.db, {
         betAmount: "5.00",
       });
-      await fundUserBalance(testEnv.deps.balanceService, userId, 100);
+      await fundUserPoints(testEnv.deps.pointsService, userId, 100);
 
       const context = await createTestContext({
         token: testEnv.users.authenticated.token,
@@ -118,7 +118,7 @@ describe("Bet Router", () => {
 
     test("throws NOT_FOUND when market does not exist", async () => {
       const userId = UserId.parse(testEnv.users.authenticated.id);
-      await fundUserBalance(testEnv.deps.balanceService, userId, 50);
+      await fundUserPoints(testEnv.deps.pointsService, userId, 50);
 
       const context = await createTestContext({
         token: testEnv.users.authenticated.token,
@@ -155,7 +155,7 @@ describe("Bet Router", () => {
       const market = await createEndedTestMarket(testEnv.deps.db, {
         betAmount: "10.00",
       });
-      await fundUserBalance(testEnv.deps.balanceService, userId, 50);
+      await fundUserPoints(testEnv.deps.pointsService, userId, 50);
 
       const context = await createTestContext({
         token: testEnv.users.authenticated.token,
@@ -230,7 +230,7 @@ describe("Bet Router", () => {
       const userId = UserId.parse(testEnv.users.authenticated.id);
 
       // Fund user and create multiple markets/bets
-      await fundUserBalance(testEnv.deps.balanceService, userId, 500);
+      await fundUserPoints(testEnv.deps.pointsService, userId, 500);
 
       const context = await createTestContext({
         token: testEnv.users.authenticated.token,

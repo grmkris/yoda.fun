@@ -1,5 +1,7 @@
 import {
+  type BetId,
   type DepositId,
+  type MarketId,
   type SettlementBatchId,
   type TransactionId,
   typeIdGenerator,
@@ -8,6 +10,7 @@ import {
 } from "@yoda.fun/shared/typeid";
 import {
   boolean,
+  integer,
   jsonb,
   numeric,
   pgEnum,
@@ -24,12 +27,18 @@ import { settlementBatch } from "./settlement.db";
 
 // Enums
 export const transactionTypeEnum = pgEnum("transaction_type", [
+  // TODO move to shared, create a type, zod schema enum
   "DEPOSIT",
   "WITHDRAWAL",
   "BET_PLACED",
   "PAYOUT",
   "REFUND",
   "REWARD",
+  // Points economy additions
+  "POINT_PURCHASE",
+  "DAILY_CLAIM",
+  "SKIP",
+  "SIGNUP_BONUS",
 ]);
 
 export const transactionStatusEnum = pgEnum("transaction_status", [
@@ -61,17 +70,20 @@ export const transaction = pgTable("transaction", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" })
     .$type<UserId>(),
-  type: transactionTypeEnum("type").notNull(),
-  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  type: transactionTypeEnum("type").notNull(), // TODO.$type<TransactionType>(),
+  // Points-based: integer points (positive = credit, negative = debit)
+  points: integer("points").notNull(),
   status: transactionStatusEnum("status").notNull().default("PENDING"),
   txHash: text("tx_hash"),
   metadata: jsonb("metadata").$type<{
-    marketId?: string;
-    betId?: string;
+    marketId?: MarketId;
+    betId?: BetId;
     depositId?: string;
     withdrawalId?: string;
     walletAddress?: string;
     notes?: string;
+    usdcAmount?: string; // For POINT_PURCHASE tracking
+    packTier?: string;
     [key: string]: unknown;
   }>(),
   ...baseEntityFields,

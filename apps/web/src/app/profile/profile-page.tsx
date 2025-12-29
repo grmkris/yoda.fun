@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowDownRight,
   ArrowUpRight,
   Check,
   Clock,
@@ -27,19 +26,18 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
-import { useLeaderboard, useMyRank } from "@/hooks/use-leaderboard";
-import { useUploadAvatar } from "@/hooks/use-profile";
+import { useMyRank } from "@/hooks/use-leaderboard";
+import { useMyProfile, useUploadAvatar } from "@/hooks/use-profile";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
 import { authClient } from "@/lib/auth-client";
 import { DepositSection } from "./deposit-section";
 import { ProfileConnectPrompt } from "./profile-connect-prompt";
+import { SetupWizard } from "./setup-wizard";
 
-// ═══════════════════════════════════════════════════════════════
-// PROFILE HEADER (with inline editing)
-// ═══════════════════════════════════════════════════════════════
 function ProfileHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { data: myProfile } = useMyProfile();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,7 +65,6 @@ function ProfileHeader() {
         return;
       }
       const base64 = result.split(",")[1];
-      // Upload starts background processing - avatar will appear via session refresh
       uploadAvatar.mutate(base64, {
         onSuccess: () => {
           setIsEditing(false);
@@ -109,7 +106,6 @@ function ProfileHeader() {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          {/* Avatar */}
           <input
             accept="image/*"
             className="hidden"
@@ -152,7 +148,6 @@ function ProfileHeader() {
             )}
           </button>
 
-          {/* Name & Username */}
           {isEditing ? (
             <div className="flex-1 space-y-2">
               <Input
@@ -174,16 +169,15 @@ function ProfileHeader() {
               >
                 {session?.user?.name || "User"}
               </h1>
-              {session?.user?.name && (
+              {myProfile?.user?.username && (
                 <p style={{ color: "oklch(0.65 0.04 280)" }}>
-                  @{session.user.name}
+                  @{myProfile.user.displayUsername || myProfile.user.username}
                 </p>
               )}
             </div>
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex shrink-0 items-center gap-2">
           {isEditing ? (
             <>
@@ -250,9 +244,6 @@ function ProfileHeader() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// BALANCE CARD
-// ═══════════════════════════════════════════════════════════════
 function BalanceCard() {
   const { data: balance, isLoading } = useBalance();
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
@@ -260,11 +251,11 @@ function BalanceCard() {
     limit: 100,
   });
 
-  const availableBalance = Number(balance?.available ?? 0);
-  const totalDeposited = Number(balance?.totalDeposited ?? 0);
-  const totalWithdrawn = Number(balance?.totalWithdrawn ?? 0);
+  const availableBalance = balance?.points ?? 0;
+  const totalDeposited = balance?.totalPointsPurchased ?? 0;
   const totalWon =
-    wonBets?.bets?.reduce((sum, b) => sum + Number(b.bet.payout ?? 0), 0) ?? 0;
+    wonBets?.bets?.reduce((sum, b) => sum + (b.bet.pointsReturned ?? 0), 0) ??
+    0;
 
   return (
     <motion.div
@@ -326,7 +317,7 @@ function BalanceCard() {
       </div>
 
       <div
-        className="grid grid-cols-3 gap-3 rounded-xl p-3"
+        className="grid grid-cols-2 gap-3 rounded-xl p-3"
         style={{
           background: "oklch(0.08 0.02 270 / 50%)",
           border: "1px solid oklch(0.65 0.25 290 / 10%)",
@@ -338,13 +329,6 @@ function BalanceCard() {
           isLoading={isLoading}
           label="Deposited"
           value={totalDeposited}
-        />
-        <StatItem
-          color="oklch(0.68 0.20 25)"
-          icon={<ArrowDownRight className="h-3.5 w-3.5" />}
-          isLoading={isLoading}
-          label="Withdrawn"
-          value={totalWithdrawn}
         />
         <StatItem
           color="oklch(0.80 0.16 90)"
@@ -403,9 +387,6 @@ function StatItem({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PERFORMANCE CARD
-// ═══════════════════════════════════════════════════════════════
 function PerformanceCard() {
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
     status: "WON",
@@ -533,21 +514,10 @@ function PerformanceCard() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// LEADERBOARD BADGE
-// ═══════════════════════════════════════════════════════════════
 function LeaderboardBadge() {
-  const { data: myRank, isLoading: rankLoading } = useMyRank();
-  const { data: leaderboard, isLoading: leaderboardLoading } = useLeaderboard({
-    limit: 1,
-  });
+  const { data: myRank, isLoading } = useMyRank();
 
-  const rank = (myRank as { rank?: number } | undefined)?.rank ?? null;
-  const totalUsers =
-    (leaderboard as { totalCount?: number } | undefined)?.totalCount ?? 0;
-  const percentile =
-    rank && totalUsers > 0 ? ((rank / totalUsers) * 100).toFixed(1) : null;
-  const isLoading = rankLoading || leaderboardLoading;
+  const rank = myRank?.rank ?? null;
 
   return (
     <motion.div
@@ -587,31 +557,23 @@ function LeaderboardBadge() {
           )}
           {!isLoading && rank && (
             <>
-              <div className="flex items-baseline gap-1">
-                <span
-                  className="font-bold font-heading text-2xl"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.95 0.02 280))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  #{rank}
-                </span>
-                <span
-                  className="text-sm"
-                  style={{ color: "oklch(0.60 0.04 280)" }}
-                >
-                  of {totalUsers.toLocaleString()}
-                </span>
-              </div>
+              <span
+                className="font-bold font-heading text-2xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.95 0.02 280))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                #{rank}
+              </span>
               <div
                 className="font-medium text-sm"
-                style={{ color: "oklch(0.72 0.18 175)" }}
+                style={{ color: "oklch(0.60 0.04 280)" }}
               >
-                Top {percentile}%
+                Global Rank
               </div>
             </>
           )}
@@ -638,9 +600,6 @@ function LeaderboardBadge() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ACTIVE BETS
-// ═══════════════════════════════════════════════════════════════
 const VOTE_STYLES = {
   YES: {
     color: "oklch(0.72 0.18 175)",
@@ -651,6 +610,11 @@ const VOTE_STYLES = {
     color: "oklch(0.68 0.20 25)",
     bg: "oklch(0.68 0.20 25 / 15%)",
     border: "oklch(0.68 0.20 25 / 20%)",
+  },
+  SKIP: {
+    color: "oklch(0.60 0.04 280)",
+    bg: "oklch(0.60 0.04 280 / 15%)",
+    border: "oklch(0.60 0.04 280 / 20%)",
   },
 } as const;
 
@@ -706,7 +670,7 @@ function ActiveBets() {
               key={bet.id}
               style={{
                 background: "oklch(0.08 0.02 270 / 50%)",
-                border: `1px solid ${VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]?.border ?? VOTE_STYLES.NO.border}`,
+                border: `1px solid ${VOTE_STYLES[bet.vote]?.border ?? VOTE_STYLES.NO.border}`,
               }}
             >
               <div className="min-w-0 flex-1">
@@ -719,9 +683,7 @@ function ActiveBets() {
                 <span
                   className="font-semibold text-xs"
                   style={{
-                    color:
-                      VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]
-                        ?.color ?? VOTE_STYLES.NO.color,
+                    color: VOTE_STYLES[bet.vote]?.color ?? VOTE_STYLES.NO.color,
                   }}
                 >
                   {bet.vote}
@@ -730,15 +692,11 @@ function ActiveBets() {
               <div
                 className="shrink-0 rounded-lg px-2.5 py-1 font-heading font-semibold text-sm"
                 style={{
-                  background:
-                    VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]?.bg ??
-                    VOTE_STYLES.NO.bg,
-                  color:
-                    VOTE_STYLES[bet.vote as keyof typeof VOTE_STYLES]?.color ??
-                    VOTE_STYLES.NO.color,
+                  background: VOTE_STYLES[bet.vote]?.bg ?? VOTE_STYLES.NO.bg,
+                  color: VOTE_STYLES[bet.vote]?.color ?? VOTE_STYLES.NO.color,
                 }}
               >
-                ${bet.amount}
+                {bet.pointsSpent} pts
               </div>
             </div>
           ))}
@@ -748,9 +706,6 @@ function ActiveBets() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ACTIVITY FEED
-// ═══════════════════════════════════════════════════════════════
 function ActivityFeed() {
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
     status: "WON",
@@ -768,13 +723,13 @@ function ActivityFeed() {
       id: `win-${b.bet.id}`,
       type: "win" as const,
       title: b.market.title,
-      amount: b.bet.payout ?? b.bet.amount,
+      amount: String(b.bet.pointsReturned ?? b.bet.pointsSpent),
     })) ?? []),
     ...(lostBets?.bets?.slice(0, 2).map((b) => ({
       id: `loss-${b.bet.id}`,
       type: "loss" as const,
       title: b.market.title,
-      amount: b.bet.amount,
+      amount: String(b.bet.pointsSpent),
     })) ?? []),
   ].slice(0, 5);
 
@@ -858,17 +813,8 @@ function ActivityFeed() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN PROFILE PAGE
-// ═══════════════════════════════════════════════════════════════
-export function ProfilePage() {
-  const { isAnonymous, isLoading } = useIsAuthenticated();
-
-  // Gate: anonymous users must link account to view profile
-  if (isAnonymous && !isLoading) {
-    return <ProfileConnectPrompt />;
-  }
-
+// PROFILE DASHBOARD (for users who completed setup)
+function ProfileDashboard() {
   return (
     <div className="container mx-auto space-y-6 p-4 pb-8">
       <ProfileHeader />
@@ -888,4 +834,35 @@ export function ProfilePage() {
       </div>
     </div>
   );
+}
+
+// MAIN PROFILE PAGE (with routing logic)
+export function ProfilePage() {
+  const { isPending: sessionPending } = authClient.useSession();
+  const { data: myProfile, isPending: profilePending } = useMyProfile();
+  const { isAnonymous } = useIsAuthenticated();
+
+  if (sessionPending || profilePending) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+          style={{
+            borderColor: "oklch(0.65 0.25 290)",
+            borderTopColor: "transparent",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (isAnonymous) {
+    return <ProfileConnectPrompt />;
+  }
+
+  if (!myProfile?.user?.username) {
+    return <SetupWizard />;
+  }
+
+  return <ProfileDashboard />;
 }

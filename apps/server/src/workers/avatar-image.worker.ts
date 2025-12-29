@@ -27,22 +27,18 @@ export function createAvatarImageWorker(config: AvatarImageWorkerConfig): {
 
       logger.info({ userId, sourceKey }, "Processing avatar image");
 
-      // Download source image from private bucket
       const imageBlob = await storage.download({ key: sourceKey });
       const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
 
-      // Process and upload to public bucket
       const { avatarKey } = await processAvatarImage(imageBuffer, userId, {
         storage,
       });
 
-      // Update user.image with the public key
       await db
         .update(DB_SCHEMA.user)
         .set({ image: avatarKey })
         .where(eq(DB_SCHEMA.user.id, userId));
 
-      // Cleanup: delete source from private bucket
       await storage.delete({ key: sourceKey });
 
       logger.info({ userId, avatarKey }, "Avatar image processed successfully");

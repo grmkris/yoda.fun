@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createBetService } from "@yoda.fun/api/services/bet-service";
+import { createDailyService } from "@yoda.fun/api/services/daily-service";
+import { createPointsService } from "@yoda.fun/api/services/points-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, desc, eq } from "@yoda.fun/db/drizzle";
@@ -45,8 +46,11 @@ function getScoreFromStats(
 
 export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
   const { db, logger } = deps;
-  const balanceService = createBalanceService({ deps: { db, logger } });
-  const betService = createBetService({ deps: { db, logger } });
+  const pointsService = createPointsService({ deps: { db, logger } });
+  const dailyService = createDailyService({
+    deps: { db, logger, pointsService },
+  });
+  const betService = createBetService({ deps: { db, logger, dailyService } });
 
   const server = new McpServer({
     name: "yoda-fun",
@@ -181,11 +185,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
       description: "Place a bet on a prediction market. Requires x402 payment.",
       inputSchema: {
         marketId: MarketId,
-        vote: z.enum(["YES", "NO"]),
-        amount: z.number().optional(),
+        vote: z.enum(["YES", "NO", "SKIP"]),
       },
     },
-    async ({ marketId, vote, amount }) => {
+    async ({ marketId, vote }) => {
       if (!userId) {
         return {
           content: [
@@ -203,7 +206,6 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
       const result = await betService.placeBet(userId, {
         marketId: parsedMarketId,
         vote,
-        amount,
       });
 
       if (result.isErr()) {
@@ -218,6 +220,19 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
       }
 
       const bet = result.value;
+
+      // SKIP votes return null (no bet record created)
+      if (!bet) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ success: true, skipped: true }, null, 2),
+            },
+          ],
+        };
+      }
+
       return {
         content: [
           {
@@ -228,7 +243,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
                 betId: bet.id,
                 marketId: bet.marketId,
                 vote: bet.vote,
-                amount: bet.amount,
+                pointsSpent: bet.pointsSpent,
                 message: "Bet placed successfully",
               },
               null,
@@ -241,9 +256,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
   );
 
   server.registerTool(
-    "get_balance",
+    "get_points",
     {
-      description: "Get your current yoda.fun balance. Requires x402 payment.",
+      description:
+        "Get your current yoda.fun points balance. Requires x402 payment.",
     },
     async () => {
       if (!userId) {
@@ -259,9 +275,9 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
         };
       }
 
-      const balance = await balanceService.getBalance(userId);
+      const points = await pointsService.getPoints(userId);
       return {
-        content: [{ type: "text", text: JSON.stringify(balance, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(points, null, 2) }],
       };
     }
   );
@@ -314,9 +330,9 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
           id: b.bet.id,
           marketTitle: b.market.title,
           vote: b.bet.vote,
-          amount: b.bet.amount,
+          pointsSpent: b.bet.pointsSpent,
           status: b.bet.status,
-          payout: b.bet.payout,
+          pointsReturned: b.bet.pointsReturned,
           createdAt: b.bet.createdAt,
         })),
       };

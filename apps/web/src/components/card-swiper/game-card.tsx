@@ -13,6 +13,7 @@ interface GameCardProps {
   onToggleExpand?: () => void;
   onVoteYes?: () => void;
   onVoteNo?: () => void;
+  onSkip?: () => void;
 }
 
 export function GameCard({
@@ -21,6 +22,7 @@ export function GameCard({
   onToggleExpand,
   onVoteYes,
   onVoteNo,
+  onSkip,
 }: GameCardProps) {
   return (
     <div
@@ -169,6 +171,7 @@ export function GameCard({
           <GameCardBack
             card={card}
             onClose={onToggleExpand}
+            onSkip={onSkip}
             onVoteNo={onVoteNo}
             onVoteYes={onVoteYes}
           />

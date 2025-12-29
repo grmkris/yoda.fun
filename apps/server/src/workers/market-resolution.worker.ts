@@ -1,6 +1,6 @@
 import type { AiClient } from "@yoda.fun/ai";
-import { createBalanceService } from "@yoda.fun/api/services/balance-service";
 import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
+import { createPointsService } from "@yoda.fun/api/services/points-service";
 import { createRewardService } from "@yoda.fun/api/services/reward-service";
 import { createSettlementService } from "@yoda.fun/api/services/settlement-service";
 import type { Database } from "@yoda.fun/db";
@@ -26,9 +26,9 @@ export function createMarketResolutionWorker(
   const { queue, db, logger, aiClient } = config;
 
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
-  const balanceService = createBalanceService({ deps: { db, logger } });
+  const pointsService = createPointsService({ deps: { db, logger } });
   const rewardService = createRewardService({
-    deps: { db, balanceService },
+    deps: { db, pointsService },
   });
   const settlementService = createSettlementService({
     deps: { db, logger, leaderboardService, rewardService },

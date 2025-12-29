@@ -5,40 +5,26 @@ import { z } from "zod";
 import { protectedProcedure } from "../api";
 
 export const rewardRouter = {
+  /**
+   * Get reward summary (win streaks, referrals, etc.)
+   */
   getSummary: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
     return await context.rewardService.getRewardSummary(userId);
   }),
 
+  /**
+   * Get count of claimable rewards
+   */
   getClaimableCount: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
     const count = await context.rewardService.getClaimableCount(userId);
     return { count };
   }),
 
-  claimDaily: protectedProcedure.handler(async ({ context }) => {
-    const userId = UserId.parse(context.session.user.id);
-
-    try {
-      const claim = await context.rewardService.claimDailyStreak(userId);
-      return {
-        success: true,
-        amount: Number(claim.amount),
-        streakDay: claim.metadata?.streakDay ?? 1,
-      };
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("Cannot claim")) {
-        throw new ORPCError("BAD_REQUEST", { message: error.message });
-      }
-      throw error;
-    }
-  }),
-
-  getDailyStatus: protectedProcedure.handler(async ({ context }) => {
-    const userId = UserId.parse(context.session.user.id);
-    return await context.rewardService.canClaimDailyStreak(userId);
-  }),
-
+  /**
+   * Get reward history
+   */
   getHistory: protectedProcedure
     .input(
       z.object({
@@ -60,12 +46,18 @@ export const rewardRouter = {
       return { rewards, limit: input.limit, offset: input.offset };
     }),
 
+  /**
+   * Get user's referral code
+   */
   getReferralCode: protectedProcedure.handler(async ({ context }) => {
     const userId = UserId.parse(context.session.user.id);
     const code = await context.rewardService.getReferralCode(userId);
     return { code };
   }),
 
+  /**
+   * Apply a referral code
+   */
   applyReferralCode: protectedProcedure
     .input(z.object({ code: z.string().min(1).max(20) }))
     .handler(async ({ context, input }) => {

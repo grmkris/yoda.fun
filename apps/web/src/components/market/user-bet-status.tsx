@@ -27,27 +27,34 @@ const COLORS = {
   goldBg: "oklch(0.80 0.16 90 / 15%)",
 } as const;
 
-function getPayoutLabel(status: string) {
+function getReturnLabel(status: string) {
   if (status === "WON") {
-    return "Payout";
+    return "Points Returned";
   }
   if (status === "ACTIVE") {
-    return "Potential Win";
+    return "Potential Return";
   }
-  return "Payout";
+  if (status === "REFUNDED") {
+    return "Refunded";
+  }
+  return "Points Lost";
 }
 
-function getPayoutDisplay(
-  payout: string | null | undefined,
-  potentialPayout: string | null
+function getReturnDisplay(
+  pointsReturned: number | null | undefined,
+  pointsSpent: number,
+  status: string
 ) {
-  if (payout) {
-    return `$${Number(payout).toFixed(2)}`;
+  if (status === "WON" && pointsReturned) {
+    return `+${pointsReturned} pts`;
   }
-  if (potentialPayout) {
-    return `~$${potentialPayout}`;
+  if (status === "REFUNDED") {
+    return `+${pointsSpent} pts`;
   }
-  return "-";
+  if (status === "ACTIVE") {
+    return `+${pointsSpent} pts`;
+  }
+  return "0 pts";
 }
 
 const statusConfig = {
@@ -79,10 +86,10 @@ const statusConfig = {
 
 interface UserBetStatusProps {
   bet: {
-    vote: "YES" | "NO";
-    amount: string;
+    vote: "YES" | "NO" | "SKIP";
+    pointsSpent: number;
     status: "ACTIVE" | "WON" | "LOST" | "REFUNDED";
-    payout?: string | null;
+    pointsReturned?: number | null;
   };
   market: {
     totalYesVotes: number;
@@ -102,13 +109,8 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
   const status = statusConfig[bet.status];
   const StatusIcon = status.icon;
 
-  // Calculate potential payout for ACTIVE bets
+  // In points-based system, winners get their points back (break even)
   const _totalVotes = market.totalYesVotes + market.totalNoVotes;
-  const userVotes = isYes ? market.totalYesVotes : market.totalNoVotes;
-  const potentialPayout =
-    bet.status === "ACTIVE" && userVotes > 0
-      ? (Number(market.totalPool) / userVotes).toFixed(2)
-      : null;
 
   return (
     <motion.div
@@ -176,7 +178,7 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Amount bet */}
+        {/* Points spent */}
         <motion.div
           animate={{ opacity: 1 }}
           className="rounded-xl p-3"
@@ -188,17 +190,17 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
           transition={{ delay: 0.7 }}
         >
           <p className="mb-1 text-xs" style={{ color: COLORS.textDim }}>
-            Amount Bet
+            Points Spent
           </p>
           <p
             className="font-heading font-semibold text-lg"
             style={{ color: COLORS.text }}
           >
-            ${Number(bet.amount).toFixed(2)}
+            {bet.pointsSpent} pts
           </p>
         </motion.div>
 
-        {/* Payout / Potential */}
+        {/* Return / Potential */}
         <motion.div
           animate={{ opacity: 1 }}
           className="rounded-xl p-3"
@@ -210,7 +212,7 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
           transition={{ delay: 0.8 }}
         >
           <p className="mb-1 text-xs" style={{ color: COLORS.textDim }}>
-            {getPayoutLabel(bet.status)}
+            {getReturnLabel(bet.status)}
           </p>
           <p
             className="font-heading font-semibold text-lg"
@@ -218,7 +220,7 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
               color: bet.status === "WON" ? COLORS.gold : COLORS.text,
             }}
           >
-            {getPayoutDisplay(bet.payout, potentialPayout)}
+            {getReturnDisplay(bet.pointsReturned, bet.pointsSpent, bet.status)}
           </p>
         </motion.div>
       </div>

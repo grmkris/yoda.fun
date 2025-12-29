@@ -121,3 +121,17 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
+
+---
+
+## Monorepo Structure
+
+Standard TypeScript monorepo layout:
+- `packages/db` - Drizzle schema, migrations
+- `packages/api` - ORPC routers, services, context
+- `packages/auth` - better-auth config
+- `packages/shared` - TypeIDs, constants, shared schemas
+- `packages/test-utils` - PGlite, Redis, S3 mocks
+- `apps/server` - Hono API server
+- `apps/web` - Next.js frontend
+

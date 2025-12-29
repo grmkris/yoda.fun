@@ -8,7 +8,7 @@ import {
   createEndedTestMarket,
   createTestBet,
   createTestMarket,
-  fundUserBalance,
+  fundUserPoints,
 } from "test/test-helpers";
 
 describe("Settlement Service", () => {
@@ -74,7 +74,7 @@ describe("Settlement Service", () => {
   });
 
   describe("settleMarket", () => {
-    test("pays winners using parimutuel calculation", async () => {
+    test("pays winners with fixed point returns", async () => {
       const user1 = UserId.parse(testEnv.users.authenticated.id);
       const user2 = UserId.parse(testEnv.users.unauthenticated.id);
 
@@ -84,8 +84,8 @@ describe("Settlement Service", () => {
       });
 
       // Fund users and create balance records
-      await fundUserBalance(testEnv.deps.balanceService, user1, 100);
-      await fundUserBalance(testEnv.deps.balanceService, user2, 100);
+      await fundUserPoints(testEnv.deps.pointsService, user1, 100);
+      await fundUserPoints(testEnv.deps.pointsService, user2, 100);
 
       // Create bets directly (bypassing balance service for test setup)
       await createTestBet({
@@ -93,24 +93,22 @@ describe("Settlement Service", () => {
         userId: user1,
         marketId: market.id,
         vote: "YES",
-        amount: "30.00",
+        pointsSpent: 3,
       });
       await createTestBet({
         db: testEnv.deps.db,
         userId: user2,
         marketId: market.id,
         vote: "NO",
-        amount: "20.00",
+        pointsSpent: 3,
       });
 
-      // Total pool: 50
-      // If YES wins: user1 gets entire pool (50)
-      // If NO wins: user2 gets entire pool (50)
+      // Fixed point returns: winners get 3 points back (their original bet)
 
       const result = await settlementService.settleMarket(market.id, "YES");
 
       expect(result.settled).toBe(2);
-      expect(result.totalPayout).toBeCloseTo(50, 1);
+      expect(result.totalPointsReturned).toBe(3); // Only winner gets points back
 
       // Verify user1's bet was marked as WON
       const user1Bets = await testEnv.deps.db
@@ -120,7 +118,7 @@ describe("Settlement Service", () => {
 
       const user1Bet = user1Bets.find((b) => b.marketId === market.id);
       expect(user1Bet?.status).toBe("WON");
-      expect(Number(user1Bet?.payout)).toBeCloseTo(50, 1);
+      expect(user1Bet?.pointsReturned).toBe(3);
 
       // Verify user2's bet was marked as LOST
       const user2Bets = await testEnv.deps.db
@@ -130,7 +128,7 @@ describe("Settlement Service", () => {
 
       const user2Bet = user2Bets.find((b) => b.marketId === market.id);
       expect(user2Bet?.status).toBe("LOST");
-      expect(Number(user2Bet?.payout)).toBe(0);
+      expect(user2Bet?.pointsReturned).toBe(0);
     });
 
     test("refunds all when no winners", async () => {
@@ -141,8 +139,8 @@ describe("Settlement Service", () => {
       const market = await createTestMarket(testEnv.deps.db);
 
       // Fund users
-      await fundUserBalance(testEnv.deps.balanceService, user1, 50);
-      await fundUserBalance(testEnv.deps.balanceService, user2, 50);
+      await fundUserPoints(testEnv.deps.pointsService, user1, 50);
+      await fundUserPoints(testEnv.deps.pointsService, user2, 50);
 
       // All users bet YES
       await createTestBet({
@@ -150,14 +148,14 @@ describe("Settlement Service", () => {
         userId: user1,
         marketId: market.id,
         vote: "YES",
-        amount: "10.00",
+        pointsSpent: 3,
       });
       await createTestBet({
         db: testEnv.deps.db,
         userId: user2,
         marketId: market.id,
         vote: "YES",
-        amount: "10.00",
+        pointsSpent: 3,
       });
 
       // Result is NO - no winners
@@ -173,7 +171,7 @@ describe("Settlement Service", () => {
 
       for (const bet of bets) {
         expect(bet.status).toBe("REFUNDED");
-        expect(Number(bet.payout)).toBe(Number(bet.amount));
+        expect(bet.pointsReturned).toBe(bet.pointsSpent);
       }
     });
 
@@ -183,19 +181,19 @@ describe("Settlement Service", () => {
       const result = await settlementService.settleMarket(market.id, "YES");
 
       expect(result.settled).toBe(0);
-      expect(result.totalPayout).toBe(0);
+      expect(result.totalPointsReturned).toBe(0);
     });
   });
 
   describe("refundAllBets", () => {
-    test("refunds all bets and credits balances", async () => {
+    test("refunds all bets and credits points", async () => {
       const user1 = UserId.parse(testEnv.users.authenticated.id);
 
       // Create market
       const market = await createTestMarket(testEnv.deps.db);
 
       // Fund user
-      await fundUserBalance(testEnv.deps.balanceService, user1, 50);
+      await fundUserPoints(testEnv.deps.pointsService, user1, 50);
 
       // Create bet
       const bet = await createTestBet({
@@ -203,23 +201,23 @@ describe("Settlement Service", () => {
         userId: user1,
         marketId: market.id,
         vote: "YES",
-        amount: "25.00",
+        pointsSpent: 3,
       });
 
-      // Get balance before refund
-      const balanceBefore = await testEnv.deps.balanceService.getBalance(user1);
+      // Get points before refund
+      const pointsBefore = await testEnv.deps.pointsService.getPoints(user1);
 
       // Refund
       const result = await settlementService.refundAllBets(market.id, [
-        { id: bet.id, userId: user1, amount: bet.amount },
+        { id: bet.id, userId: user1, pointsSpent: bet.pointsSpent },
       ]);
 
       expect(result.settled).toBe(1);
-      expect(result.totalPayout).toBe(25);
+      expect(result.totalPointsReturned).toBe(3);
 
-      // Verify balance was credited
-      const balanceAfter = await testEnv.deps.balanceService.getBalance(user1);
-      expect(balanceAfter.available).toBe(balanceBefore.available + 25);
+      // Verify points were credited
+      const pointsAfter = await testEnv.deps.pointsService.getPoints(user1);
+      expect(pointsAfter.points).toBe(pointsBefore.points + 3);
 
       // Verify bet status
       const updatedBets = await testEnv.deps.db

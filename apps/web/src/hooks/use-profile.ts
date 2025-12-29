@@ -47,7 +47,6 @@ export function useSetUsername() {
     mutationFn: async (username: string) =>
       client.profile.setUsername({ username }),
     onSuccess: () => {
-      toast.success("Username set!");
       queryClient.invalidateQueries({
         queryKey: orpc.profile.me.queryOptions({}).queryKey,
       });
@@ -57,6 +56,16 @@ export function useSetUsername() {
         error instanceof Error ? error.message : "Failed to set username";
       toast.error(message);
     },
+  });
+}
+
+export function useCheckUsername(username: string) {
+  return useQuery({
+    ...orpc.profile.checkUsernameAvailability.queryOptions({
+      input: { username },
+    }),
+    enabled: username.length >= 3,
+    staleTime: 5000,
   });
 }
 

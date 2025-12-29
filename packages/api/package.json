@@ -44,6 +44,14 @@
     "./services/reward-service": {
       "types": "./dist/services/reward-service.d.ts",
       "default": "./src/services/reward-service.ts"
+    },
+    "./services/points-service": {
+      "types": "./dist/services/points-service.d.ts",
+      "default": "./src/services/points-service.ts"
+    },
+    "./services/daily-service": {
+      "types": "./dist/services/daily-service.d.ts",
+      "default": "./src/services/daily-service.ts"
     }
   },
   "type": "module",

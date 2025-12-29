@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// Legacy types - kept for backwards compatibility with existing DB records
+// All new markets use web search for resolution
 export const SPORTS_LEAGUES = [
   "nba",
   "nfl",
@@ -12,6 +14,7 @@ export const SPORTS_LEAGUES = [
   "esports",
 ] as const;
 
+/** @deprecated Use resolutionCriteria text field instead */
 export const PriceStrategySchema = z.object({
   type: z.literal("PRICE"),
   provider: z.literal("coingecko"),
@@ -20,6 +23,7 @@ export const PriceStrategySchema = z.object({
   threshold: z.number().positive(),
 });
 
+/** @deprecated Use resolutionCriteria text field instead */
 export const SportsStrategySchema = z.object({
   type: z.literal("SPORTS"),
   provider: z.literal("thesportsdb"),
@@ -29,6 +33,7 @@ export const SportsStrategySchema = z.object({
   outcome: z.enum(["win", "lose"]),
 });
 
+/** @deprecated Use resolutionCriteria text field instead */
 export const WebSearchStrategySchema = z.object({
   type: z.literal("WEB_SEARCH"),
   searchQuery: z.string().min(5),
@@ -36,6 +41,7 @@ export const WebSearchStrategySchema = z.object({
   verificationUrls: z.array(z.string().url()).optional(),
 });
 
+/** @deprecated Use resolutionCriteria text field instead */
 export const ResolutionStrategySchema = z.discriminatedUnion("type", [
   PriceStrategySchema,
   SportsStrategySchema,
@@ -43,10 +49,15 @@ export const ResolutionStrategySchema = z.discriminatedUnion("type", [
 ]);
 
 export type SportsLeague = (typeof SPORTS_LEAGUES)[number];
+/** @deprecated */
 export type PriceStrategy = z.infer<typeof PriceStrategySchema>;
+/** @deprecated */
 export type SportsStrategy = z.infer<typeof SportsStrategySchema>;
+/** @deprecated */
 export type WebSearchStrategy = z.infer<typeof WebSearchStrategySchema>;
+/** @deprecated */
 export type ResolutionStrategy = z.infer<typeof ResolutionStrategySchema>;
+/** @deprecated */
 export type ResolutionMethodType = ResolutionStrategy["type"];
 
 export const MarketForResolutionSchema = z.object({

@@ -21,13 +21,13 @@ function withSignedImageUrl<T extends SelectMarket>(
 
 export const betRouter = {
   /**
-   * Place a vote on a market
+   * Place a vote on a market (YES/NO costs 3 points, SKIP costs 0-1)
    */
   place: protectedProcedure
     .input(
       z.object({
         marketId: MarketId,
-        vote: z.enum(["YES", "NO"]),
+        vote: z.enum(["YES", "NO", "SKIP"]),
       })
     )
     .handler(async ({ context, input }) => {
@@ -36,25 +36,29 @@ export const betRouter = {
 
       return result.match(
         (bet) => {
-          const betAmount = Number(bet.amount);
-          const betId = BetId.parse(bet.id);
-          Promise.all([
-            context.rewardService.processFirstBetBonus(userId, betId),
-            context.rewardService.processVolumeMilestone(userId, betAmount),
-            context.rewardService.processReferralBonus(userId),
-          ]).catch((error) => {
-            context.logger.error(
-              { error, userId },
-              "Failed to process bet rewards"
-            );
-          });
+          // Process rewards for YES/NO votes (not SKIPs)
+          if (input.vote !== "SKIP" && bet) {
+            const betId = BetId.parse(bet.id);
+            Promise.all([
+              context.rewardService.processFirstBetBonus(userId, betId),
+              context.rewardService.processReferralBonus(userId),
+            ]).catch((error) => {
+              context.logger.error(
+                { error, userId },
+                "Failed to process bet rewards"
+              );
+            });
+          }
 
           return {
             success: true,
-            betId: bet.id,
-            marketId: bet.marketId,
-            vote: bet.vote,
-            message: `Vote placed successfully! You voted ${input.vote}.`,
+            betId: bet?.id ?? null,
+            marketId: input.marketId,
+            vote: input.vote,
+            message:
+              input.vote === "SKIP"
+                ? "Market skipped"
+                : `Vote placed successfully! You voted ${input.vote}.`,
           };
         },
         (error) => {
@@ -64,6 +68,21 @@ export const betRouter = {
           );
         }
       );
+    }),
+
+  /**
+   * Get crowd stats for a market (shown after voting)
+   */
+  crowd: protectedProcedure
+    .input(z.object({ marketId: MarketId }))
+    .handler(async ({ context, input }) => {
+      const crowd = await context.betService.getMarketCrowd(input.marketId);
+
+      if (!crowd) {
+        throw new ORPCError("NOT_FOUND", { message: "Market not found" });
+      }
+
+      return crowd;
     }),
 
   /**

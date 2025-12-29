@@ -9,6 +9,7 @@ interface GameCardBackProps {
   onClose?: () => void;
   onVoteYes?: () => void;
   onVoteNo?: () => void;
+  onSkip?: () => void;
 }
 
 function formatDate(date: Date | string | null): string {
@@ -46,6 +47,7 @@ export function GameCardBack({
   onClose,
   onVoteYes,
   onVoteNo,
+  onSkip,
 }: GameCardBackProps) {
   const totalVotes = (card.totalYesVotes ?? 0) + (card.totalNoVotes ?? 0);
   const yesPercent =
@@ -312,68 +314,92 @@ export function GameCardBack({
           ) : null}
         </div>
 
-        {/* Footer - Vote & Close Buttons */}
+        {/* Footer - Vote Buttons */}
         <div className="border-white/10 border-t p-4">
-          <div className="flex gap-2">
-            {/* NO Button */}
-            <motion.button
-              className="flex-1 rounded-full py-3 font-bold font-heading text-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onVoteNo?.();
-              }}
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.70 0.20 25), oklch(0.60 0.18 20))",
-                color: "oklch(0.98 0.01 25)",
-                boxShadow: "0 4px 20px oklch(0.70 0.20 25 / 30%)",
-              }}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              NO
-            </motion.button>
+          <div className="flex flex-col gap-2">
+            {/* Main vote row */}
+            <div className="flex gap-2">
+              {/* NO Button */}
+              <motion.button
+                className="flex-1 rounded-full py-3 font-bold font-heading text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVoteNo?.();
+                }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.70 0.20 25), oklch(0.60 0.18 20))",
+                  color: "oklch(0.98 0.01 25)",
+                  boxShadow: "0 4px 20px oklch(0.70 0.20 25 / 30%)",
+                }}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                NO
+              </motion.button>
 
-            {/* Close Button */}
-            <motion.button
-              className="flex-1 rounded-full py-3 font-heading font-medium text-sm backdrop-blur-md"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose?.();
-              }}
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.65 0.25 290 / 35%), oklch(0.70 0.15 200 / 25%))",
-                border: "1px solid oklch(1 0 0 / 20%)",
-                color: "oklch(0.92 0.02 280)",
-              }}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Close
-            </motion.button>
+              {/* YES Button */}
+              <motion.button
+                className="flex-1 rounded-full py-3 font-bold font-heading text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVoteYes?.();
+                }}
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.16 180))",
+                  color: "oklch(0.08 0.02 175)",
+                  boxShadow: "0 4px 20px oklch(0.72 0.18 175 / 30%)",
+                }}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                YES
+              </motion.button>
+            </div>
 
-            {/* YES Button */}
-            <motion.button
-              className="flex-1 rounded-full py-3 font-bold font-heading text-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onVoteYes?.();
-              }}
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.16 180))",
-                color: "oklch(0.08 0.02 175)",
-                boxShadow: "0 4px 20px oklch(0.72 0.18 175 / 30%)",
-              }}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              YES
-            </motion.button>
+            {/* Skip & Close row */}
+            <div className="flex gap-2">
+              {/* Skip Button */}
+              <motion.button
+                className="flex-1 rounded-full py-2 font-heading font-medium text-xs backdrop-blur-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSkip?.();
+                }}
+                style={{
+                  background: "oklch(0.50 0.15 290 / 30%)",
+                  border: "1px solid oklch(1 0 0 / 15%)",
+                  color: "oklch(0.75 0.02 280)",
+                }}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Skip
+              </motion.button>
+
+              {/* Close Button */}
+              <motion.button
+                className="flex-1 rounded-full py-2 font-heading font-medium text-xs backdrop-blur-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose?.();
+                }}
+                style={{
+                  background: "oklch(1 0 0 / 8%)",
+                  border: "1px solid oklch(1 0 0 / 15%)",
+                  color: "oklch(0.75 0.02 280)",
+                }}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Close
+              </motion.button>
+            </div>
           </div>
         </div>
       </div>

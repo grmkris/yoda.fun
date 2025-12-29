@@ -162,14 +162,14 @@ export const createAuth = (config: AuthConfig) => {
             if (config.signupBonusEnabled) {
               await config.db.insert(DB_SCHEMA.userBalance).values({
                 userId: UserId.parse(user.id),
-                availableBalance: "10.00",
-                totalDeposited: "10.00",
+                points: 1000,
+                totalPointsPurchased: 0,
               });
 
               await config.db.insert(DB_SCHEMA.transaction).values({
                 userId: UserId.parse(user.id),
-                type: "DEPOSIT",
-                amount: "10.00",
+                type: "SIGNUP_BONUS",
+                points: 1000,
                 status: "COMPLETED",
                 metadata: { reason: "signup_bonus" },
               });

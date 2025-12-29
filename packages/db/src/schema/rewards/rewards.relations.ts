@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { user } from "../auth/auth.db";
 import { transaction } from "../market/transaction.db";
+import { dailyState } from "./daily-state.db";
 import { referral, rewardClaim, userRewardState } from "./rewards.db";
 
 export const userRewardStateRelations = relations(
@@ -34,5 +35,12 @@ export const referralRelations = relations(referral, ({ one }) => ({
     fields: [referral.refereeId],
     references: [user.id],
     relationName: "referredBy",
+  }),
+}));
+
+export const dailyStateRelations = relations(dailyState, ({ one }) => ({
+  user: one(user, {
+    fields: [dailyState.userId],
+    references: [user.id],
   }),
 }));

@@ -2,8 +2,6 @@ import { type AiClient, Output, stepCountIs } from "@yoda.fun/ai";
 import type { MarketForResolution } from "@yoda.fun/shared/resolution-types";
 import { z } from "zod";
 import { WORKFLOW_MODELS } from "../config";
-import { fetchCoinGeckoPrice } from "./price-resolver";
-import { fetchRecentEvents } from "./sports-resolver";
 
 const ResolutionOutputSchema = z.object({
   result: z.enum(["YES", "NO", "INVALID"]),
@@ -42,17 +40,8 @@ Description: ${market.description}
 ${market.resolutionCriteria ? `Resolution Criteria: ${market.resolutionCriteria}` : ""}
 Category: ${market.category ?? "general"}
 
-## Your Tools
-You have access to these tools to gather information:
-
-1. **getCryptoPrice** - Get current cryptocurrency price from CoinGecko
-   Use for: crypto price targets (Bitcoin, Ethereum, Dogecoin, PEPE, etc.)
-
-2. **getSportsResult** - Get recent sports event results from TheSportsDB
-   Use for: sports outcomes (NBA, NFL, NHL, soccer, etc.)
-
-3. **webSearch** - Search the web for news and information
-   Use for: announcements, events, celebrity actions, general news
+## Your Tool
+You have access to **webSearch** to search the web for news, scores, prices, and any other information needed to resolve this market.
 
 ## Resolution Rules
 - **YES**: Clear evidence the event happened or condition is met
@@ -61,46 +50,12 @@ You have access to these tools to gather information:
 
 ## Instructions
 1. Read the resolution criteria carefully
-2. Use the appropriate tool(s) to gather data
-3. Compare the data against the criteria
-4. Make a decision with confidence level (0-100)
+2. ALWAYS use webSearch to find current information - do not rely on memory
+3. Search for specific facts: scores, prices, announcements, news
+4. Compare the data against the criteria
+5. Make a decision with confidence level (0-100)
 
-Be decisive. If you have enough information, resolve YES or NO.`;
-}
-
-async function getCryptoPrice(coinId: string): Promise<string> {
-  const price = await fetchCoinGeckoPrice(coinId);
-  return JSON.stringify({
-    coinId,
-    priceUsd: price,
-    source: `https://www.coingecko.com/en/coins/${coinId}`,
-  });
-}
-
-async function getSportsResult(team: string, sport: string): Promise<string> {
-  const events = await fetchRecentEvents(sport, team);
-  const event = events[0];
-
-  if (!event) {
-    return JSON.stringify({ team, sport, status: "no_events_found" });
-  }
-
-  return JSON.stringify({
-    team,
-    sport,
-    event: event.strEvent,
-    homeTeam: event.strHomeTeam,
-    awayTeam: event.strAwayTeam,
-    homeScore: event.intHomeScore
-      ? Number.parseInt(event.intHomeScore, 10)
-      : null,
-    awayScore: event.intAwayScore
-      ? Number.parseInt(event.intAwayScore, 10)
-      : null,
-    status: event.strStatus,
-    date: event.dateEvent,
-    source: `https://www.thesportsdb.com/event/${event.idEvent}`,
-  });
+Be decisive. If you find clear evidence, resolve YES or NO.`;
 }
 
 async function webSearch(aiClient: AiClient, query: string): Promise<string> {
@@ -133,44 +88,11 @@ export async function resolveWithAgent(
     output: Output.object({ schema: ResolutionOutputSchema }),
     system: buildSystemPrompt(market),
     prompt:
-      "Resolve this market now. Use the available tools to gather information, then make your decision.",
+      "Resolve this market now. Use webSearch to find current information, then make your decision.",
     tools: {
-      getCryptoPrice: {
-        description:
-          "Get cryptocurrency price from CoinGecko (bitcoin, ethereum, dogecoin, pepe, solana)",
-        inputSchema: z.object({ coinId: z.string() }),
-        execute: async ({ coinId }) => {
-          toolsUsed.push("getCryptoPrice");
-          const result = await getCryptoPrice(coinId);
-          const parsed = JSON.parse(result);
-          if (parsed.source) {
-            sources.push({
-              url: parsed.source,
-              snippet: `${coinId}: $${parsed.priceUsd}`,
-            });
-          }
-          return result;
-        },
-      },
-      getSportsResult: {
-        description:
-          "Get sports results for a team (nba, nfl, mlb, nhl, soccer, mma, boxing, tennis, esports)",
-        inputSchema: z.object({ team: z.string(), sport: z.string() }),
-        execute: async ({ team, sport }) => {
-          toolsUsed.push("getSportsResult");
-          const result = await getSportsResult(team, sport);
-          const parsed = JSON.parse(result);
-          if (parsed.source) {
-            sources.push({
-              url: parsed.source,
-              snippet: parsed.event ?? `${team} game`,
-            });
-          }
-          return result;
-        },
-      },
       webSearch: {
-        description: "Search the web for news, announcements, or events",
+        description:
+          "Search the web for news, scores, prices, announcements, or any information needed to resolve the market",
         inputSchema: z.object({ query: z.string() }),
         execute: async ({ query }) => {
           toolsUsed.push("webSearch");

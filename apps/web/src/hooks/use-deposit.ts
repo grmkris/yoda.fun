@@ -55,9 +55,9 @@ export function useDeposit() {
         `Deposited $${data.amount}! New balance: $${data.newBalance.toFixed(2)}`
       );
 
-      // Invalidate balance query to refresh UI
+      // Invalidate points query to refresh UI
       queryClient.invalidateQueries({
-        queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({}).queryKey,
       });
     },
     onError: (error) => {
@@ -103,7 +103,7 @@ export function useDevDeposit() {
       );
 
       queryClient.invalidateQueries({
-        queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({}).queryKey,
       });
     },
     onError: (error) => {

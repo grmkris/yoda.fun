@@ -31,7 +31,10 @@ export const selectBetSchema = createSelectSchema(bet);
 export const insertBetSchema = createSelectSchema(bet).omit({
   id: true,
   status: true,
-  payout: true,
+  pointsReturned: true,
+  settlementStatus: true,
+  settledAt: true,
+  settlementBatchId: true,
   createdAt: true,
   updatedAt: true,
 });

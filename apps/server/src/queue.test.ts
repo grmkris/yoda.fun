@@ -6,7 +6,7 @@ import { createTestSetup, type TestSetup } from "test/test.setup";
 import {
   createEndedTestMarket,
   createTestBet,
-  fundUserBalance,
+  fundUserPoints,
 } from "test/test-helpers";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
 
@@ -46,22 +46,22 @@ describe("Market Resolution Queue", () => {
     });
 
     // Fund users and place bets
-    await fundUserBalance(testEnv.deps.balanceService, user1, 100);
-    await fundUserBalance(testEnv.deps.balanceService, user2, 100);
+    await fundUserPoints(testEnv.deps.pointsService, user1, 100);
+    await fundUserPoints(testEnv.deps.pointsService, user2, 100);
 
     await createTestBet({
       db: testEnv.deps.db,
       userId: user1,
       marketId: market.id,
       vote: "YES",
-      amount: "20.00",
+      pointsSpent: 3,
     });
     await createTestBet({
       db: testEnv.deps.db,
       userId: user2,
       marketId: market.id,
       vote: "NO",
-      amount: "10.00",
+      pointsSpent: 3,
     });
 
     // Add job to queue with no delay

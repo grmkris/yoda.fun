@@ -11,8 +11,7 @@ import {
   createTestMarket,
   createTestUserWithFunds,
   type E2ETestUser,
-  generateWalletAddress,
-  verifyBalanceIntegrity,
+  verifyPointsIntegrity,
   waitForQueueJob,
 } from "test/test-helpers";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
@@ -87,11 +86,11 @@ describe("E2E: Complete User Journey", () => {
       testSetup: testEnv,
     });
 
-    // ========== PHASE 1: VERIFY INITIAL BALANCES ==========
-    const aliceInitial = await call(appRouter.balance.get, undefined, {
+    // ========== PHASE 1: VERIFY INITIAL POINTS ==========
+    const aliceInitial = await call(appRouter.points.get, undefined, {
       context: aliceCtx,
     });
-    expect(aliceInitial.available).toBe(INITIAL_BALANCE);
+    expect(aliceInitial.points).toBe(INITIAL_BALANCE);
 
     // ========== PHASE 2: CREATE MARKET ==========
     // Clear factual question for AI resolution
@@ -130,26 +129,26 @@ describe("E2E: Complete User Journey", () => {
       { context: charlieCtx }
     );
 
-    // Verify balances deducted (each user placed 1 bet of $10)
-    const aliceAfterBet = await call(appRouter.balance.get, undefined, {
+    // Verify points deducted (each user placed 1 bet costing 3 points)
+    const aliceAfterBet = await call(appRouter.points.get, undefined, {
       context: aliceCtx,
     });
-    const bobAfterBet = await call(appRouter.balance.get, undefined, {
+    const bobAfterBet = await call(appRouter.points.get, undefined, {
       context: bobCtx,
     });
-    const charlieAfterBet = await call(appRouter.balance.get, undefined, {
+    const charlieAfterBet = await call(appRouter.points.get, undefined, {
       context: charlieCtx,
     });
 
-    expect(aliceAfterBet.available).toBe(INITIAL_BALANCE - 10);
-    expect(bobAfterBet.available).toBe(INITIAL_BALANCE - 10);
-    expect(charlieAfterBet.available).toBe(INITIAL_BALANCE - 10);
+    expect(aliceAfterBet.points).toBe(INITIAL_BALANCE - 3);
+    expect(bobAfterBet.points).toBe(INITIAL_BALANCE - 3);
+    expect(charlieAfterBet.points).toBe(INITIAL_BALANCE - 3);
 
     testEnv.deps.logger.info({
       msg: "Bets placed",
-      alice: aliceAfterBet.available,
-      bob: bobAfterBet.available,
-      charlie: charlieAfterBet.available,
+      alice: aliceAfterBet.points,
+      bob: bobAfterBet.points,
+      charlie: charlieAfterBet.points,
     });
 
     // ========== PHASE 4: QUEUE RESOLUTION ==========
@@ -186,31 +185,27 @@ describe("E2E: Complete User Journey", () => {
     });
 
     // ========== PHASE 6: VERIFY PAYOUTS ==========
-    // Parimutuel calculation:
-    // Total pool: $30 (3 users x $10)
+    // Points-based calculation:
+    // Total pool: 9 points (3 users x 3 points)
     // If YES wins (expected): Alice and Charlie split pool proportionally
-    //   - YES pool: $20 (Alice $10 + Charlie $10)
-    //   - Alice gets: ($10/$20) * $30 = $15
-    //   - Charlie gets: ($10/$20) * $30 = $15
-    //   - Bob gets: $0
-    // If NO wins: Bob gets entire pool ($30)
+    // If NO wins: Bob gets entire pool
 
-    const aliceAfterSettle = await call(appRouter.balance.get, undefined, {
+    const aliceAfterSettle = await call(appRouter.points.get, undefined, {
       context: aliceCtx,
     });
-    const bobAfterSettle = await call(appRouter.balance.get, undefined, {
+    const bobAfterSettle = await call(appRouter.points.get, undefined, {
       context: bobCtx,
     });
-    const charlieAfterSettle = await call(appRouter.balance.get, undefined, {
+    const charlieAfterSettle = await call(appRouter.points.get, undefined, {
       context: charlieCtx,
     });
 
     testEnv.deps.logger.info({
-      msg: "Balances after settlement",
+      msg: "Points after settlement",
       result: resolvedMarket.result,
-      alice: aliceAfterSettle.available,
-      bob: bobAfterSettle.available,
-      charlie: charlieAfterSettle.available,
+      alice: aliceAfterSettle.points,
+      bob: bobAfterSettle.points,
+      charlie: charlieAfterSettle.points,
     });
 
     // Verify bet statuses changed
@@ -225,49 +220,21 @@ describe("E2E: Complete User Journey", () => {
     // If YES (expected - water IS H2O)
     if (resolvedMarket.result === "YES") {
       // Winners: Alice, Charlie
-      expect(aliceAfterSettle.available).toBeGreaterThan(INITIAL_BALANCE - 10);
-      expect(charlieAfterSettle.available).toBeGreaterThan(
-        INITIAL_BALANCE - 10
-      );
+      expect(aliceAfterSettle.points).toBeGreaterThan(INITIAL_BALANCE - 3);
+      expect(charlieAfterSettle.points).toBeGreaterThan(INITIAL_BALANCE - 3);
       // Loser: Bob
-      expect(bobAfterSettle.available).toBe(INITIAL_BALANCE - 10);
+      expect(bobAfterSettle.points).toBe(INITIAL_BALANCE - 3);
     } else if (resolvedMarket.result === "NO") {
       // Winner: Bob gets all
-      expect(bobAfterSettle.available).toBeGreaterThan(INITIAL_BALANCE - 10);
+      expect(bobAfterSettle.points).toBeGreaterThan(INITIAL_BALANCE - 3);
       // Losers: Alice, Charlie
-      expect(aliceAfterSettle.available).toBe(INITIAL_BALANCE - 10);
-      expect(charlieAfterSettle.available).toBe(INITIAL_BALANCE - 10);
+      expect(aliceAfterSettle.points).toBe(INITIAL_BALANCE - 3);
+      expect(charlieAfterSettle.points).toBe(INITIAL_BALANCE - 3);
     }
 
-    // ========== PHASE 7: WITHDRAWAL ==========
-    const withdrawAmount = 50;
-    const withdrawal = await call(
-      appRouter.withdrawal.request,
-      {
-        amount: withdrawAmount,
-        walletAddress: generateWalletAddress(),
-      },
-      { context: aliceCtx }
-    );
-
-    expect(withdrawal.status).toBe("PENDING");
-    expect(Number(withdrawal.amount)).toBe(withdrawAmount);
-
-    // Verify balance deducted for withdrawal
-    const aliceAfterWithdraw = await call(appRouter.balance.get, undefined, {
-      context: aliceCtx,
-    });
-    expect(aliceAfterWithdraw.available).toBe(
-      aliceAfterSettle.available - withdrawAmount
-    );
-    expect(aliceAfterWithdraw.totalWithdrawn).toBe(withdrawAmount);
-
-    // ========== PHASE 8: BALANCE INTEGRITY CHECK ==========
-    const totalDeposited = INITIAL_BALANCE * 3;
-    const integrity = await verifyBalanceIntegrity(
-      testEnv.deps.db,
-      totalDeposited
-    );
+    // ========== PHASE 7: POINTS INTEGRITY CHECK ==========
+    const totalPoints = INITIAL_BALANCE * 3;
+    const integrity = await verifyPointsIntegrity(testEnv.deps.db, totalPoints);
 
     testEnv.deps.logger.info({
       msg: "Balance integrity check",
@@ -296,39 +263,36 @@ describe("E2E: Complete User Journey", () => {
         userId: alice.userId,
         marketId: market.id,
         vote: "YES",
-        amount: "30.00",
+        pointsSpent: 30,
         status: "ACTIVE",
       },
       {
         userId: bob.userId,
         marketId: market.id,
         vote: "NO",
-        amount: "20.00",
+        pointsSpent: 20,
         status: "ACTIVE",
       },
       {
         userId: charlie.userId,
         marketId: market.id,
         vote: "YES",
-        amount: "50.00",
+        pointsSpent: 50,
         status: "ACTIVE",
       },
     ]);
 
-    // Deduct balances
-    await testEnv.deps.balanceService.debitBalance(
+    // Deduct points
+    await testEnv.deps.pointsService.debitPoints(
       alice.userId,
       30,
       "BET_PLACED",
       { marketId: market.id }
     );
-    await testEnv.deps.balanceService.debitBalance(
-      bob.userId,
-      20,
-      "BET_PLACED",
-      { marketId: market.id }
-    );
-    await testEnv.deps.balanceService.debitBalance(
+    await testEnv.deps.pointsService.debitPoints(bob.userId, 20, "BET_PLACED", {
+      marketId: market.id,
+    });
+    await testEnv.deps.pointsService.debitPoints(
       charlie.userId,
       50,
       "BET_PLACED",
@@ -361,7 +325,7 @@ describe("E2E: Complete User Journey", () => {
 
     const aliceMarketBet = aliceBets.find((b) => b.marketId === market.id);
     expect(aliceMarketBet?.status).toBe("WON");
-    expect(Number(aliceMarketBet?.payout)).toBeCloseTo(37.5, 1);
+    expect(Number(aliceMarketBet?.pointsReturned)).toBeCloseTo(37.5, 1);
 
     const charlieBets = await testEnv.deps.db
       .select()
@@ -370,7 +334,7 @@ describe("E2E: Complete User Journey", () => {
 
     const charlieMarketBet = charlieBets.find((b) => b.marketId === market.id);
     expect(charlieMarketBet?.status).toBe("WON");
-    expect(Number(charlieMarketBet?.payout)).toBeCloseTo(62.5, 1);
+    expect(Number(charlieMarketBet?.pointsReturned)).toBeCloseTo(62.5, 1);
 
     const bobBets = await testEnv.deps.db
       .select()
@@ -379,13 +343,13 @@ describe("E2E: Complete User Journey", () => {
 
     const bobMarketBet = bobBets.find((b) => b.marketId === market.id);
     expect(bobMarketBet?.status).toBe("LOST");
-    expect(Number(bobMarketBet?.payout)).toBe(0);
+    expect(Number(bobMarketBet?.pointsReturned)).toBe(0);
 
     testEnv.deps.logger.info({
       msg: "Parimutuel distribution verified",
-      alicePayout: aliceMarketBet?.payout,
-      charliePayout: charlieMarketBet?.payout,
-      bobPayout: bobMarketBet?.payout,
+      alicePayout: aliceMarketBet?.pointsReturned,
+      charliePayout: charlieMarketBet?.pointsReturned,
+      bobPayout: bobMarketBet?.pointsReturned,
     });
   });
 
@@ -401,36 +365,33 @@ describe("E2E: Complete User Journey", () => {
         userId: alice.userId,
         marketId: market.id,
         vote: "YES",
-        amount: "15.00",
+        pointsSpent: 15,
         status: "ACTIVE",
       },
       {
         userId: bob.userId,
         marketId: market.id,
         vote: "NO",
-        amount: "15.00",
+        pointsSpent: 15,
         status: "ACTIVE",
       },
     ]);
 
-    await testEnv.deps.balanceService.debitBalance(
+    await testEnv.deps.pointsService.debitPoints(
       alice.userId,
       15,
       "BET_PLACED",
       { marketId: market.id }
     );
-    await testEnv.deps.balanceService.debitBalance(
-      bob.userId,
-      15,
-      "BET_PLACED",
-      { marketId: market.id }
-    );
+    await testEnv.deps.pointsService.debitPoints(bob.userId, 15, "BET_PLACED", {
+      marketId: market.id,
+    });
 
-    // Get balances before
-    const aliceBefore = await testEnv.deps.balanceService.getBalance(
+    // Get points before
+    const aliceBefore = await testEnv.deps.pointsService.getPoints(
       alice.userId
     );
-    const bobBefore = await testEnv.deps.balanceService.getBalance(bob.userId);
+    const bobBefore = await testEnv.deps.pointsService.getPoints(bob.userId);
 
     // Resolve as INVALID
     const settlementService = createSettlementService({
@@ -442,13 +403,11 @@ describe("E2E: Complete User Journey", () => {
     });
 
     // Both should be refunded
-    const aliceAfter = await testEnv.deps.balanceService.getBalance(
-      alice.userId
-    );
-    const bobAfter = await testEnv.deps.balanceService.getBalance(bob.userId);
+    const aliceAfter = await testEnv.deps.pointsService.getPoints(alice.userId);
+    const bobAfter = await testEnv.deps.pointsService.getPoints(bob.userId);
 
-    expect(aliceAfter.available).toBe(aliceBefore.available + 15);
-    expect(bobAfter.available).toBe(bobBefore.available + 15);
+    expect(aliceAfter.points).toBe(aliceBefore.points + 15);
+    expect(bobAfter.points).toBe(bobBefore.points + 15);
 
     // Check bet statuses
     const bets = await testEnv.deps.db
@@ -458,7 +417,7 @@ describe("E2E: Complete User Journey", () => {
 
     for (const bet of bets) {
       expect(bet.status).toBe("REFUNDED");
-      expect(Number(bet.payout)).toBe(Number(bet.amount));
+      expect(Number(bet.pointsReturned)).toBe(bet.pointsSpent);
     }
 
     testEnv.deps.logger.info({ msg: "INVALID resolution refund verified" });
@@ -474,8 +433,8 @@ describe("E2E: Complete User Journey", () => {
     // Should have various transaction types
     const types = new Set(transactions.map((t) => t.type));
 
-    // Alice should have at least DEPOSIT from setup
-    expect(types.has("DEPOSIT")).toBe(true);
+    // Alice should have at least REWARD from setup (starting points)
+    expect(types.has("REWARD")).toBe(true);
 
     testEnv.deps.logger.info({
       msg: "Transaction audit",
@@ -484,7 +443,7 @@ describe("E2E: Complete User Journey", () => {
       types: Array.from(types),
     });
 
-    // Each balance change should have a corresponding transaction
+    // Each point change should have a corresponding transaction
     expect(transactions.length).toBeGreaterThan(0);
   });
 });

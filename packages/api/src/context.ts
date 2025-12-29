@@ -5,13 +5,13 @@ import type { QueueClient } from "@yoda.fun/queue";
 import type { StorageClient } from "@yoda.fun/storage";
 import type { Context as HonoContext } from "hono";
 import type { PostHog } from "posthog-node";
-import { createBalanceService } from "./services/balance-service";
 import { createBetService } from "./services/bet-service";
+import { createDailyService } from "./services/daily-service";
 import { createFollowService } from "./services/follow-service";
 import { createLeaderboardService } from "./services/leaderboard-service";
+import { createPointsService } from "./services/points-service";
 import { createProfileService } from "./services/profile-service";
 import { createRewardService } from "./services/reward-service";
-import { createWithdrawalService } from "./services/withdrawal-service";
 
 export interface CreateContextOptions {
   context: HonoContext;
@@ -36,19 +36,21 @@ export async function createContext({
     headers: context.req.raw.headers,
   });
 
-  // Create services
-  const balanceService = createBalanceService({ deps: { db, logger } });
-  const withdrawalService = createWithdrawalService({ deps: { db, logger } });
+  // Create services - order matters for dependencies
+  const pointsService = createPointsService({ deps: { db, logger } });
+  const dailyService = createDailyService({
+    deps: { db, logger, pointsService },
+  });
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const profileService = createProfileService({ deps: { db, logger } });
   const followService = createFollowService({
     deps: { db, logger, profileService },
   });
   const betService = createBetService({
-    deps: { db, logger },
+    deps: { db, logger, dailyService },
   });
   const rewardService = createRewardService({
-    deps: { db, balanceService },
+    deps: { db, pointsService },
   });
 
   return {
@@ -59,8 +61,8 @@ export async function createContext({
     storage,
     queue,
     betService,
-    balanceService,
-    withdrawalService,
+    pointsService,
+    dailyService,
     leaderboardService,
     profileService,
     followService,

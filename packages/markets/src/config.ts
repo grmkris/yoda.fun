@@ -2,23 +2,40 @@ import type { AIModelConfig } from "@yoda.fun/ai";
 
 export const WORKFLOW_MODELS = {
   generation: {
-    markets: { provider: "xai", modelId: "grok-4.1-latest" },
+    markets: {
+      provider: "xai",
+      modelId: "grok-4-1-fast-reasoning",
+    } satisfies AIModelConfig,
   },
   trending: {
-    googleSearch: { provider: "google", modelId: "gemini-2.5-flash" },
+    googleSearch: {
+      provider: "google",
+      modelId: "gemini-flash-latest",
+    } satisfies AIModelConfig,
     xSearch: {
       provider: "xai",
       modelId: "grok-4-1-fast-non-reasoning",
     } satisfies AIModelConfig,
   },
   resolution: {
-    webSearch: { provider: "google", modelId: "gemini-2.5-flash" },
-    xaiSearch: { provider: "xai", modelId: "grok-4-fast" },
-    analysis: { provider: "xai", modelId: "grok-4-fast" },
-    basic: { provider: "google", modelId: "gemini-2.5-flash" },
+    webSearch: {
+      provider: "google",
+      modelId: "gemini-flash-latest",
+    } satisfies AIModelConfig,
+    analysis: {
+      provider: "xai",
+      modelId: "grok-4-1-fast-reasoning",
+    } satisfies AIModelConfig,
+    basic: {
+      provider: "google",
+      modelId: "gemini-flash-latest",
+    } satisfies AIModelConfig,
   },
   image: {
-    promptGen: { provider: "google", modelId: "gemini-2.5-flash" },
+    promptGen: {
+      provider: "google",
+      modelId: "gemini-flash-latest",
+    } satisfies AIModelConfig,
   },
 } as const satisfies Record<string, Record<string, AIModelConfig>>;
 

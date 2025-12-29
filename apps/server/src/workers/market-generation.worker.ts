@@ -59,20 +59,17 @@ export function createMarketGenerationWorker(
           "Processing market generation job"
         );
 
-        // Get last used categories to rotate through them
         const lastUsedIds = ((await cache.get("last-research-categories")) ??
           []) as string[];
         const unused = DEFAULT_TOPICS.filter(
           (t) => !lastUsedIds.includes(t.id)
         );
 
-        // Pick from unused, or reset if all used
         const topics =
           unused.length >= 4
             ? pickRandomFromArray(unused, 4)
             : pickRandomFromArray(DEFAULT_TOPICS, 4);
 
-        // Store for next time
         const topicsIds = topics.map((t) => t.id);
         await cache.set("last-research-categories", {
           value: topicsIds,
@@ -86,14 +83,12 @@ export function createMarketGenerationWorker(
           "Researching trending topics"
         );
 
-        // Fresh trending research (no caching)
         const trendingTopics = await getTrendingTopics({
           aiClient,
           logger,
           config: { topics },
         });
 
-        // Generate markets from trending topics
         const { generated, inserted } = await generateAndInsertMarkets({
           db,
           aiClient,
@@ -105,7 +100,6 @@ export function createMarketGenerationWorker(
           },
         });
 
-        // Queue image generation and resolution for each market
         for (const market of inserted) {
           await queue.addJob("generate-market-image", {
             marketId: market.id,

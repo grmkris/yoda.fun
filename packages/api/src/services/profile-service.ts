@@ -206,9 +206,9 @@ export function createProfileService({ deps }: { deps: ProfileServiceDeps }) {
         bets: bets.map((b) => ({
           id: b.bet.id,
           vote: b.bet.vote,
-          amount: Number(b.bet.amount),
+          amount: Number(b.bet.pointsSpent),
           status: b.bet.status,
-          payout: b.bet.payout ? Number(b.bet.payout) : null,
+          payout: b.bet.pointsReturned ? Number(b.bet.pointsReturned) : null,
           createdAt: b.bet.createdAt,
           market: b.market,
         })),
@@ -272,6 +272,21 @@ export function createProfileService({ deps }: { deps: ProfileServiceDeps }) {
 
       logger.info({ userId, username: normalizedUsername }, "Username set");
       return { success: true, username: normalizedUsername };
+    },
+
+    /**
+     * Check if a username is available
+     */
+    async isUsernameAvailable(username: string) {
+      const normalizedUsername = username.toLowerCase();
+
+      const existing = await db
+        .select({ id: DB_SCHEMA.user.id })
+        .from(DB_SCHEMA.user)
+        .where(eq(DB_SCHEMA.user.username, normalizedUsername))
+        .limit(1);
+
+      return { available: !existing[0] };
     },
   };
 }

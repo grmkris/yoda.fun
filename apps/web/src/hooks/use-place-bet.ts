@@ -22,22 +22,32 @@ export function usePlaceBet() {
 
   return useMutation({
     mutationFn: async (input: PlaceBetInput) => client.bet.place(input),
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
+      // Invalidate points to refresh balance
       queryClient.invalidateQueries({
-        queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
+      });
+      // Invalidate daily status to update free skips count
+      queryClient.invalidateQueries({
+        queryKey: orpc.points.dailyStatus.queryOptions({ input: {} }).queryKey,
       });
       queryClient.invalidateQueries({
         queryKey: orpc.bet.history.queryOptions({ input: {} }).queryKey,
       });
+
+      // Show success toast for votes (not skips)
+      if (input.vote !== "SKIP") {
+        toast.success(`Voted ${input.vote}!`);
+      }
     },
     onError: (error) => {
       const { code, message } = getErrorData(error);
       const fallbackMessage =
-        error instanceof Error ? error.message : "Failed to place bet";
+        error instanceof Error ? error.message : "Failed to place vote";
 
       switch (code) {
-        case "INSUFFICIENT_BALANCE":
-          toast.error("Not enough balance. Deposit more to continue.");
+        case "INSUFFICIENT_POINTS":
+          toast.error("Not enough points. Buy more to continue.");
           break;
         case "ALREADY_BET":
           toast.error("You already voted on this market.");

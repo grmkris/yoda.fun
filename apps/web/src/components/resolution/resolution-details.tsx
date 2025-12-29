@@ -4,11 +4,9 @@ import type { ResolutionStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   AlertTriangle,
   CheckCircle2,
-  DollarSign,
   ExternalLink,
   Globe,
   Search,
-  Trophy,
   XCircle,
   Zap,
 } from "lucide-react";
@@ -51,25 +49,20 @@ const resultConfig = {
   },
 };
 
-const methodConfig = {
-  PRICE: {
-    icon: DollarSign,
-    label: "Price Oracle",
-    color: "oklch(0.70 0.18 200)",
-  },
-  SPORTS: { icon: Trophy, label: "Sports Data", color: "oklch(0.72 0.20 145)" },
-  WEB_SEARCH: {
-    icon: Globe,
-    label: "Web Research",
-    color: "oklch(0.70 0.22 290)",
-  },
+// All markets now use AI web search resolution
+const DEFAULT_METHOD = {
+  icon: Globe,
+  label: "AI Research",
+  color: "oklch(0.70 0.22 290)",
 };
 
 interface ResolutionDetailsProps {
   result: MarketResult;
   confidence: BetMarket["resolutionConfidence"];
-  resolutionType: BetMarket["resolutionType"];
+  /** @deprecated - kept for backwards compatibility */
+  resolutionType?: BetMarket["resolutionType"];
   sources: BetMarket["resolutionSources"];
+  /** @deprecated - kept for backwards compatibility */
   strategy?: ResolutionStrategy | null;
   criteria?: string | null;
   reasoning?: string | null;
@@ -152,114 +145,16 @@ function ConfidenceArc({ value }: { value: number }) {
   );
 }
 
-// Strategy details renderer
-function StrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -10 },
-    visible: { opacity: 1, x: 0 },
-  };
-
-  if (strategy.type === "PRICE") {
-    const operatorLabels: Record<string, string> = {
-      ">=": "reaches or exceeds",
-      "<=": "drops to or below",
-      ">": "exceeds",
-      "<": "drops below",
-    };
-    return (
-      <motion.div
-        animate="visible"
-        className="space-y-2"
-        initial="hidden"
-        variants={containerVariants}
-      >
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <DollarSign
-            className="h-4 w-4"
-            style={{ color: methodConfig.PRICE.color }}
-          />
-          <span style={{ color: COLORS.textMuted }}>Asset:</span>
-          <span className="font-medium" style={{ color: COLORS.text }}>
-            {strategy.coinId.toUpperCase()}
-          </span>
-        </motion.div>
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <Zap
-            className="h-4 w-4"
-            style={{ color: methodConfig.PRICE.color }}
-          />
-          <span style={{ color: COLORS.textMuted }}>Condition:</span>
-          <span className="font-medium" style={{ color: COLORS.text }}>
-            {operatorLabels[strategy.operator]} $
-            {strategy.threshold.toLocaleString()}
-          </span>
-        </motion.div>
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <Globe className="h-4 w-4" style={{ color: COLORS.textDim }} />
-          <span style={{ color: COLORS.textMuted }}>Provider:</span>
-          <span style={{ color: COLORS.textDim }}>CoinGecko</span>
-        </motion.div>
-      </motion.div>
-    );
-  }
-
-  if (strategy.type === "SPORTS") {
-    return (
-      <motion.div
-        animate="visible"
-        className="space-y-2"
-        initial="hidden"
-        variants={containerVariants}
-      >
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <Trophy
-            className="h-4 w-4"
-            style={{ color: methodConfig.SPORTS.color }}
-          />
-          <span style={{ color: COLORS.textMuted }}>Team:</span>
-          <span className="font-medium" style={{ color: COLORS.text }}>
-            {strategy.teamName}
-          </span>
-        </motion.div>
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <Zap
-            className="h-4 w-4"
-            style={{ color: methodConfig.SPORTS.color }}
-          />
-          <span style={{ color: COLORS.textMuted }}>Outcome:</span>
-          <span
-            className="font-medium capitalize"
-            style={{ color: COLORS.text }}
-          >
-            {strategy.outcome}
-          </span>
-        </motion.div>
-        <motion.div className="flex items-center gap-2" variants={itemVariants}>
-          <Globe className="h-4 w-4" style={{ color: COLORS.textDim }} />
-          <span style={{ color: COLORS.textMuted }}>Provider:</span>
-          <span style={{ color: COLORS.textDim }}>TheSportsDB</span>
-        </motion.div>
-      </motion.div>
-    );
-  }
-
+/** @deprecated - Legacy strategy details, kept for backwards compat with old markets */
+function LegacyStrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
+  // Only show details for WEB_SEARCH, others are deprecated
   if (strategy.type === "WEB_SEARCH") {
     return (
-      <motion.div
-        animate="visible"
-        className="space-y-3"
-        initial="hidden"
-        variants={containerVariants}
-      >
-        <motion.div className="flex items-start gap-2" variants={itemVariants}>
+      <div className="space-y-3">
+        <div className="flex items-start gap-2">
           <Search
             className="mt-0.5 h-4 w-4"
-            style={{ color: methodConfig.WEB_SEARCH.color }}
+            style={{ color: DEFAULT_METHOD.color }}
           />
           <div>
             <span style={{ color: COLORS.textMuted }}>Search Query:</span>
@@ -270,15 +165,12 @@ function StrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
               "{strategy.searchQuery}"
             </p>
           </div>
-        </motion.div>
+        </div>
         {strategy.successIndicators.length > 0 && (
-          <motion.div
-            className="flex items-start gap-2"
-            variants={itemVariants}
-          >
+          <div className="flex items-start gap-2">
             <CheckCircle2
               className="mt-0.5 h-4 w-4"
-              style={{ color: methodConfig.WEB_SEARCH.color }}
+              style={{ color: DEFAULT_METHOD.color }}
             />
             <div>
               <span style={{ color: COLORS.textMuted }}>
@@ -291,20 +183,18 @@ function StrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
                     key={i}
                     style={{ color: COLORS.text }}
                   >
-                    <span style={{ color: methodConfig.WEB_SEARCH.color }}>
-                      •
-                    </span>
+                    <span style={{ color: DEFAULT_METHOD.color }}>•</span>
                     {indicator}
                   </li>
                 ))}
               </ul>
             </div>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
     );
   }
-
+  // For PRICE/SPORTS legacy markets, just return null - criteria should explain it
   return null;
 }
 
@@ -368,7 +258,6 @@ function SourceCard({
 export function ResolutionDetails({
   result,
   confidence,
-  resolutionType,
   sources,
   strategy,
   criteria,
@@ -377,8 +266,9 @@ export function ResolutionDetails({
 }: ResolutionDetailsProps) {
   const config = resultConfig[result];
   const ResultIcon = config.icon;
-  const method = resolutionType ? methodConfig[resolutionType] : null;
-  const MethodIcon = method?.icon;
+  // All markets now use AI web search
+  const method = DEFAULT_METHOD;
+  const MethodIcon = method.icon;
 
   return (
     <div className={className}>
@@ -488,40 +378,38 @@ export function ResolutionDetails({
         )}
 
         {/* Resolution Method */}
-        {method && MethodIcon && (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center rounded-xl p-4"
-            initial={{ opacity: 0, y: 20 }}
-            style={{
-              background: COLORS.cardBg,
-              border: `1px solid ${COLORS.border}`,
-            }}
-            transition={{ delay: 0.3 }}
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center rounded-xl p-4"
+          initial={{ opacity: 0, y: 20 }}
+          style={{
+            background: COLORS.cardBg,
+            border: `1px solid ${COLORS.border}`,
+          }}
+          transition={{ delay: 0.3 }}
+        >
+          <p
+            className="mb-3 font-heading text-xs uppercase tracking-wider"
+            style={{ color: COLORS.textMuted }}
           >
-            <p
-              className="mb-3 font-heading text-xs uppercase tracking-wider"
-              style={{ color: COLORS.textMuted }}
-            >
-              Method
-            </p>
-            <motion.div
-              animate={{ scale: 1 }}
-              className="mb-2 rounded-xl p-3"
-              initial={{ scale: 0 }}
-              style={{ background: `${method.color}20` }}
-              transition={{ delay: 0.4, type: "spring" }}
-            >
-              <MethodIcon className="h-6 w-6" style={{ color: method.color }} />
-            </motion.div>
-            <span
-              className="font-heading font-medium text-sm"
-              style={{ color: COLORS.text }}
-            >
-              {method.label}
-            </span>
+            Method
+          </p>
+          <motion.div
+            animate={{ scale: 1 }}
+            className="mb-2 rounded-xl p-3"
+            initial={{ scale: 0 }}
+            style={{ background: `${method.color}20` }}
+            transition={{ delay: 0.4, type: "spring" }}
+          >
+            <MethodIcon className="h-6 w-6" style={{ color: method.color }} />
           </motion.div>
-        )}
+          <span
+            className="font-heading font-medium text-sm"
+            style={{ color: COLORS.text }}
+          >
+            {method.label}
+          </span>
+        </motion.div>
       </div>
 
       {/* Resolution Criteria */}
@@ -548,8 +436,8 @@ export function ResolutionDetails({
         </motion.div>
       )}
 
-      {/* Strategy Details */}
-      {strategy && (
+      {/* Legacy Strategy Details - only show if no criteria */}
+      {strategy && !criteria && (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 rounded-xl p-4"
@@ -566,7 +454,7 @@ export function ResolutionDetails({
           >
             Strategy Details
           </p>
-          <StrategyDetails strategy={strategy} />
+          <LegacyStrategyDetails strategy={strategy} />
         </motion.div>
       )}
 

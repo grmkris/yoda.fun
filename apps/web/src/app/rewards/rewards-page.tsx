@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import { DailyStreakCard } from "@/components/rewards/daily-streak-card";
 import {
   FirstBetCard,
-  VolumeCard,
   WinStreakCard,
 } from "@/components/rewards/milestone-card";
 import { ReferralCard } from "@/components/rewards/referral-card";
@@ -54,7 +53,6 @@ export function RewardsPage() {
 
       {/* Two column grid for milestones */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <VolumeCard />
         <WinStreakCard />
       </div>
 

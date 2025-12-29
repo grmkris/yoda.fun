@@ -258,20 +258,20 @@ export function BetsHistory() {
                       </p>
                     </div>
 
-                    {/* Amount */}
+                    {/* Points */}
                     <div className="shrink-0 text-right">
                       <p
                         className="font-bold font-heading text-lg"
                         style={{ color: "oklch(0.95 0.02 280)" }}
                       >
-                        ${bet.amount}
+                        {bet.pointsSpent} pts
                       </p>
-                      {bet.payout && (
+                      {bet.pointsReturned && bet.pointsReturned > 0 && (
                         <p
                           className="font-medium text-sm"
                           style={{ color: "oklch(0.72 0.18 175)" }}
                         >
-                          Won ${bet.payout}
+                          +{bet.pointsReturned} pts
                         </p>
                       )}
                     </div>

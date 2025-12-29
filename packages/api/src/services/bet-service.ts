@@ -5,6 +5,8 @@ import type { Logger } from "@yoda.fun/logger";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import { err, ok, type Result } from "neverthrow";
 import type { SelectBet } from "../../../db/src/schema/market/market.zod";
+import type { DailyService } from "./daily-service";
+import { VOTE_COST } from "./points-service";
 
 export type BetServiceError =
   | { type: "MARKET_NOT_FOUND"; message: "Market not found" }
@@ -14,27 +16,31 @@ export type BetServiceError =
       type: "ALREADY_BET";
       message: "You have already placed a bet on this market";
     }
-  | { type: "INSUFFICIENT_BALANCE"; message: "Insufficient balance" }
-  | { type: "INVALID_AMOUNT"; message: "Bet amount must be greater than 0" }
+  | { type: "INSUFFICIENT_POINTS"; message: "Not enough points to vote" }
   | { type: "BET_CREATION_FAILED"; message: "Failed to create bet record" };
 
 interface BetServiceDeps {
   db: Database;
   logger: Logger;
+  dailyService: DailyService;
 }
 
 export function createBetService({ deps }: { deps: BetServiceDeps }) {
-  const { db, logger } = deps;
+  const { db, logger, dailyService } = deps;
 
   return {
     async placeBet(
       userId: UserId,
       input: {
         marketId: MarketId;
-        vote: "YES" | "NO";
-        amount?: number;
+        vote: "YES" | "NO" | "SKIP";
       }
-    ): Promise<Result<SelectBet, BetServiceError>> {
+    ): Promise<Result<SelectBet | null, BetServiceError>> {
+      // Handle SKIP separately - doesn't affect market
+      if (input.vote === "SKIP") {
+        return this.handleSkip(userId, input.marketId);
+      }
+
       // Get the market
       const marketRecords = await db
         .select()
@@ -82,18 +88,12 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         });
       }
 
-      // Use provided amount or market's default bet amount
-      const betAmount = input.amount ?? Number(marketData.betAmount);
-      if (betAmount <= 0) {
-        return err({
-          type: "INVALID_AMOUNT",
-          message: "Bet amount must be greater than 0",
-        });
-      }
+      // Fixed cost: 3 points for YES/NO
+      const pointsCost = VOTE_COST;
 
       // Place bet in a transaction
       const result = await db.transaction(async (tx) => {
-        // Get user's balance
+        // Get user's points
         const balanceRecords = await tx
           .select()
           .from(DB_SCHEMA.userBalance)
@@ -101,21 +101,21 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
           .limit(1);
 
         const balance = balanceRecords[0];
-        const availableBalance = balance ? Number(balance.availableBalance) : 0;
+        const availablePoints = balance?.points ?? 0;
 
-        if (availableBalance < betAmount) {
+        if (availablePoints < pointsCost) {
           return err({
-            type: "INSUFFICIENT_BALANCE" as const,
-            message: "Insufficient balance" as const,
+            type: "INSUFFICIENT_POINTS" as const,
+            message: "Not enough points to vote" as const,
           });
         }
 
-        // Deduct from user's balance
+        // Deduct points from user's balance
         if (balance) {
           await tx
             .update(DB_SCHEMA.userBalance)
             .set({
-              availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} - ${betAmount.toFixed(2)}`,
+              points: sql`${DB_SCHEMA.userBalance.points} - ${pointsCost}`,
             })
             .where(eq(DB_SCHEMA.userBalance.userId, userId));
         }
@@ -124,7 +124,7 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         await tx.insert(DB_SCHEMA.transaction).values({
           userId,
           type: "BET_PLACED",
-          amount: betAmount.toFixed(2),
+          points: -pointsCost,
           status: "COMPLETED",
           metadata: {
             marketId: input.marketId,
@@ -139,7 +139,7 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
             userId,
             marketId: input.marketId,
             vote: input.vote,
-            amount: betAmount.toFixed(2),
+            pointsSpent: pointsCost,
             status: "ACTIVE",
           })
           .returning();
@@ -152,17 +152,11 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
           });
         }
 
-        // Update market vote counts and total pool
+        // Update market vote counts (no pool - points based)
         const updateData =
           input.vote === "YES"
-            ? {
-                totalYesVotes: marketData.totalYesVotes + 1,
-                totalPool: sql`${DB_SCHEMA.market.totalPool} + ${betAmount.toFixed(2)}`,
-              }
-            : {
-                totalNoVotes: marketData.totalNoVotes + 1,
-                totalPool: sql`${DB_SCHEMA.market.totalPool} + ${betAmount.toFixed(2)}`,
-              };
+            ? { totalYesVotes: marketData.totalYesVotes + 1 }
+            : { totalNoVotes: marketData.totalNoVotes + 1 };
 
         await tx
           .update(DB_SCHEMA.market)
@@ -181,13 +175,81 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
           userId,
           marketId: input.marketId,
           vote: input.vote,
-          amount: betAmount,
+          pointsSpent: pointsCost,
           betId: result.value.id,
         },
         "Bet placed"
       );
 
       return result;
+    },
+
+    /**
+     * Handle SKIP vote - doesn't create a real bet, just tracks skip
+     */
+    async handleSkip(
+      userId: UserId,
+      marketId: MarketId
+    ): Promise<Result<null, BetServiceError>> {
+      // Check if user already has a bet on this market
+      const existingBet = await db
+        .select()
+        .from(DB_SCHEMA.bet)
+        .where(
+          and(
+            eq(DB_SCHEMA.bet.userId, userId),
+            eq(DB_SCHEMA.bet.marketId, marketId)
+          )
+        )
+        .limit(1);
+
+      if (existingBet.length > 0) {
+        return err({
+          type: "ALREADY_BET",
+          message: "You have already placed a bet on this market",
+        });
+      }
+
+      // Use skip (handles free vs paid skips)
+      const { cost, freeSkipsRemaining } = await dailyService.useSkip(userId);
+
+      // If skip costs points, check balance first
+      if (cost > 0) {
+        const balanceRecords = await db
+          .select()
+          .from(DB_SCHEMA.userBalance)
+          .where(eq(DB_SCHEMA.userBalance.userId, userId))
+          .limit(1);
+
+        const availablePoints = balanceRecords[0]?.points ?? 0;
+        if (availablePoints < cost) {
+          return err({
+            type: "INSUFFICIENT_POINTS",
+            message: "Not enough points to vote",
+          });
+        }
+      }
+
+      // Create skip "bet" record (to prevent voting again)
+      await db.insert(DB_SCHEMA.bet).values({
+        userId,
+        marketId,
+        vote: "SKIP",
+        pointsSpent: cost,
+        status: "ACTIVE", // SKIPs don't settle
+      });
+
+      logger.info(
+        {
+          userId,
+          marketId,
+          skipCost: cost,
+          freeSkipsRemaining,
+        },
+        "Market skipped"
+      );
+
+      return ok(null);
     },
 
     async getBetHistory(
@@ -239,6 +301,39 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
         .limit(1);
 
       return result[0] ?? null;
+    },
+
+    /**
+     * Get market crowd stats (after user votes)
+     */
+    async getMarketCrowd(marketId: MarketId) {
+      const market = await db
+        .select({
+          totalYesVotes: DB_SCHEMA.market.totalYesVotes,
+          totalNoVotes: DB_SCHEMA.market.totalNoVotes,
+        })
+        .from(DB_SCHEMA.market)
+        .where(eq(DB_SCHEMA.market.id, marketId))
+        .limit(1);
+
+      const data = market[0];
+      if (!data) {
+        return null;
+      }
+
+      const total = data.totalYesVotes + data.totalNoVotes;
+      const yesPercent =
+        total > 0 ? Math.round((data.totalYesVotes / total) * 100) : 50;
+      const noPercent =
+        total > 0 ? Math.round((data.totalNoVotes / total) * 100) : 50;
+
+      return {
+        totalVotes: total,
+        yesVotes: data.totalYesVotes,
+        noVotes: data.totalNoVotes,
+        yesPercent,
+        noPercent,
+      };
     },
   };
 }

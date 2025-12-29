@@ -1,13 +1,12 @@
 import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../api";
-import { balanceRouter } from "./balance-router";
 import { betRouter } from "./bet-router";
 import { followRouter } from "./follow-router";
 import { leaderboardRouter } from "./leaderboard-router";
 import { marketRouter } from "./market-router";
+import { pointsRouter } from "./points-router";
 import { profileRouter } from "./profile-router";
 import { rewardRouter } from "./reward-router";
-import { withdrawalRouter } from "./withdrawal-router";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => "OK"),
@@ -17,8 +16,7 @@ export const appRouter = {
   })),
   market: marketRouter,
   bet: betRouter,
-  balance: balanceRouter,
-  withdrawal: withdrawalRouter,
+  points: pointsRouter,
   leaderboard: leaderboardRouter,
   profile: profileRouter,
   follow: followRouter,

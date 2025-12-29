@@ -4,10 +4,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { client, orpc } from "@/utils/orpc";
 
+/**
+ * Get reward summary (win streaks, referrals, etc.)
+ */
 export function useRewardSummary() {
   return useQuery(orpc.reward.getSummary.queryOptions({}));
 }
 
+/**
+ * Get count of claimable rewards
+ */
 export function useClaimableRewards() {
   return useQuery({
     ...orpc.reward.getClaimableCount.queryOptions({}),
@@ -15,46 +21,16 @@ export function useClaimableRewards() {
   });
 }
 
-export function useDailyStatus() {
-  return useQuery(orpc.reward.getDailyStatus.queryOptions({}));
-}
-
-export function useClaimDailyStreak() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => client.reward.claimDaily({}),
-    onSuccess: (data) => {
-      toast.success(
-        `Claimed $${data.amount.toFixed(2)} for day ${data.streakDay}!`
-      );
-      queryClient.invalidateQueries({
-        queryKey: orpc.reward.getSummary.queryOptions({ input: {} }).queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.reward.getClaimableCount.queryOptions({ input: {} })
-          .queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.reward.getDailyStatus.queryOptions({ input: {} })
-          .queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.balance.get.queryOptions({ input: {} }).queryKey,
-      });
-    },
-    onError: (error) => {
-      const message =
-        error instanceof Error ? error.message : "Failed to claim reward";
-      toast.error(message);
-    },
-  });
-}
-
+/**
+ * Get user's referral code
+ */
 export function useReferralCode() {
   return useQuery(orpc.reward.getReferralCode.queryOptions({}));
 }
 
+/**
+ * Apply a referral code
+ */
 export function useApplyReferralCode() {
   const queryClient = useQueryClient();
 
@@ -62,9 +38,12 @@ export function useApplyReferralCode() {
     mutationFn: async (code: string) =>
       client.reward.applyReferralCode({ code }),
     onSuccess: () => {
-      toast.success("Referral code applied!");
+      toast.success("Referral code applied! +10 bonus points");
       queryClient.invalidateQueries({
         queryKey: orpc.reward.getSummary.queryOptions({ input: {} }).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
       });
     },
     onError: (error) => {
@@ -75,6 +54,9 @@ export function useApplyReferralCode() {
   });
 }
 
+/**
+ * Get reward history
+ */
 export function useRewardHistory(options?: {
   limit?: number;
   offset?: number;

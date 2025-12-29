@@ -5,6 +5,7 @@ import type { Logger } from "@yoda.fun/logger";
 import type { ResolutionMetadata } from "@yoda.fun/shared/resolution-types";
 import type { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
 import type { LeaderboardService } from "./leaderboard-service";
+import { VOTE_COST } from "./points-service";
 import type { RewardService } from "./reward-service";
 
 interface SettlementServiceDeps {
@@ -23,17 +24,21 @@ export function createSettlementService({
 }) {
   const { db, logger, leaderboardService, rewardService } = deps;
 
+  /**
+   * Process a winning bet - credit fixed 3 points
+   */
   async function processWinningBetInTx(
     tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-    bet: { id: BetId; userId: UserId; amount: string },
-    payout: number,
+    bet: { id: BetId; userId: UserId; pointsSpent: number },
     marketId: MarketId
   ) {
+    const pointsReturned = VOTE_COST; // Fixed 3 points for correct prediction
+
     await tx
       .update(DB_SCHEMA.bet)
       .set({
         status: "WON",
-        payout: payout.toFixed(2),
+        pointsReturned,
         settlementStatus: "SETTLED",
         settledAt: new Date(),
       })
@@ -42,23 +47,28 @@ export function createSettlementService({
     await tx
       .update(DB_SCHEMA.userBalance)
       .set({
-        availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} + ${payout.toFixed(2)}`,
+        points: sql`${DB_SCHEMA.userBalance.points} + ${pointsReturned}`,
       })
       .where(eq(DB_SCHEMA.userBalance.userId, bet.userId));
 
     await tx.insert(DB_SCHEMA.transaction).values({
       userId: bet.userId,
       type: "PAYOUT",
-      amount: payout.toFixed(2),
+      points: pointsReturned,
       status: "COMPLETED",
       metadata: {
         marketId,
         betId: bet.id,
-        originalBet: Number(bet.amount),
+        pointsSpent: bet.pointsSpent,
       },
     });
+
+    return pointsReturned;
   }
 
+  /**
+   * Process a losing bet - no payout
+   */
   async function processLosingBetInTx(
     tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
     betId: BetId
@@ -67,24 +77,24 @@ export function createSettlementService({
       .update(DB_SCHEMA.bet)
       .set({
         status: "LOST",
-        payout: "0.00",
+        pointsReturned: 0,
         settlementStatus: "SETTLED",
         settledAt: new Date(),
       })
       .where(eq(DB_SCHEMA.bet.id, betId));
   }
 
-  async function trackBetOutcome(options: {
-    userId: UserId;
-    won: boolean;
-    profit: number;
-  }) {
-    const { userId, won, profit } = options;
+  /**
+   * Track bet outcome for leaderboard and rewards
+   */
+  async function trackBetOutcome(options: { userId: UserId; won: boolean }) {
+    const { userId, won } = options;
     if (leaderboardService) {
+      // Points-based: no profit tracking, just win/loss
       const result = await leaderboardService.updateStatsOnSettlement({
         userId,
         won,
-        profit,
+        profit: 0, // No profit in points model
       });
 
       if (won && rewardService && result.newCurrentStreak > 0) {
@@ -147,6 +157,7 @@ export function createSettlementService({
     },
 
     async settleMarket(marketId: MarketId, result: MarketResult) {
+      // Get all active bets (exclude SKIPs - they don't settle)
       const bets = await db
         .select()
         .from(DB_SCHEMA.bet)
@@ -157,46 +168,41 @@ export function createSettlementService({
           )
         );
 
-      if (bets.length === 0) {
+      // Filter out SKIP bets - they don't participate in settlement
+      const votingBets = bets.filter((bet) => bet.vote !== "SKIP");
+
+      if (votingBets.length === 0) {
         logger.info({ marketId }, "No bets to settle");
-        return { settled: 0, totalPayout: 0 };
+        return { settled: 0, totalPointsReturned: 0 };
       }
 
-      const totalPool = bets.reduce((sum, bet) => sum + Number(bet.amount), 0);
       const winningVote = result === "INVALID" ? null : result;
 
       if (result === "INVALID") {
-        return this.refundAllBets(marketId, bets);
+        return this.refundAllBets(marketId, votingBets);
       }
 
-      const winningBets = bets.filter((bet) => bet.vote === winningVote);
-      const losingBets = bets.filter((bet) => bet.vote !== winningVote);
+      const winningBets = votingBets.filter((bet) => bet.vote === winningVote);
+      const losingBets = votingBets.filter((bet) => bet.vote !== winningVote);
 
       if (winningBets.length === 0) {
         logger.info({ marketId }, "No winners, refunding all bets");
-        return this.refundAllBets(marketId, bets);
+        return this.refundAllBets(marketId, votingBets);
       }
 
-      const totalWinningAmount = winningBets.reduce(
-        (sum, bet) => sum + Number(bet.amount),
-        0
-      );
-
-      const result_data = await db.transaction(async (tx) => {
-        let totalPayout = 0;
+      const resultData = await db.transaction(async (tx) => {
+        let totalPointsReturned = 0;
 
         for (const bet of winningBets) {
-          const betAmount = Number(bet.amount);
-          const payout = (betAmount / totalWinningAmount) * totalPool;
-          totalPayout += payout;
-          await processWinningBetInTx(tx, bet, payout, marketId);
+          const returned = await processWinningBetInTx(tx, bet, marketId);
+          totalPointsReturned += returned;
         }
 
         for (const bet of losingBets) {
           await processLosingBetInTx(tx, bet.id);
         }
 
-        return { settled: bets.length, totalPayout };
+        return { settled: votingBets.length, totalPointsReturned };
       });
 
       logger.info(
@@ -204,32 +210,21 @@ export function createSettlementService({
           marketId,
           winners: winningBets.length,
           losers: losingBets.length,
-          totalPool,
-          totalPayout: result_data.totalPayout,
+          totalPointsReturned: resultData.totalPointsReturned,
         },
         "Market settled"
       );
 
+      // Track outcomes for leaderboard
       for (const bet of winningBets) {
-        const betAmount = Number(bet.amount);
-        const payout = (betAmount / totalWinningAmount) * totalPool;
-        await trackBetOutcome({
-          userId: bet.userId,
-          won: true,
-          profit: payout - betAmount,
-        });
+        await trackBetOutcome({ userId: bet.userId, won: true });
       }
 
       for (const bet of losingBets) {
-        const betAmount = Number(bet.amount);
-        await trackBetOutcome({
-          userId: bet.userId,
-          won: false,
-          profit: -betAmount,
-        });
+        await trackBetOutcome({ userId: bet.userId, won: false });
       }
 
-      return result_data;
+      return resultData;
     },
 
     async refundAllBets(
@@ -237,21 +232,21 @@ export function createSettlementService({
       bets: Array<{
         id: BetId;
         userId: UserId;
-        amount: string;
+        pointsSpent: number;
       }>
     ) {
       let totalRefunded = 0;
 
       await db.transaction(async (tx) => {
         for (const bet of bets) {
-          const amount = Number(bet.amount);
-          totalRefunded += amount;
+          const pointsToRefund = bet.pointsSpent;
+          totalRefunded += pointsToRefund;
 
           await tx
             .update(DB_SCHEMA.bet)
             .set({
               status: "REFUNDED",
-              payout: bet.amount,
+              pointsReturned: pointsToRefund,
               settlementStatus: "SETTLED",
               settledAt: new Date(),
             })
@@ -260,14 +255,14 @@ export function createSettlementService({
           await tx
             .update(DB_SCHEMA.userBalance)
             .set({
-              availableBalance: sql`${DB_SCHEMA.userBalance.availableBalance} + ${amount.toFixed(2)}`,
+              points: sql`${DB_SCHEMA.userBalance.points} + ${pointsToRefund}`,
             })
             .where(eq(DB_SCHEMA.userBalance.userId, bet.userId));
 
           await tx.insert(DB_SCHEMA.transaction).values({
             userId: bet.userId,
             type: "REFUND",
-            amount: amount.toFixed(2),
+            points: pointsToRefund,
             status: "COMPLETED",
             metadata: {
               marketId,
@@ -283,7 +278,7 @@ export function createSettlementService({
         "All bets refunded"
       );
 
-      return { settled: bets.length, totalPayout: totalRefunded };
+      return { settled: bets.length, totalPointsReturned: totalRefunded };
     },
 
     async getMarketsToResolve() {

@@ -104,7 +104,7 @@ export function InvitePage({ code }: InvitePageProps) {
   }, [upperCode]);
 
   const handleContinue = () => {
-    router.push("/dashboard");
+    router.push("/");
   };
 
   return (

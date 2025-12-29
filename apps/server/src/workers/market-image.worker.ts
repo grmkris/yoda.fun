@@ -53,7 +53,6 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         return { success: true, marketId, imageUrl: market.imageUrl };
       }
 
-      // Generate prompt, tags, and reuse decision via AI
       const { prompt, tags, reuseOk } = await generateImagePromptWithTags(
         { title, description, category },
         aiClient
@@ -64,7 +63,6 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         "Generated image prompt and tags"
       );
 
-      // Try to find reusable image if AI says it's ok to reuse
       let mediaId = reuseOk ? await imageService.findReusableImage(tags) : null;
       let reused = false;
 
@@ -72,10 +70,8 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         logger.info({ marketId, mediaId, tags }, "Reusing existing image");
         reused = true;
       } else {
-        // Generate new image
         logger.info({ marketId }, "Generating new image via Replicate");
 
-        // Use the AI-generated prompt (not buildImagePrompt fallback)
         const sourceUrl = await generateMarketImageWithPrompt(prompt, {
           replicateApiKey,
         });
@@ -85,15 +81,12 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
           return { success: false, marketId };
         }
 
-        // Fetch and process the image
         const imageBuffer = await fetchImageBuffer(sourceUrl);
         const { imageUrl: finalKey, thumbnailUrl: thumbnailKey } =
           await processMarketImage(imageBuffer, { storage });
 
-        // Create media record with tags for future reuse
         mediaId = await imageService.createImageMedia(finalKey, tags, prompt);
 
-        // Update media with processed keys
         await db
           .update(DB_SCHEMA.media)
           .set({ finalKey, thumbnailKey, status: "processed" })
@@ -102,7 +95,6 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         logger.info({ marketId, mediaId, tags }, "Created new reusable image");
       }
 
-      // Get the media record to get URLs
       const [media] = await db
         .select()
         .from(DB_SCHEMA.media)
