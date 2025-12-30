@@ -26,7 +26,6 @@ export const idTypesMapNameToPrefix = {
 
   // storage
   media: "med",
-  marketImage: "mig",
 
   // rewards
   reward: "rwd",

@@ -28,7 +28,6 @@ import {
 import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
 import { createFarcasterWebhookRoutes } from "@/routes/farcaster-webhook";
-import { migrateMarketImages } from "@/scripts/migrate-market-images";
 import { createAvatarImageWorker } from "@/workers/avatar-image.worker";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketImageWorker } from "@/workers/market-image.worker";
@@ -70,13 +69,6 @@ const publicS3Client = new S3Client({
   secretAccessKey: env.S3_SECRET_KEY,
   endpoint: env.S3_ENDPOINT,
   bucket: SERVICE_URLS[env.APP_ENV].publicBucket,
-});
-
-await migrateMarketImages({
-  db,
-  privateS3: s3Client,
-  publicS3: publicS3Client,
-  logger,
 });
 
 const storage = createStorageClient({

@@ -1,0 +1,125 @@
+=== MEDIA DIAGNOSIS REPORT ===
+Generated: $(date -u)
+
+=== 1. MEDIA TABLE STATUS ===
+  status   | count 
+-----------+-------
+ processed |   505
+(1 row)
+
+
+=== 2. MARKET COUNTS ===
+ total_markets | with_media_id | with_mig_url 
+---------------+---------------+--------------
+          1307 |           915 |          586
+(1 row)
+
+
+=== 3. SAMPLE MARKETS WITH MIG URLs ===
+                  id                  |                  image_url                  |                   thumbnail_url                   
+--------------------------------------+---------------------------------------------+---------------------------------------------------
+ 019b6b0e-3942-733c-a8b9-b3ce9474223d | markets/mig_01kdgfjh74fzwt0wc4909tr85k.webp | markets/mig_01kdgfjh74fzwt0wc4909tr85k_thumb.webp
+ 019b5d20-85e6-7aaf-b65d-cf3729831f9f | markets/mig_01kdej194afaqvcqejagey3kpd.webp | markets/mig_01kdej194afaqvcqejagey3kpd_thumb.webp
+ 019b5d31-23a3-7aaf-b65d-fef2d3cb0934 | markets/mig_01kdek2h9zfaqvcqg0qa8dqphj.webp | markets/mig_01kdek2h9zfaqvcqg0qa8dqphj_thumb.webp
+ 019b5d0b-b9d0-7bb1-9e85-c4472ebdcdd0 | markets/mig_01kdegqnyrfersx1ef8xnmd8rb.webp | markets/mig_01kdegqnyrfersx1ef8xnmd8rb_thumb.webp
+ 019b5d1b-203d-7aaf-b65d-be6704c43a47 | markets/mig_01kdehpg09faqvcqe6m88pyy3w.webp | markets/mig_01kdehpg09faqvcqe6m88pyy3w_thumb.webp
+ 019b6b0e-3942-733c-a8b9-bb648441a5d4 | markets/mig_01kdgfjh74fzwt0wc4909tr85k.webp | markets/mig_01kdgfjh74fzwt0wc4909tr85k_thumb.webp
+ 019b5d26-04a6-7aaf-b65d-dd55ea9ffa24 | markets/mig_01kdejca3wfaqvcqf0gdr08wsh.webp | markets/mig_01kdejca3wfaqvcqf0gdr08wsh_thumb.webp
+ 019b5d2b-90c0-7aaf-b65d-ec62ef8003d0 | markets/mig_01kdejqc07faqvcqfhkk5e71s8.webp | markets/mig_01kdejqc07faqvcqfhkk5e71s8_thumb.webp
+ 019b5fcf-62d5-7552-bef5-0f955da13503 | markets/mig_01kdfwz0d3en9bxx8p7a16jvkk.webp | markets/mig_01kdfwz0d3en9bxx8p7a16jvkk_thumb.webp
+ 019b5fda-3c97-7552-bef5-2fca7cd91625 | markets/mig_01kdfxmpx2en9bxx9kr57e890w.webp | markets/mig_01kdfxmpx2en9bxx9kr57e890w_thumb.webp
+(10 rows)
+
+
+=== 4. MARKET-MEDIA CORRELATION (mig_ URLs) ===
+              market_id               |               media_id               | media_status | error_message 
+--------------------------------------+--------------------------------------+--------------+---------------
+ 019b6b0e-3942-733c-a8b9-b3ce9474223d | 019b60f9-4668-7ff9-a071-8adefa08563d | processed    | 
+ 019b5d20-85e6-7aaf-b65d-cf3729831f9f |                                      |              | 
+ 019b5d31-23a3-7aaf-b65d-fef2d3cb0934 |                                      |              | 
+ 019b5d0b-b9d0-7bb1-9e85-c4472ebdcdd0 |                                      |              | 
+ 019b5d1b-203d-7aaf-b65d-be6704c43a47 |                                      |              | 
+ 019b6b0e-3942-733c-a8b9-bb648441a5d4 | 019b60f9-4668-7ff9-a071-8adefa08563d | processed    | 
+ 019b5d26-04a6-7aaf-b65d-dd55ea9ffa24 |                                      |              | 
+ 019b5d2b-90c0-7aaf-b65d-ec62ef8003d0 |                                      |              | 
+ 019b5fcf-62d5-7552-bef5-0f955da13503 |                                      |              | 
+ 019b5fda-3c97-7552-bef5-2fca7cd91625 |                                      |              | 
+ 019b5fe5-4a07-7552-bef5-4bc3a5a13569 |                                      |              | 
+ 019b5fc4-511a-7552-bef4-eaab67802f9f |                                      |              | 
+ 019b5fea-b0c6-7552-bef5-5c32cc2e2deb |                                      |              | 
+ 019b5ff0-29ce-7552-bef5-69314bac19b0 |                                      |              | 
+ 019b5ffb-49b8-7552-bef5-8d498924e1cb |                                      |              | 
+ 019b6011-3dc4-7552-bef5-cba88b2cc00a |                                      |              | 
+ 019b6006-3a22-7552-bef5-aba8ec8ce26f |                                      |              | 
+ 019b6016-c94a-7552-bef5-dc20e5d39640 |                                      |              | 
+ 019b6021-c212-7552-bef5-fabfcf67e98f |                                      |              | 
+ 019b6000-9fe8-7552-bef5-9f11d54f0a81 |                                      |              | 
+(20 rows)
+
+
+=== 5. MARKETS WITH MIG URL BUT NO MEDIA_ID ===
+ orphaned_mig_markets 
+----------------------
+                   46
+(1 row)
+
+
+=== 6. ALL MARKETS WITH MIG URLs (NO MEDIA LINK) ===
+                  id                  |                       title                        |                  image_url                  |          created_at           
+--------------------------------------+----------------------------------------------------+---------------------------------------------+-------------------------------
+ 019b608f-8e6f-7552-bef7-6f58355ad1f1 | Will Ant score 30+ pts tonight?                    | markets/mig_01kdg8zbh9en9bxxvhaqc6x9qq.webp | 2025-12-27 16:06:19.507621+00
+ 019b608a-0be3-7552-bef7-5c0880d64f98 | Will Dogecoin hit $0.40 tomorrow?                  | markets/mig_01kdg8mae6en9bxxv5cym8brnp.webp | 2025-12-27 16:00:18.411322+00
+ 019b6084-943e-7552-bef7-4ebe79bf3bc2 | Will Bitcoin hit $112k?                            | markets/mig_01kdg89cymen9bxxtpfya3nmag.webp | 2025-12-27 15:54:20.106043+00
+ 019b607f-1753-7552-bef7-3b177672ec67 | Will Elon tweet about Dogecoin?                    | markets/mig_01kdg7ydbden9bxxt4wceht2n7.webp | 2025-12-27 15:48:20.437889+00
+ 019b6079-8c64-7552-bef7-2cc51cc2bbcf | Will Bitcoin hit $150K by New Year's?              | markets/mig_01kdg7kagzen9bxxskvwz45q6j.webp | 2025-12-27 15:42:17.191796+00
+ 019b6074-0613-7552-bef7-1f4ba2937299 | Will Bitcoin hit $120K tomorrow?                   | markets/mig_01kdg789d8en9bxxs70r9bgp1a.webp | 2025-12-27 15:36:15.128838+00
+ 019b606e-90c7-7552-bef7-0a0eff9d9bbb | Will ETH hit $10k tomorrow?                        | markets/mig_01kdg6xbm2en9bxxrqesazjxf4.webp | 2025-12-27 15:30:17.41879+00
+ 019b6069-22f6-7552-bef6-f8d81ce14c22 | Will WIF hit $3.50?                                | markets/mig_01kdg6jgf1en9bxxr2pg0weksz.webp | 2025-12-27 15:24:21.626619+00
+ 019b6063-a13a-7552-bef6-eff5b8a6d402 | Will Luka score 30+ pts tonight?                   | markets/mig_01kdg67g64en9bxxqkdtpaygsb.webp | 2025-12-27 15:18:20.733814+00
+ 019b605e-2076-7552-bef6-dd4ac57b52c6 | Will the Cowboys win tonight?                      | markets/mig_01kdg5wg5ven9bxxq417mfpsg8.webp | 2025-12-27 15:12:20.092165+00
+ 019b6058-a88c-7552-bef6-c90b0b262148 | Will LeBron score 30+ pts tonight?                 | markets/mig_01kdg5hj19en9bxxpj0erfteq2.webp | 2025-12-27 15:06:21.711056+00
+ 019b6053-0fd6-7552-bef6-b8f965501554 | Will SOL hit $350 tomorrow?                        | markets/mig_01kdg56c3den9bxxp7s3s0arem.webp | 2025-12-27 15:00:14.936501+00
+ 019b604d-9e93-7552-bef6-afb4c2ed611b | Will POPCAT hit $2 tomorrow?                       | markets/mig_01kdg4vhb8en9bxxnhq8a1azgg.webp | 2025-12-27 14:54:18.261335+00
+ 019b6048-3f2b-7552-bef6-9ec39576a020 | Will Elon tweet about Grok?                        | markets/mig_01kdg4gqwsen9bxxn672naq7gf.webp | 2025-12-27 14:48:26.160931+00
+ 019b6042-a2a9-7552-bef6-5caefef5982c | Will 'All I Want for Christmas' top Spotify today? | markets/mig_01kdg45gvwen9bxxk1ywdw7wgc.webp | 2025-12-27 14:42:18.411916+00
+ 019b603d-1b40-7552-bef6-4cf2b59b2088 | Will KD score 30+ pts tonight?                     | markets/mig_01kdg3te5ten9bxxjpy7b1a9m5.webp | 2025-12-27 14:36:16.07014+00
+ 019b6037-9ce0-7552-bef6-3e2247ffa76c | Will XRP hit $3 tomorrow?                          | markets/mig_01kdg3fey5en9bxxj269fgh4qx.webp | 2025-12-27 14:30:16.036018+00
+ 019b6032-1b17-7552-bef6-2b565fa4b80e | Will SHIB hit $0.000045 tomorrow?                  | markets/mig_01kdg34ee0en9bxxhq2ym9svne.webp | 2025-12-27 14:24:15.135196+00
+ 019b602c-a12b-7552-bef6-1bed63838c0a | Will Steph Curry score 30+ pts tonight?            | markets/mig_01kdg2sfp6en9bxxh0j2qqnrfp.webp | 2025-12-27 14:18:16.237198+00
+ 019b6027-1b21-7552-bef6-0e21c5f8b313 | Will RNDR hit $20 tomorrow?                        | markets/mig_01kdg2efdaen9bxxgggqynwbrx.webp | 2025-12-27 14:12:14.244317+00
+ 019b6021-c212-7552-bef5-fabfcf67e98f | Will BRETT hit $0.20 tomorrow?                     | markets/mig_01kdg23s8wen9bxxg0j5xdpvde.webp | 2025-12-27 14:06:23.766563+00
+ 019b601c-2e45-7552-bef5-efedfa4df532 | Will Jokic score 30+ tonight?                      | markets/mig_01kdg1rkgzen9bxxfptv18x97s.webp | 2025-12-27 14:00:18.24946+00
+ 019b6016-c94a-7552-bef5-dc20e5d39640 | Will Zion score 30+ tonight?                       | markets/mig_01kdg1dsfyen9bxxf2tv56ytpx.webp | 2025-12-27 13:54:24.717358+00
+ 019b6011-3dc4-7552-bef5-cba88b2cc00a | Will BONK hit $0.00005 tomorrow?                   | markets/mig_01kdg12q5gen9bxxepwb1y9y9g.webp | 2025-12-27 13:48:21.320374+00
+ 019b600b-be46-7552-bef5-b972f15bf779 | Will PEPE hit $0.000025 tomorrow?                  | markets/mig_01kdg0qqhken9bxxe50vcm60z3.webp | 2025-12-27 13:42:21.004022+00
+ 019b6006-3a22-7552-bef5-aba8ec8ce26f | Will Wemby score 30+ tonight?                      | markets/mig_01kdg0cnpren9bxxdqhg5qtb1w.webp | 2025-12-27 13:36:19.496123+00
+ 019b6000-9fe8-7552-bef5-9f11d54f0a81 | Will AVAX hit $40 next 4 hours?                    | markets/mig_01kdg01feyen9bxxd3zh381ytk.webp | 2025-12-27 13:30:12.33057+00
+ 019b5ffb-49b8-7552-bef5-8d498924e1cb | Will SUI hit $5 tomorrow?                          | markets/mig_01kdfzpt04en9bxxcn8yh06d6s.webp | 2025-12-27 13:24:22.587758+00
+ 019b5ff5-cf31-7552-bef5-7e22bfb20549 | Will DOGE hit $0.40 tomorrow?                      | markets/mig_01kdfzbvqren9bxxc2304bd53z.webp | 2025-12-27 13:18:23.540051+00
+ 019b5ff0-29ce-7552-bef5-69314bac19b0 | Will LINK hit $30 by NYE?                          | markets/mig_01kdfz0hxnen9bxxbghkqcxz34.webp | 2025-12-27 13:12:13.521133+00
+ 019b5fea-b0c6-7552-bef5-5c32cc2e2deb | Will BTC hit $135k by NYE?                         | markets/mig_01kdfynm8fen9bxxb52fx0x7yj.webp | 2025-12-27 13:06:14.857113+00
+ 019b5fe5-4a07-7552-bef5-4bc3a5a13569 | Will ETH hit $6,000 tomorrow?                      | markets/mig_01kdfyasmken9bxxamte61nc4t.webp | 2025-12-27 13:00:20.875+00
+ 019b5fdf-ce0b-7552-bef5-3c501072e02c | Will Ant Man score 30+ pts tonight?                | markets/mig_01kdfxzvbaen9bxxa5w25wkejp.webp | 2025-12-27 12:54:21.463915+00
+ 019b5fda-3c97-7552-bef5-2fca7cd91625 | Will SOL hit $350 next 4 hours?                    | markets/mig_01kdfxmpx2en9bxx9kr57e890w.webp | 2025-12-27 12:48:16.539117+00
+ 019b5fd4-b4f3-7552-bef5-1afd71857fae | Will BTC hit $130k tomorrow?                       | markets/mig_01kdfx9mrxen9bxx907ew1f1f9.webp | 2025-12-27 12:42:14.135037+00
+ 019b5fcf-62d5-7552-bef5-0f955da13503 | Will Embiid score 30+ tonight?                     | markets/mig_01kdfwz0d3en9bxx8p7a16jvkk.webp | 2025-12-27 12:36:25.431892+00
+ 019b5fc9-b9e9-7552-bef4-f954cc84a556 | Will Lakers beat Clippers tonight?                 | markets/mig_01kdfwkqbfen9bxx83wqdee80k.webp | 2025-12-27 12:30:14.507601+00
+ 019b5fc4-511a-7552-bef4-eaab67802f9f | Will WIF hit $3 in next 4 hours?                   | markets/mig_01kdfw8wkjen9bxx7q01f4g43h.webp | 2025-12-27 12:24:20.002979+00
+ 019b5fbe-eea1-7aa3-a93d-09933d675c34 | Will Luka score 30+ tonight?                       | markets/mig_01kdfvy2k3fahtjf8hpnbmnhhf.webp | 2025-12-27 12:18:27.116508+00
+ 019b5d31-23a3-7aaf-b65d-fef2d3cb0934 | Will POPCAT hit $2 today?                          | markets/mig_01kdek2h9zfaqvcqg0qa8dqphj.webp | 2025-12-27 00:24:20.133256+00
+ 019b5d2b-90c0-7aaf-b65d-ec62ef8003d0 | Will ETH hit $4,000?                               | markets/mig_01kdejqc07faqvcqfhkk5e71s8.webp | 2025-12-27 00:18:14.85051+00
+ 019b5d26-04a6-7aaf-b65d-dd55ea9ffa24 | Will WIF hit $5?                                   | markets/mig_01kdejca3wfaqvcqf0gdr08wsh.webp | 2025-12-27 00:12:11.304116+00
+ 019b5d20-85e6-7aaf-b65d-cf3729831f9f | Will Solana hit $350 by tomorrow?                  | markets/mig_01kdej194afaqvcqejagey3kpd.webp | 2025-12-27 00:06:11.176905+00
+ 019b5d1b-203d-7aaf-b65d-be6704c43a47 | Will Steph Curry score 30+ points tonight?         | markets/mig_01kdehpg09faqvcqe6m88pyy3w.webp | 2025-12-27 00:00:17.474396+00
+ 019b5d10-265c-7bb1-9e85-d2d9636d857d | Will Elon tweet about Dogecoin today?              | markets/mig_01kdeh0rhffersx1ez2yd0bb9b.webp | 2025-12-26 23:48:18.142934+00
+ 019b5d0b-b9d0-7bb1-9e85-c4472ebdcdd0 | Will Bitcoin hit $110k by New Year's?              | markets/mig_01kdegqnyrfersx1ef8xnmd8rb.webp | 2025-12-26 23:43:28.213692+00
+(46 rows)
+
+
+=== 7. MEDIA WITH ERRORS ===
+ id | status | error_message 
+----+--------+---------------
+(0 rows)
+
+
+=== END REPORT ===
