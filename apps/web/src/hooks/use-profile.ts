@@ -40,35 +40,6 @@ export function useProfileBets(
   );
 }
 
-export function useSetUsername() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (username: string) =>
-      client.profile.setUsername({ username }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: orpc.profile.me.queryOptions({}).queryKey,
-      });
-    },
-    onError: (error) => {
-      const message =
-        error instanceof Error ? error.message : "Failed to set username";
-      toast.error(message);
-    },
-  });
-}
-
-export function useCheckUsername(username: string) {
-  return useQuery({
-    ...orpc.profile.checkUsernameAvailability.queryOptions({
-      input: { username },
-    }),
-    enabled: username.length >= 3,
-    staleTime: 5000,
-  });
-}
-
 export function useUploadAvatar() {
   const queryClient = useQueryClient();
 

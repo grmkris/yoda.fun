@@ -50,6 +50,7 @@ const auth = createAuth({
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
   signupBonusEnabled: true,
+  reownProjectId: env.REOWN_PROJECT_ID,
 });
 
 const posthog = createPostHogClient({
@@ -69,7 +70,7 @@ const publicS3Client = new S3Client({
   accessKeyId: env.S3_ACCESS_KEY,
   secretAccessKey: env.S3_SECRET_KEY,
   endpoint: env.S3_ENDPOINT,
-  bucket: env.S3_PUBLIC_BUCKET,
+  bucket: SERVICE_URLS[env.APP_ENV].publicBucket,
 });
 
 await migrateMarketImages({
@@ -82,7 +83,7 @@ await migrateMarketImages({
 const storage = createStorageClient({
   s3Client,
   publicS3Client,
-  publicUrl: env.S3_PUBLIC_URL,
+  publicUrl: SERVICE_URLS[env.APP_ENV].publicStorageUrl,
   env: env.APP_ENV,
   logger,
 });
@@ -96,7 +97,7 @@ app.use(honoLogger());
 app.use(
   "/*",
   cors({
-    origin: [SERVICE_URLS[env.APP_ENV].web, "https://id.porto.sh"],
+    origin: [SERVICE_URLS[env.APP_ENV].web],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,

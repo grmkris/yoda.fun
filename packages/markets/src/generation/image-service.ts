@@ -36,8 +36,11 @@ export function createImageService(deps: ImageServiceDeps) {
     return match.id as MediaId;
   }
 
-  async function createImageMedia(
-    imageUrl: string,
+  /**
+   * Create a pending media record to get the mediaId before uploading.
+   * The mediaId is used as the S3 key for unified naming (med_xxx.webp).
+   */
+  async function createPendingMedia(
     tags: string[],
     prompt: string
   ): Promise<MediaId> {
@@ -46,8 +49,7 @@ export function createImageService(deps: ImageServiceDeps) {
       .values({
         type: "market_image",
         source: "replicate",
-        status: "processed",
-        sourceUrl: imageUrl,
+        status: "pending",
         tags,
         metadata: { prompt },
       })
@@ -58,6 +60,23 @@ export function createImageService(deps: ImageServiceDeps) {
     }
 
     return inserted.id;
+  }
+
+  /**
+   * Mark media as processed after successful upload.
+   * S3 keys are derived from mediaId at runtime, not stored.
+   */
+  async function markMediaProcessed(
+    mediaId: MediaId,
+    sourceUrl: string
+  ): Promise<void> {
+    await db
+      .update(DB_SCHEMA.media)
+      .set({
+        sourceUrl,
+        status: "processed",
+      })
+      .where(eq(DB_SCHEMA.media.id, mediaId));
   }
 
   async function linkMediaToMarket(
@@ -72,7 +91,8 @@ export function createImageService(deps: ImageServiceDeps) {
 
   return {
     findReusableImage,
-    createImageMedia,
+    createPendingMedia,
+    markMediaProcessed,
     linkMediaToMarket,
   };
 }

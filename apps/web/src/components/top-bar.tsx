@@ -2,8 +2,7 @@
 
 import { User } from "lucide-react";
 import Link from "next/link";
-import { BalanceDisplay } from "@/components/balance-display";
-import { RewardsModal } from "@/components/rewards/rewards-modal";
+import { PointsDisplay } from "@/components/balance-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authClient } from "@/lib/auth-client";
 
@@ -20,8 +19,7 @@ export function TopBar() {
       }}
     >
       <div className="flex h-14 items-center justify-end gap-3 px-6">
-        <RewardsModal />
-        <BalanceDisplay />
+        <PointsDisplay />
 
         {isPending && <Skeleton className="h-8 w-24" />}
         {!isPending && session?.user && (

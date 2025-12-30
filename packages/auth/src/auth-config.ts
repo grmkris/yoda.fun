@@ -1,3 +1,4 @@
+import { verifySignature } from "@reown/appkit-siwe";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
@@ -6,9 +7,6 @@ import { UserId } from "@yoda.fun/shared/typeid";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous, siwe } from "better-auth/plugins";
-import { Porto, RelayActions } from "porto";
-import { RelayClient } from "porto/viem";
-import { hashMessage } from "viem";
 import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
 
 export interface AuthConfig {
@@ -16,14 +14,12 @@ export interface AuthConfig {
   appEnv: Environment;
   secret: string;
   signupBonusEnabled?: boolean;
+  reownProjectId: string;
 }
 
 export const createAuth = (config: AuthConfig) => {
   const baseURL = SERVICE_URLS[config.appEnv].auth;
   const trustedOrigins = [SERVICE_URLS[config.appEnv].web];
-
-  // Create Porto instance for SIWE verification
-  const porto = Porto.create();
 
   return betterAuth<BetterAuthOptions>({
     database: drizzleAdapter(config.db, {
@@ -140,16 +136,26 @@ export const createAuth = (config: AuthConfig) => {
           try {
             const { address, chainId } = parseSiweMessage(message);
             if (!(address && chainId)) {
+              console.log("[SIWE] Failed to parse message");
               return false;
             }
-            const client = RelayClient.fromPorto(porto, { chainId });
-            const result = await RelayActions.verifySignature(client, {
+
+            // Use Reown's verification (supports ERC-6492 for undeployed smart accounts)
+            const isValid = await verifySignature({
               address,
-              digest: hashMessage(message),
-              signature: signature as `0x${string}`,
+              message,
+              signature,
+              chainId: chainId.toString(),
+              projectId: config.reownProjectId,
             });
-            return result.valid;
-          } catch {
+
+            console.log(
+              "[SIWE] Reown verification:",
+              isValid ? "passed" : "failed"
+            );
+            return isValid;
+          } catch (err) {
+            console.log("[SIWE] Error:", err);
             return false;
           }
         },

@@ -4,6 +4,7 @@ import {
   typeIdFromUuid,
   typeIdToUuid,
 } from "@yoda.fun/shared/typeid";
+import { sql } from "drizzle-orm";
 import { customType, timestamp } from "drizzle-orm/pg-core";
 
 /**
@@ -48,5 +49,5 @@ export const baseEntityFields = {
   updatedAt: createTimestampField("updated_at")
     .defaultNow()
     .notNull()
-    .$onUpdate(() => new Date()),
+    .$onUpdate(() => sql`now()`),
 };

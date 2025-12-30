@@ -27,6 +27,10 @@
     "./market.schema": {
       "types": "./dist/market.schema.d.ts",
       "default": "./src/market.schema.ts"
+    },
+    "./media-utils": {
+      "types": "./dist/media-utils.d.ts",
+      "default": "./src/media-utils.ts"
     }
   },
   "scripts": {

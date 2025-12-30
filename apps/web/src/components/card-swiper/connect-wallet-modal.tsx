@@ -1,6 +1,6 @@
 "use client";
 
-import { PortoConnectButton } from "@/components/porto-connect-button";
+import { AppKitButton } from "@reown/appkit/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { MarketCard } from "./game-card";
+import type { MarketCard } from "./card-front";
 
 interface ConnectWalletModalProps {
   market: MarketCard | null;
@@ -84,7 +84,7 @@ export function ConnectWalletModal({
             </p>
           </div>
 
-          <PortoConnectButton />
+          <AppKitButton />
         </div>
 
         <DialogFooter>

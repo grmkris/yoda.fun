@@ -27,17 +27,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
 import { useMyRank } from "@/hooks/use-leaderboard";
-import { useMyProfile, useUploadAvatar } from "@/hooks/use-profile";
+import { useUploadAvatar } from "@/hooks/use-profile";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
 import { authClient } from "@/lib/auth-client";
 import { DepositSection } from "./deposit-section";
 import { ProfileConnectPrompt } from "./profile-connect-prompt";
-import { SetupWizard } from "./setup-wizard";
 
 function ProfileHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const { data: myProfile } = useMyProfile();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,11 +167,6 @@ function ProfileHeader() {
               >
                 {session?.user?.name || "User"}
               </h1>
-              {myProfile?.user?.username && (
-                <p style={{ color: "oklch(0.65 0.04 280)" }}>
-                  @{myProfile.user.displayUsername || myProfile.user.username}
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -839,10 +832,9 @@ function ProfileDashboard() {
 // MAIN PROFILE PAGE (with routing logic)
 export function ProfilePage() {
   const { isPending: sessionPending } = authClient.useSession();
-  const { data: myProfile, isPending: profilePending } = useMyProfile();
   const { isAnonymous } = useIsAuthenticated();
 
-  if (sessionPending || profilePending) {
+  if (sessionPending) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div
@@ -858,10 +850,6 @@ export function ProfilePage() {
 
   if (isAnonymous) {
     return <ProfileConnectPrompt />;
-  }
-
-  if (!myProfile?.user?.username) {
-    return <SetupWizard />;
   }
 
   return <ProfileDashboard />;

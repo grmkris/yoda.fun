@@ -29,10 +29,10 @@ export function useClaimDaily() {
     onSuccess: (data) => {
       toast.success(`Claimed ${data.pointsClaimed} points!`);
       queryClient.invalidateQueries({
-        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({}).queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: orpc.points.dailyStatus.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.dailyStatus.queryOptions({}).queryKey,
       });
     },
     onError: (error) => {
@@ -64,7 +64,7 @@ export function usePurchasePoints() {
     onSuccess: (data) => {
       toast.success(`Purchased ${data.pointsPurchased} points!`);
       queryClient.invalidateQueries({
-        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({}).queryKey,
       });
     },
     onError: (error) => {

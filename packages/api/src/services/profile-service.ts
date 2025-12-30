@@ -238,56 +238,6 @@ export function createProfileService({ deps }: { deps: ProfileServiceDeps }) {
         })
         .where(eq(DB_SCHEMA.userProfile.userId, userId));
     },
-
-    /**
-     * Set username for a user (claims a unique username)
-     */
-    async setUsername(userId: UserId, username: string) {
-      const normalizedUsername = username.toLowerCase();
-
-      // Check if username is already taken
-      const existing = await db
-        .select({ id: DB_SCHEMA.user.id })
-        .from(DB_SCHEMA.user)
-        .where(eq(DB_SCHEMA.user.username, normalizedUsername))
-        .limit(1);
-
-      if (existing[0] && existing[0].id !== userId) {
-        return { success: false, error: "USERNAME_TAKEN" as const };
-      }
-
-      // Update user with username
-      const [updated] = await db
-        .update(DB_SCHEMA.user)
-        .set({
-          username: normalizedUsername,
-          displayUsername: username,
-        })
-        .where(eq(DB_SCHEMA.user.id, userId))
-        .returning();
-
-      if (!updated) {
-        return { success: false, error: "UPDATE_FAILED" as const };
-      }
-
-      logger.info({ userId, username: normalizedUsername }, "Username set");
-      return { success: true, username: normalizedUsername };
-    },
-
-    /**
-     * Check if a username is available
-     */
-    async isUsernameAvailable(username: string) {
-      const normalizedUsername = username.toLowerCase();
-
-      const existing = await db
-        .select({ id: DB_SCHEMA.user.id })
-        .from(DB_SCHEMA.user)
-        .where(eq(DB_SCHEMA.user.username, normalizedUsername))
-        .limit(1);
-
-      return { available: !existing[0] };
-    },
   };
 }
 

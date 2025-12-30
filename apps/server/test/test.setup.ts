@@ -135,6 +135,7 @@ export async function createTestSetup(): Promise<TestSetup> {
     db,
     appEnv: env.APP_ENV,
     secret: env.BETTER_AUTH_SECRET,
+    reownProjectId: "test-project-id", // Not used in tests
   });
 
   logger.debug({ msg: "Creating test users..." });

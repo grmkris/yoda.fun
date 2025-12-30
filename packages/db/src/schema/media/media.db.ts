@@ -58,8 +58,6 @@ export const media = pgTable(
     status: mediaStatusEnum("status").notNull().default("pending"),
 
     sourceUrl: text("source_url"),
-    finalKey: text("final_key"),
-    thumbnailKey: text("thumbnail_key"),
     metadata: jsonb("metadata").$type<MediaMetadata>(),
     errorMessage: text("error_message"),
     retryCount: integer("retry_count").notNull().default(0),

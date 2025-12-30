@@ -56,14 +56,43 @@ export const NUMERIC_CONSTANTS = {
     defaultLimit: 20,
   },
   swipe: {
+    // Thresholds
+    horizontalThreshold: 150,
+    velocityThreshold: 500,
+    downSwipeThreshold: 100,
+    downVelocityThreshold: 400,
+    // Exit
     exitDistance: 1000,
-    animationDuration: 300,
+    exitScale: 0.8,
+    // Drag
     dragElasticity: 0.7,
     scaleOnDrag: 1.05,
-    exitScale: 0.8,
+    // Stack
     stackScaleFactor: 0.05,
     stackOpacityFactor: 0.2,
     stackYOffset: 10,
+    maxVisibleCards: 3,
+    // Spring physics (velocity-based)
+    spring: {
+      exit: { stiffness: 600, damping: 30 },
+      snapBack: { stiffness: 400, damping: 25 },
+      stack: { stiffness: 300, damping: 28 },
+      overlay: { stiffness: 350, damping: 22 },
+    },
+    // Overlay configuration
+    overlay: {
+      maxHeight: 0.85,
+      dragCloseThreshold: 100,
+      velocityCloseThreshold: 300,
+    },
+    // Haptic patterns (ms)
+    haptic: {
+      threshold: 10,
+      swipeComplete: 20,
+      error: [50, 30, 50] as number[],
+    },
+    // Legacy (keeping for backwards compat during migration)
+    animationDuration: 300,
     buttonSize: 60,
     buttonBorderWidth: 2,
     buttonScale: 1.1,

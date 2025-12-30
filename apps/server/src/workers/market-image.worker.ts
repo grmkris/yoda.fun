@@ -11,6 +11,10 @@ import type { Logger } from "@yoda.fun/logger";
 import { createImageService } from "@yoda.fun/markets/generation";
 import { processMarketImage } from "@yoda.fun/markets/image-processing";
 import type { QueueClient } from "@yoda.fun/queue";
+import {
+  getMediaS3Key,
+  getMediaThumbnailS3Key,
+} from "@yoda.fun/shared/media-utils";
 import type { StorageClient } from "@yoda.fun/storage";
 
 export interface MarketImageWorkerConfig {
@@ -72,42 +76,41 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
       } else {
         logger.info({ marketId }, "Generating new image via Replicate");
 
+        // Create pending media first to get mediaId (used as S3 key)
+        mediaId = await imageService.createPendingMedia(tags, prompt);
+        logger.info({ marketId, mediaId }, "Created pending media record");
+
         const sourceUrl = await generateMarketImageWithPrompt(prompt, {
           replicateApiKey,
         });
 
         if (!sourceUrl) {
-          logger.warn({ marketId }, "Image generation returned null");
+          logger.warn({ marketId, mediaId }, "Image generation returned null");
           return { success: false, marketId };
         }
 
         const imageBuffer = await fetchImageBuffer(sourceUrl);
-        const { imageUrl: finalKey, thumbnailUrl: thumbnailKey } =
-          await processMarketImage(imageBuffer, { storage });
 
-        mediaId = await imageService.createImageMedia(finalKey, tags, prompt);
+        // Upload to S3 (keys derived from mediaId)
+        await processMarketImage(imageBuffer, { storage, mediaId });
 
-        await db
-          .update(DB_SCHEMA.media)
-          .set({ finalKey, thumbnailKey, status: "processed" })
-          .where(eq(DB_SCHEMA.media.id, mediaId));
+        // Mark media as processed
+        await imageService.markMediaProcessed(mediaId, sourceUrl);
 
         logger.info({ marketId, mediaId, tags }, "Created new reusable image");
       }
 
-      const [media] = await db
-        .select()
-        .from(DB_SCHEMA.media)
-        .where(eq(DB_SCHEMA.media.id, mediaId))
-        .limit(1);
+      // Derive S3 keys from mediaId
+      const imageUrl = getMediaS3Key(mediaId);
+      const thumbnailUrl = getMediaThumbnailS3Key(mediaId);
 
       // Update market with media reference and URLs
       await db
         .update(DB_SCHEMA.market)
         .set({
           mediaId,
-          imageUrl: media?.finalKey ?? media?.sourceUrl,
-          thumbnailUrl: media?.thumbnailKey,
+          imageUrl,
+          thumbnailUrl,
           status: "LIVE",
         })
         .where(eq(DB_SCHEMA.market.id, marketId));
@@ -122,8 +125,8 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
         marketId,
         mediaId,
         reused,
-        imageUrl: media?.finalKey ?? undefined,
-        thumbnailUrl: media?.thumbnailKey ?? undefined,
+        imageUrl,
+        thumbnailUrl,
       };
     },
     {

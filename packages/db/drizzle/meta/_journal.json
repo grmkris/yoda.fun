@@ -57,6 +57,13 @@
       "when": 1767015736246,
       "tag": "0007_parallel_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1767048033015,
+      "tag": "0008_rainy_cloak",
+      "breakpoints": true
     }
   ]
 }

@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SwipeStack, type SwipeStackRef } from "@/components/swipe/swipe-stack";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useHaptic } from "@/hooks/use-haptic";
 import { useMarketStack } from "@/hooks/use-market-stack";
 import { usePlaceBet } from "@/hooks/use-place-bet";
+import { CardDetailsSheet } from "./card-details-sheet";
+import { CardFront, type MarketCard } from "./card-front";
+import { CardStack, type CardStackRef } from "./card-stack";
 import { EmptyState } from "./empty-state";
-import { GameCard, type MarketCard } from "./game-card";
+import type { SwipeDirection } from "./swipeable-card";
 
 export function CardSwiperSection() {
   const [swipedCount, setSwipedCount] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
-  const stackRef = useRef<SwipeStackRef>(null);
+  const [selectedCard, setSelectedCard] = useState<MarketCard | null>(null);
+  const stackRef = useRef<CardStackRef>(null);
+  const { vibrateOnError } = useHaptic();
 
   const {
     data,
@@ -40,6 +44,8 @@ export function CardSwiperSection() {
 
   const handleSwipe = (card: MarketCard, vote: "YES" | "NO" | "SKIP") => {
     setSwipedCount((prev) => prev + 1);
+    setSelectedCard(null);
+
     placeBet.mutate(
       { marketId: card.id, vote },
       {
@@ -47,14 +53,39 @@ export function CardSwiperSection() {
           setSwipedCount((prev) => prev - 1);
           stackRef.current?.revert();
           setIsBlocked(true);
+          vibrateOnError();
         },
       }
     );
   };
 
-  const handleSwipeLeft = (card: MarketCard) => handleSwipe(card, "NO");
-  const handleSwipeRight = (card: MarketCard) => handleSwipe(card, "YES");
-  const handleSwipeDown = (card: MarketCard) => handleSwipe(card, "SKIP");
+  // Handler for swipe direction to vote mapping
+  const handleDirectionSwipe = (
+    card: MarketCard,
+    direction: SwipeDirection
+  ) => {
+    const voteMap = { left: "NO", right: "YES", down: "SKIP" } as const;
+    handleSwipe(card, voteMap[direction]);
+  };
+
+  // Sheet action handlers
+  const handleSheetVoteYes = () => {
+    if (selectedCard) {
+      stackRef.current?.swipeRight();
+    }
+  };
+
+  const handleSheetVoteNo = () => {
+    if (selectedCard) {
+      stackRef.current?.swipeLeft();
+    }
+  };
+
+  const handleSheetSkip = () => {
+    if (selectedCard) {
+      stackRef.current?.swipeDown();
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,39 +144,27 @@ export function CardSwiperSection() {
         {remaining <= 0 && !hasNextPage ? (
           <EmptyState />
         ) : (
-          <SwipeStack
-            cards={allMarkets}
-            className="min-h-[500px]"
-            disabled={isBlocked || !!expandedCardId}
-            maxVisibleCards={5}
-            onSwipeDown={handleSwipeDown}
-            onSwipeLeft={handleSwipeLeft}
-            onSwipeRight={handleSwipeRight}
-            ref={stackRef}
-            renderCard={(card) => (
-              <GameCard
-                card={card}
-                isExpanded={expandedCardId === card.id}
-                onSkip={() => {
-                  setExpandedCardId(null);
-                  stackRef.current?.swipeDown();
-                }}
-                onToggleExpand={() =>
-                  setExpandedCardId((prev) =>
-                    prev === card.id ? null : card.id
-                  )
-                }
-                onVoteNo={() => {
-                  setExpandedCardId(null);
-                  stackRef.current?.swipeLeft();
-                }}
-                onVoteYes={() => {
-                  setExpandedCardId(null);
-                  stackRef.current?.swipeRight();
-                }}
-              />
-            )}
-          />
+          <>
+            <CardStack
+              cards={allMarkets}
+              className="min-h-[500px]"
+              disabled={isBlocked || !!selectedCard}
+              maxVisibleCards={5}
+              onCardTap={setSelectedCard}
+              onSwipe={handleDirectionSwipe}
+              ref={stackRef}
+              renderCard={(card) => <CardFront card={card} />}
+            />
+
+            <CardDetailsSheet
+              card={selectedCard}
+              isOpen={!!selectedCard}
+              onClose={() => setSelectedCard(null)}
+              onSkip={handleSheetSkip}
+              onVoteNo={handleSheetVoteNo}
+              onVoteYes={handleSheetVoteYes}
+            />
+          </>
         )}
       </div>
     </section>

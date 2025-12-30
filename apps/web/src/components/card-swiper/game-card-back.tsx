@@ -2,7 +2,7 @@
 
 import { Clock, Coins, ExternalLink, Users, X } from "lucide-react";
 import { motion } from "motion/react";
-import type { MarketCard } from "./game-card";
+import type { MarketCard } from "./card-front";
 
 interface GameCardBackProps {
   card: MarketCard;

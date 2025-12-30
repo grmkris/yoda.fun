@@ -3,8 +3,7 @@
 import { User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { BalanceDisplay } from "@/components/balance-display";
-import { RewardsModal } from "@/components/rewards/rewards-modal";
+import { PointsDisplay } from "@/components/balance-display";
 import { authClient } from "@/lib/auth-client";
 import { SidebarTrigger } from "./sidebar/sidebar-trigger";
 
@@ -35,10 +34,9 @@ export default function Header() {
           />
         </Link>
 
-        {/* Right: Balance, Rewards, Profile */}
+        {/* Right: Points + Profile */}
         <div className="flex items-center gap-2">
-          {session && <BalanceDisplay />}
-          <RewardsModal compact />
+          {session && <PointsDisplay />}
           <Link
             className="flex h-8 w-8 items-center justify-center"
             href={session ? "/profile" : "/login"}

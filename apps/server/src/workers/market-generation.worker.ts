@@ -2,6 +2,8 @@ import type { AiClient } from "@yoda.fun/ai";
 import { withTrace } from "@yoda.fun/ai/observability";
 import type { Cache } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
+import { DB_SCHEMA } from "@yoda.fun/db";
+import { desc, gte } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import {
   generateAndInsertMarkets,
@@ -34,10 +36,6 @@ const pickRandomFromArray = <T>(arr: T[], count: number): T[] => {
   return shuffled.slice(0, count);
 };
 
-/**
- * Create and start the market generation worker
- * Processes scheduled and manual market generation jobs
- */
 export function createMarketGenerationWorker(
   config: MarketGenerationWorkerConfig
 ): {
@@ -78,15 +76,27 @@ export function createMarketGenerationWorker(
           },
         });
 
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        const recentMarkets = await db
+          .select({ title: DB_SCHEMA.market.title })
+          .from(DB_SCHEMA.market)
+          .where(gte(DB_SCHEMA.market.createdAt, fourHoursAgo))
+          .orderBy(desc(DB_SCHEMA.market.createdAt))
+          .limit(50);
+        const recentTitles = recentMarkets.map((m) => m.title);
+
         logger.info(
-          { categories: topics.map((t) => t.category) },
+          {
+            categories: topics.map((t) => t.category),
+            recentTitlesCount: recentTitles.length,
+          },
           "Researching trending topics"
         );
 
         const trendingTopics = await getTrendingTopics({
           aiClient,
           logger,
-          config: { topics },
+          config: { topics, previousTopics: recentTitles },
         });
 
         const { generated, inserted } = await generateAndInsertMarkets({

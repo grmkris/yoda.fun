@@ -1,9 +1,9 @@
 "use client";
 
+import { AppKitButton } from "@reown/appkit/react";
 import { Loader2, Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import { useAccount } from "wagmi";
-import { PortoConnectButton } from "@/components/porto-connect-button";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
 import {
@@ -165,7 +165,7 @@ export function DepositSection() {
               Connect your wallet to deposit funds
             </div>
           </div>
-          <PortoConnectButton />
+          <AppKitButton />
         </div>
       )}
     </motion.div>

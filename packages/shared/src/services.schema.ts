@@ -16,6 +16,8 @@ export const SERVICE_URLS: Record<
     cookieDomain: string;
     siweDomain: string;
     storageUrl: string;
+    publicBucket: string;
+    publicStorageUrl: string;
     posthog: string;
     posthogAssets: string;
     posthogUi: string;
@@ -30,6 +32,8 @@ export const SERVICE_URLS: Record<
     cookieDomain: "localhost",
     siweDomain: "localhost",
     storageUrl: "https://storage.yoda.fun",
+    publicBucket: "yoda-fun-public",
+    publicStorageUrl: "https://storage.yoda.fun/yoda-fun-public",
     posthog: "https://eu.i.posthog.com",
     posthogAssets: "https://eu-assets.i.posthog.com",
     posthogUi: "https://eu.posthog.com",
@@ -43,6 +47,8 @@ export const SERVICE_URLS: Record<
     cookieDomain: ".yoda.fun",
     siweDomain: ".yoda.fun",
     storageUrl: "https://storage.yoda.fun",
+    publicBucket: "yoda-fun-public",
+    publicStorageUrl: "https://storage.yoda.fun/yoda-fun-public",
     posthog: "https://eu.i.posthog.com",
     posthogAssets: "https://eu-assets.i.posthog.com",
     posthogUi: "https://eu.posthog.com",

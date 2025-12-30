@@ -1,6 +1,6 @@
 "use client";
 
-import { PortoConnectButton } from "@/components/porto-connect-button";
+import { AppKitButton } from "@reown/appkit/react";
 
 export default function LoginPage() {
   return (
@@ -14,7 +14,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex justify-center">
-          <PortoConnectButton />
+          <AppKitButton />
         </div>
       </div>
     </div>

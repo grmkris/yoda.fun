@@ -21,11 +21,11 @@
     "tsdown": "catalog:"
   },
   "dependencies": {
+    "@reown/appkit-siwe": "^1.8.15",
     "@yoda.fun/db": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/test-utils": "workspace:*",
     "better-auth": "catalog:",
-    "porto": "catalog:",
     "viem": "catalog:",
     "zod": "catalog:"
   }

@@ -1,8 +1,8 @@
 "use client";
 
+import { AppKitButton } from "@reown/appkit/react";
 import { TrendingUp, Trophy, Wallet } from "lucide-react";
 import { motion } from "motion/react";
-import { PortoConnectButton } from "@/components/porto-connect-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
 
@@ -130,7 +130,7 @@ export function ProfileConnectPrompt() {
       subtitle="Connect your wallet to view your profile and unlock all features"
       title="Connect Your Wallet"
     >
-      <PortoConnectButton />
+      <AppKitButton />
     </PromptCard>
   );
 }

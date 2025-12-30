@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { MarketCard } from "./game-card";
+import type { MarketCard } from "./card-front";
 
 interface BetConfirmationModalProps {
   market: MarketCard | null;

@@ -22,23 +22,20 @@ export function usePlaceBet() {
 
   return useMutation({
     mutationFn: async (input: PlaceBetInput) => client.bet.place(input),
-    onSuccess: (_data, input) => {
+    onSuccess: () => {
       // Invalidate points to refresh balance
       queryClient.invalidateQueries({
-        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.get.queryOptions({}).queryKey,
       });
       // Invalidate daily status to update free skips count
       queryClient.invalidateQueries({
-        queryKey: orpc.points.dailyStatus.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.points.dailyStatus.queryOptions({}).queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: orpc.bet.history.queryOptions({ input: {} }).queryKey,
+        queryKey: orpc.bet.history.queryOptions({
+          input: {},
+        }).queryKey,
       });
-
-      // Show success toast for votes (not skips)
-      if (input.vote !== "SKIP") {
-        toast.success(`Voted ${input.vote}!`);
-      }
     },
     onError: (error) => {
       const { code, message } = getErrorData(error);

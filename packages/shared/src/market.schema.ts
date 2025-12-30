@@ -33,12 +33,7 @@ export const DEFAULT_TOPICS: TopicConfig[] = [
   {
     id: "sports",
     category: "sports",
-    querySeeds: [
-      "NBA games today tomorrow",
-      "NFL games this week",
-      "Premier League fixtures",
-      "UFC fights scheduled",
-    ],
+    querySeeds: ["major sports games today", "UFC fights scheduled"],
   },
   {
     id: "entertainment",
