@@ -21,6 +21,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { useDisconnect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +37,7 @@ import { ProfileConnectPrompt } from "./profile-connect-prompt";
 function ProfileHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { mutateAsync: disconnect } = useDisconnect();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,8 +212,9 @@ function ProfileHeader() {
 
               <button
                 className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:scale-105"
-                onClick={() => {
-                  authClient.signOut({
+                onClick={async () => {
+                  await disconnect();
+                  await authClient.signOut({
                     fetchOptions: {
                       onSuccess: () => router.push("/"),
                     },

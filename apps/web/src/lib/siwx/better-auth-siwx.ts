@@ -59,6 +59,9 @@ export const betterAuthSiwx: SIWXConfig = {
     if (error) {
       throw new Error(error.message ?? "Failed to verify signature");
     }
+
+    // Refresh page to load new auth state
+    window.location.reload();
   },
 
   async revokeSession(_chainId, _address) {

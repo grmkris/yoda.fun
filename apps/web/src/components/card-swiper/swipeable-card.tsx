@@ -8,7 +8,13 @@ import {
   useMotionValue,
   useTransform,
 } from "motion/react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { useHaptic } from "@/hooks/use-haptic";
 
 export type SwipeDirection = "left" | "right" | "down";
@@ -77,7 +83,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     ref
   ) {
     const controls = useAnimation();
-    const isExitingRef = useRef(false);
+    const [isExiting, setIsExiting] = useState(false);
     const hasTriggeredThreshold = useRef({
       left: false,
       right: false,
@@ -149,11 +155,11 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         velocity: { x: number; y: number },
         isProgrammatic = false
       ) => {
-        if (isExitingRef.current) {
+        if (isExiting) {
           return;
         }
 
-        isExitingRef.current = true;
+        setIsExiting(true);
         onSwipe(direction);
         vibrateOnSwipe();
 
@@ -180,7 +186,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
 
         onSwipeComplete(direction);
       },
-      [controls, onSwipe, vibrateOnSwipe]
+      [controls, isExiting, onSwipe, onSwipeComplete, vibrateOnSwipe]
     );
 
     const handleDrag = useCallback(
@@ -193,9 +199,6 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
 
     const handleDragEnd = useCallback(
       (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-        if (isExitingRef.current) {
-          return;
-        }
         const { offset, velocity } = info;
 
         // Check down swipe first (priority)
@@ -272,7 +275,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
       <motion.div
         animate={controls}
         className={className}
-        drag={!disabled}
+        drag={!(disabled || isExiting)}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={config.dragElasticity}
         onDrag={handleDrag}

@@ -8,7 +8,7 @@ import {
   parseUnits,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { base, baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { ERC20_ABI, USDC_ADDRESSES } from "./constants";
 
 export interface UsdcClientConfig {
@@ -19,7 +19,6 @@ export interface UsdcClientConfig {
 
 const CHAINS = {
   base,
-  "base-sepolia": baseSepolia,
 } as const;
 
 const USDC_DECIMALS = 6;

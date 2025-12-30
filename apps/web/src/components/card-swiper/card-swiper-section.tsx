@@ -9,7 +9,6 @@ import { CardDetailsSheet } from "./card-details-sheet";
 import { CardFront, type MarketCard } from "./card-front";
 import { CardStack, type CardStackRef } from "./card-stack";
 import { EmptyState } from "./empty-state";
-import { SwipeActionButtons } from "./swipe-action-buttons";
 import type { SwipeDirection } from "./swipeable-card";
 
 export function CardSwiperSection() {
@@ -82,9 +81,6 @@ export function CardSwiperSection() {
     stackRef.current?.swipeDown();
   };
 
-  // Current card for button disabled state
-  const currentCard = allMarkets[swipedCount];
-
   if (isLoading) {
     return (
       <section className="p-4">
@@ -152,13 +148,6 @@ export function CardSwiperSection() {
               onSwipe={handleDirectionSwipe}
               ref={stackRef}
               renderCard={(card) => <CardFront card={card} />}
-            />
-
-            <SwipeActionButtons
-              disabled={isBlocked || !!selectedCard || !currentCard}
-              onNo={handleVoteNo}
-              onSkip={handleSkip}
-              onYes={handleVoteYes}
             />
 
             <CardDetailsSheet

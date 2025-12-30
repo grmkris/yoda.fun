@@ -31,12 +31,12 @@ export const WORKER_CONFIG = {
 } as const;
 
 // Network types
-export type Network = "base" | "base-sepolia";
+export type Network = "base";
 
 // Environment-specific configuration
 export const ENV_CONFIG = {
   dev: {
-    network: "base-sepolia" as const,
+    network: "base" as const,
     depositWalletAddress: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
   },
   prod: {

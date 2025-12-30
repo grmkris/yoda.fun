@@ -1,6 +1,6 @@
 "use client";
 
-import { base, baseSepolia } from "@reown/appkit/networks";
+import { base } from "@reown/appkit/networks";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import type { Network } from "@yoda.fun/shared/constants";
@@ -9,9 +9,8 @@ import { cookieStorage, createStorage, WagmiProvider } from "wagmi";
 import { env } from "@/env";
 import { betterAuthSiwx } from "@/lib/siwx/better-auth-siwx";
 
-const NETWORKS: Record<Network, typeof base | typeof baseSepolia> = {
+const NETWORKS: Record<Network, typeof base> = {
   base,
-  "base-sepolia": baseSepolia,
 };
 
 const network = ENV_CONFIG[env.NEXT_PUBLIC_ENV].network;
@@ -30,7 +29,7 @@ const wagmiAdapter = new WagmiAdapter({
 createAppKit({
   adapters: [wagmiAdapter],
   projectId,
-  networks: [base, baseSepolia],
+  networks: [base],
   features: { analytics: false },
   siwx: betterAuthSiwx,
 });
