@@ -9,6 +9,7 @@ import { CardDetailsSheet } from "./card-details-sheet";
 import { CardFront, type MarketCard } from "./card-front";
 import { CardStack, type CardStackRef } from "./card-stack";
 import { EmptyState } from "./empty-state";
+import { SwipeActionButtons } from "./swipe-action-buttons";
 import type { SwipeDirection } from "./swipeable-card";
 
 export function CardSwiperSection() {
@@ -68,24 +69,21 @@ export function CardSwiperSection() {
     handleSwipe(card, voteMap[direction]);
   };
 
-  // Sheet action handlers
-  const handleSheetVoteYes = () => {
-    if (selectedCard) {
-      stackRef.current?.swipeRight();
-    }
+  // Action handlers - work from both sheet and buttons
+  const handleVoteYes = () => {
+    stackRef.current?.swipeRight();
   };
 
-  const handleSheetVoteNo = () => {
-    if (selectedCard) {
-      stackRef.current?.swipeLeft();
-    }
+  const handleVoteNo = () => {
+    stackRef.current?.swipeLeft();
   };
 
-  const handleSheetSkip = () => {
-    if (selectedCard) {
-      stackRef.current?.swipeDown();
-    }
+  const handleSkip = () => {
+    stackRef.current?.swipeDown();
   };
+
+  // Current card for button disabled state
+  const currentCard = allMarkets[swipedCount];
 
   if (isLoading) {
     return (
@@ -156,13 +154,20 @@ export function CardSwiperSection() {
               renderCard={(card) => <CardFront card={card} />}
             />
 
+            <SwipeActionButtons
+              disabled={isBlocked || !!selectedCard || !currentCard}
+              onNo={handleVoteNo}
+              onSkip={handleSkip}
+              onYes={handleVoteYes}
+            />
+
             <CardDetailsSheet
               card={selectedCard}
               isOpen={!!selectedCard}
               onClose={() => setSelectedCard(null)}
-              onSkip={handleSheetSkip}
-              onVoteNo={handleSheetVoteNo}
-              onVoteYes={handleSheetVoteYes}
+              onSkip={handleSkip}
+              onVoteNo={handleVoteNo}
+              onVoteYes={handleVoteYes}
             />
           </>
         )}

@@ -6,7 +6,7 @@ import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import { UserId } from "@yoda.fun/shared/typeid";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous, siwe } from "better-auth/plugins";
+import { anonymous, customSession, siwe } from "better-auth/plugins";
 import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
 
 export interface AuthConfig {
@@ -159,6 +159,19 @@ export const createAuth = (config: AuthConfig) => {
             return false;
           }
         },
+      }),
+      customSession(async ({ user, session }) => {
+        const wallet = await config.db.query.walletAddress.findFirst({
+          where: eq(
+            DB_SCHEMA.walletAddress.userId,
+            UserId.parse(session.userId)
+          ),
+        });
+        return {
+          user,
+          session,
+          walletAddress: wallet?.address ?? null,
+        };
       }),
     ],
     databaseHooks: {

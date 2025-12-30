@@ -1,4 +1,4 @@
-import type { SIWXConfig, SIWXMessage, SIWXSession } from "@reown/appkit";
+import type { SIWXConfig } from "@reown/appkit";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { createSiweMessage } from "viem/siwe";
 import { env } from "@/env";
@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 const domain = SERVICE_URLS[env.NEXT_PUBLIC_ENV].siweDomain;
 
 export const betterAuthSiwx: SIWXConfig = {
-  async createMessage(input: SIWXMessage.Input): Promise<SIWXMessage> {
+  async createMessage(input) {
     // Parse chainId from CAIP format (e.g., "eip155:8453" -> 8453)
     const chainId = Number.parseInt(input.chainId.split(":")[1] ?? "8453", 10);
 
@@ -42,7 +42,7 @@ export const betterAuthSiwx: SIWXConfig = {
     };
   },
 
-  async addSession(session: SIWXSession): Promise<void> {
+  async addSession(session) {
     const chainId = Number.parseInt(
       session.data.chainId.split(":")[1] ?? "8453",
       10
@@ -61,20 +61,44 @@ export const betterAuthSiwx: SIWXConfig = {
     }
   },
 
-  async revokeSession(_chainId: string, _address: string): Promise<void> {
+  async revokeSession(_chainId, _address) {
     await authClient.signOut();
   },
 
-  async setSessions(_sessions: SIWXSession[]): Promise<void> {
+  async setSessions(_sessions) {
     // Not needed - better-auth handles single session
   },
 
-  async getSessions(
-    _chainId: string,
-    _address: string
-  ): Promise<SIWXSession[]> {
-    // Return empty - better-auth manages sessions separately
-    return [];
+  async getSessions(chainId, address) {
+    const { data: session } = await authClient.getSession();
+
+    // Must be authenticated and not anonymous
+    if (!session?.user || session.user.isAnonymous) {
+      return [];
+    }
+
+    // Use wallet from session (populated by customSession plugin)
+    const authenticatedWallet = (
+      session as { walletAddress?: string }
+    ).walletAddress?.toLowerCase();
+    if (!authenticatedWallet || authenticatedWallet !== address.toLowerCase()) {
+      return [];
+    }
+
+    return [
+      {
+        data: {
+          accountAddress: address,
+          chainId,
+          domain,
+          uri: typeof window !== "undefined" ? window.location.origin : "",
+          version: "1",
+          nonce: "existing-session",
+        },
+        message: "existing-session",
+        signature: "existing-session",
+      },
+    ];
   },
 
   signOutOnDisconnect: true,

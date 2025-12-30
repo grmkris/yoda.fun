@@ -8,13 +8,7 @@ import {
   useMotionValue,
   useTransform,
 } from "motion/react";
-import {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
 import { useHaptic } from "@/hooks/use-haptic";
 
 export type SwipeDirection = "left" | "right" | "down";
@@ -83,12 +77,13 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     ref
   ) {
     const controls = useAnimation();
-    const [isExiting, setIsExiting] = useState(false);
+    const isExitingRef = useRef(false);
     const hasTriggeredThreshold = useRef({
       left: false,
       right: false,
       down: false,
     });
+    const dragOffset = useRef({ x: 0, y: 0 });
     const { vibrateOnThreshold, vibrateOnSwipe } = useHaptic();
 
     // Motion values for reactive transforms
@@ -149,17 +144,30 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     );
 
     const executeSwipe = useCallback(
-      async (direction: SwipeDirection, velocity: { x: number; y: number }) => {
-        if (isExiting) {
+      async (
+        direction: SwipeDirection,
+        velocity: { x: number; y: number },
+        isProgrammatic = false
+      ) => {
+        if (isExitingRef.current) {
           return;
         }
 
-        setIsExiting(true);
+        isExitingRef.current = true;
         onSwipe(direction);
         vibrateOnSwipe();
 
         const exit = getExitPosition(direction, config.exitDistance);
         const exitVelocity = direction === "down" ? velocity.y : velocity.x;
+
+        // Smoother tween for button clicks, spring for natural swipes
+        const transition = isProgrammatic
+          ? {
+              type: "tween" as const,
+              duration: 0.35,
+              ease: "easeInOut" as const,
+            }
+          : getSpringConfig(exitVelocity);
 
         await controls.start({
           x: exit.x,
@@ -167,16 +175,17 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           opacity: 0,
           scale: config.exitScale,
           rotate: exit.rotate,
-          transition: getSpringConfig(exitVelocity),
+          transition,
         });
 
         onSwipeComplete(direction);
       },
-      [controls, isExiting, onSwipe, onSwipeComplete, vibrateOnSwipe]
+      [controls, onSwipe, vibrateOnSwipe]
     );
 
     const handleDrag = useCallback(
       (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        dragOffset.current = { x: info.offset.x, y: info.offset.y };
         checkThresholds(info.offset.x, info.offset.y);
       },
       [checkThresholds]
@@ -184,6 +193,9 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
 
     const handleDragEnd = useCallback(
       (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        if (isExitingRef.current) {
+          return;
+        }
         const { offset, velocity } = info;
 
         // Check down swipe first (priority)
@@ -216,36 +228,56 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           },
         });
 
-        // Reset threshold triggers
+        // Reset threshold triggers and drag offset
         hasTriggeredThreshold.current = {
           left: false,
           right: false,
           down: false,
         };
+        dragOffset.current = { x: 0, y: 0 };
       },
       [controls, executeSwipe]
     );
 
-    // Imperative handle for programmatic swipes
-    useImperativeHandle(ref, () => ({
-      swipe: (direction: SwipeDirection) => {
-        executeSwipe(direction, {
-          x: config.velocityThreshold,
-          y: config.downVelocityThreshold,
-        });
-      },
-    }));
+    // Imperative handle for programmatic swipes (buttons)
+    // Must depend on executeSwipe to avoid stale closure with isExiting
+    useImperativeHandle(
+      ref,
+      () => ({
+        swipe: (direction: SwipeDirection) => {
+          executeSwipe(
+            direction,
+            { x: config.velocityThreshold, y: config.downVelocityThreshold },
+            true // isProgrammatic - use smooth tween animation
+          );
+        },
+      }),
+      [executeSwipe]
+    );
+
+    // Tap handler with dead zone - prevent tap after drag
+    const handleTap = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+      const { x: dx, y: dy } = dragOffset.current;
+      const moved = Math.abs(dx) > 5 || Math.abs(dy) > 5;
+      if (!moved) {
+        onTap?.();
+      }
+      dragOffset.current = { x: 0, y: 0 };
+    }, [disabled, onTap]);
 
     return (
       <motion.div
         animate={controls}
         className={className}
-        drag={!(disabled || isExiting)}
+        drag={!disabled}
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={config.dragElasticity}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        onTap={disabled ? undefined : onTap}
+        onTap={handleTap}
         style={{
           ...GPU_STYLES,
           x,

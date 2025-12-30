@@ -67,9 +67,9 @@ export const NUMERIC_CONSTANTS = {
     // Drag
     dragElasticity: 0.7,
     scaleOnDrag: 1.05,
-    // Stack
-    stackScaleFactor: 0.05,
-    stackOpacityFactor: 0.2,
+    // Stack (subtle differences so cards don't show through)
+    stackScaleFactor: 0.03,
+    stackOpacityFactor: 0.08,
     stackYOffset: 10,
     maxVisibleCards: 3,
     // Spring physics (velocity-based)

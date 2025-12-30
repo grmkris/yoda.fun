@@ -75,7 +75,6 @@ function CardStackComponent<T>(
   ref: ForwardedRef<CardStackRef>
 ) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [pendingRemoval, setPendingRemoval] = useState<number | null>(null);
   const topCardRef = useRef<SwipeableCardRef>(null);
 
   const visibleCards = cards
@@ -92,26 +91,27 @@ function CardStackComponent<T>(
       if (card) {
         onSwipe(card, direction);
       }
-      setPendingRemoval(cardIndex);
     },
     [cards, onSwipe]
   );
 
   const handleSwipeComplete = useCallback(() => {
     setCurrentIndex((prev) => prev + 1);
-    setPendingRemoval(null);
   }, []);
 
-  useImperativeHandle(ref, () => ({
-    swipeLeft: () => topCardRef.current?.swipe("left"),
-    swipeRight: () => topCardRef.current?.swipe("right"),
-    swipeDown: () => topCardRef.current?.swipe("down"),
-    getCurrentCard: () => visibleCards[0]?.card,
-    revert: () => {
-      setCurrentIndex((prev) => Math.max(0, prev - 1));
-      setPendingRemoval(null);
-    },
-  }));
+  useImperativeHandle(
+    ref,
+    () => ({
+      swipeLeft: () => topCardRef.current?.swipe("left"),
+      swipeRight: () => topCardRef.current?.swipe("right"),
+      swipeDown: () => topCardRef.current?.swipe("down"),
+      getCurrentCard: () => visibleCards[0]?.card,
+      revert: () => {
+        setCurrentIndex((prev) => Math.max(0, prev - 1));
+      },
+    }),
+    [visibleCards]
+  );
 
   if (currentIndex >= cards.length) {
     return (
@@ -142,18 +142,12 @@ function CardStackComponent<T>(
             .reverse()
             .map(({ card, globalIndex, stackIndex }) => {
               const isTop = stackIndex === 0;
-              const isBeingRemoved = pendingRemoval === globalIndex;
-              const effectiveStackIndex = isBeingRemoved ? 0 : stackIndex;
 
               return (
                 <motion.div
                   key={globalIndex}
                   layout={!isTop}
-                  style={getStackStyles(
-                    effectiveStackIndex,
-                    isTop,
-                    visibleCards.length
-                  )}
+                  style={getStackStyles(stackIndex, isTop, visibleCards.length)}
                   transition={{
                     type: "spring",
                     ...config.spring.stack,
@@ -177,7 +171,7 @@ function CardStackComponent<T>(
                         style={{
                           position: "absolute",
                           inset: 0,
-                          background: `linear-gradient(180deg, oklch(0.65 0.25 290 / ${stackIndex * 3}%) 0%, transparent 100%)`,
+                          background: `linear-gradient(180deg, oklch(0.65 0.25 290 / ${stackIndex * 2}%) 0%, transparent 100%)`,
                           borderRadius: "inherit",
                           pointerEvents: "none",
                         }}

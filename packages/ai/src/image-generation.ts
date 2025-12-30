@@ -16,8 +16,15 @@ export interface MarketImageContext {
   description: string;
 }
 
+export type ImageModel =
+  | "black-forest-labs/flux-schnell"
+  | "google/nano-banana";
+
+const DEFAULT_IMAGE_MODEL: ImageModel = "black-forest-labs/flux-schnell";
+
 export interface ImageGenerationConfig {
   replicateApiKey: string;
+  model?: ImageModel;
 }
 
 export interface ImagePromptResult {
@@ -58,39 +65,39 @@ export async function generateImagePromptWithTags(
   const result = await aiClient.generateText({
     model,
     output: Output.object({ schema: ImagePromptResponseSchema }),
-    prompt: `Generate an image prompt, reusable tags, and reuse decision for this prediction market:
+    prompt: `Generate a Flux-compatible image prompt for this prediction market.
 
-Title: "${market.title}"
-Description: ${market.description}
+Market: "${market.title}"
+Context: ${market.description}
 Category: ${market.category}
 Style hints: ${style}
 
-PROMPT: Create a detailed image generation prompt (50-100 words) for a betting card. Include:
-- Visual style matching the category
-- No text/watermarks
-- 2:3 aspect ratio feel
-- Eye-catching, professional quality
+PROMPT RULES (for Flux Schnell model):
+- Write DESCRIPTIVE visual language, NOT meta-instructions
+- Describe actual objects, colors, lighting, composition
+- Include: subject, setting, color palette, lighting style, mood
+- End with: "no text no words no letters no numbers"
+- 50-100 words
 
-TAGS: Extract 2-5 reusable tags for image matching:
-- Primary entity (team name, person name, coin symbol, etc.)
-- Category-level tag if relevant
-- Only include entities that would match similar future markets
+BAD (meta): "Create a professional crypto image with blockchain vibes, eye-catching"
+GOOD (descriptive): "Golden Bitcoin coin floating above glowing price chart, neon blue and amber lighting, dark background with subtle digital grid, volumetric light rays, cinematic depth of field, no text no words no letters no numbers"
 
-REUSE_OK: Should we reuse an existing image if tags match?
-- true: Generic/recurring topic (regular game, price prediction, ongoing series)
-- false: Unique/novel event that deserves a fresh image (record-breaking, historic, first-time, specific moment)
+BAD (meta): "Dynamic sports action shot, professional quality"
+GOOD (descriptive): "Basketball player mid-air slam dunk silhouette, arena spotlights creating dramatic rim lighting, crowd blur in background, orange and purple color grade, motion blur on ball, no text no words no letters no numbers"
 
-Examples:
-- "Will Lakers beat Celtics?" → tags: ["lakers", "nba"], reuseOk: true (regular game)
-- "Lakers break 20-game win streak?" → tags: ["lakers", "nba"], reuseOk: false (historic moment)
-- "Will Bitcoin hit $100k?" → tags: ["bitcoin", "crypto"], reuseOk: true (price milestone)
-- "Bitcoin ETF approved for first time?" → tags: ["bitcoin", "crypto"], reuseOk: false (novel event)`,
+TAGS: 2-5 reusable tags for image matching:
+- Primary entity (team name, person, coin symbol)
+- Category tag if relevant
+
+REUSE_OK:
+- true: Generic/recurring (regular game, price prediction)
+- false: Historic/unique event (record-breaking, first-time)`,
   });
 
   return result.output;
 }
 
-function buildImagePrompt(market: MarketImageContext): string {
+export function buildImagePrompt(market: MarketImageContext): string {
   const categoryStyles: Record<string, string> = {
     // Entertainment subcategories
     movies:
@@ -128,50 +135,9 @@ Context: ${market.description}
 Style requirements:
 - ${style}
 - Suitable for a mobile card UI (2:3 aspect ratio feel)
-- No text overlays or watermarks
+- ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO WATERMARKS
 - High contrast, attention-grabbing
 - Professional quality, suitable for a betting app`;
-}
-
-export async function generateMarketImageBuffer(
-  market: MarketImageContext,
-  config: ImageGenerationConfig
-): Promise<Buffer | null> {
-  const replicate = new Replicate({
-    auth: config.replicateApiKey,
-  });
-  const prompt = buildImagePrompt(market);
-
-  const output = (await replicate.run("google/nano-banana", {
-    input: {
-      prompt,
-      aspect_ratio: "2:3",
-      output_format: "png",
-    },
-  })) as { url: () => Promise<string>; blob: () => Promise<Blob> };
-
-  const imageBuffer = await output.blob();
-  return Buffer.from(await imageBuffer.arrayBuffer());
-}
-
-export async function generateMarketImageUrl(
-  market: MarketImageContext,
-  config: ImageGenerationConfig
-): Promise<string | null> {
-  const replicate = new Replicate({
-    auth: config.replicateApiKey,
-  });
-  const prompt = buildImagePrompt(market);
-
-  const output = (await replicate.run("google/nano-banana", {
-    input: {
-      prompt,
-      aspect_ratio: "2:3",
-      output_format: "png",
-    },
-  })) as { url: () => Promise<string>; blob: () => Promise<Blob> };
-
-  return output.url();
 }
 
 export async function fetchImageBuffer(url: string): Promise<Buffer> {
@@ -185,15 +151,29 @@ export async function fetchImageBuffer(url: string): Promise<Buffer> {
 
 /**
  * Generate image using a pre-generated AI prompt
- * (Fixes bug where AI-generated prompts were being ignored)
  */
 export async function generateMarketImageWithPrompt(
   prompt: string,
   config: ImageGenerationConfig
-): Promise<string | null> {
+): Promise<string> {
+  const model: ImageModel = config.model ?? DEFAULT_IMAGE_MODEL;
   const replicate = new Replicate({ auth: config.replicateApiKey });
-  const output = (await replicate.run("google/nano-banana", {
-    input: { prompt, aspect_ratio: "2:3", output_format: "png" },
-  })) as { url: () => Promise<string> };
-  return output.url();
+
+  const input =
+    model === "black-forest-labs/flux-schnell"
+      ? {
+          prompt,
+          aspect_ratio: "2:3",
+          output_format: "webp",
+          num_inference_steps: 4,
+        }
+      : { prompt, aspect_ratio: "2:3", output_format: "png" };
+
+  const output = await replicate.run(model, { input });
+
+  // Flux returns string[], nano-banana returns { url: () => URL }
+  if (Array.isArray(output)) {
+    return output[0] as string;
+  }
+  return (output as { url: () => URL }).url().href;
 }

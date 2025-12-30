@@ -9,6 +9,118 @@ const SAMPLE_MARKETS = [
   "Does MrBeast hit 100M views?",
 ];
 
+const MARKET_CATEGORIES = ["CRYPTO", "SPORTS", "VIRAL"];
+const TAGLINE_COLORS = [COLORS.primary, COLORS.yesGreen, COLORS.nebulaBlue];
+
+function MarketCard({
+  market,
+  category,
+  index,
+}: {
+  market: string;
+  category: string;
+  index: number;
+}) {
+  const isActive = index === 2;
+
+  return (
+    <div
+      key={market}
+      style={{
+        position: "absolute",
+        top: index * 24,
+        left: index * 16,
+        width: 360,
+        height: 220,
+        background: "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
+        borderRadius: 20,
+        border: `1px solid ${isActive ? COLORS.primary : "#374151"}`,
+        padding: 24,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        boxShadow: isActive
+          ? `0 20px 60px ${COLORS.primary}30`
+          : "0 10px 40px rgba(0,0,0,0.4)",
+      }}
+    >
+      {/* Category pill */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: COLORS.textMuted,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+          }}
+        >
+          {category}
+        </div>
+      </div>
+
+      {/* Market question */}
+      <div
+        style={{
+          fontSize: isActive ? 26 : 20,
+          fontWeight: 800,
+          color: isActive ? COLORS.textLight : COLORS.textMuted,
+          lineHeight: 1.25,
+        }}
+      >
+        {market}
+      </div>
+
+      {/* YES/NO buttons */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            height: 44,
+            background: isActive ? COLORS.yesGreen : `${COLORS.yesGreen}40`,
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 16,
+            fontWeight: 700,
+            color: isActive ? "#fff" : COLORS.yesGreen,
+          }}
+        >
+          YES
+        </div>
+        <div
+          style={{
+            flex: 1,
+            height: 44,
+            background: isActive ? "#ef4444" : "#ef444440",
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 16,
+            fontWeight: 700,
+            color: isActive ? "#fff" : "#ef4444",
+          }}
+        >
+          NO
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function GET() {
   try {
     return new ImageResponse(
@@ -76,103 +188,12 @@ export function GET() {
               }}
             >
               {SAMPLE_MARKETS.map((market, i) => (
-                <div
+                <MarketCard
+                  category={MARKET_CATEGORIES[i]}
+                  index={i}
                   key={market}
-                  style={{
-                    position: "absolute",
-                    top: i * 24,
-                    left: i * 16,
-                    width: 360,
-                    height: 220,
-                    background:
-                      "linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)",
-                    borderRadius: 20,
-                    border: `1px solid ${i === 2 ? COLORS.primary : "#374151"}`,
-                    padding: 24,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    boxShadow:
-                      i === 2
-                        ? `0 20px 60px ${COLORS.primary}30`
-                        : "0 10px 40px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  {/* Category pill */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: COLORS.textMuted,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                      }}
-                    >
-                      {i === 0 ? "CRYPTO" : i === 1 ? "SPORTS" : "VIRAL"}
-                    </div>
-                  </div>
-
-                  {/* Market question */}
-                  <div
-                    style={{
-                      fontSize: i === 2 ? 26 : 20,
-                      fontWeight: 800,
-                      color: i === 2 ? COLORS.textLight : COLORS.textMuted,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {market}
-                  </div>
-
-                  {/* YES/NO buttons */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        height: 44,
-                        background:
-                          i === 2 ? COLORS.yesGreen : `${COLORS.yesGreen}40`,
-                        borderRadius: 12,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: i === 2 ? "#fff" : COLORS.yesGreen,
-                      }}
-                    >
-                      YES
-                    </div>
-                    <div
-                      style={{
-                        flex: 1,
-                        height: 44,
-                        background: i === 2 ? "#ef4444" : "#ef444440",
-                        borderRadius: 12,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: i === 2 ? "#fff" : "#ef4444",
-                      }}
-                    >
-                      NO
-                    </div>
-                  </div>
-                </div>
+                  market={market}
+                />
               ))}
             </div>
 
@@ -215,12 +236,7 @@ export function GET() {
                     style={{
                       fontSize: 48,
                       fontWeight: 800,
-                      color:
-                        i === 0
-                          ? COLORS.primary
-                          : i === 1
-                            ? COLORS.yesGreen
-                            : COLORS.nebulaBlue,
+                      color: TAGLINE_COLORS[i],
                     }}
                   >
                     {word}

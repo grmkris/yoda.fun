@@ -18,7 +18,6 @@ import { createStorageClient } from "@yoda.fun/storage";
 import { RedisClient, S3Client } from "bun";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger as honoLogger } from "hono/logger";
 import { setupBullBoard } from "@/admin/bull-board";
 import { env } from "@/env";
 import {
@@ -93,7 +92,28 @@ const queue: QueueClient = createQueueClient({
   logger,
 });
 
-app.use(honoLogger());
+// HTTP request logging with Pino
+app.use(async (c, next) => {
+  const start = Date.now();
+  const reqId = crypto.randomUUID().slice(0, 8);
+
+  logger.debug({ reqId, method: c.req.method, path: c.req.path }, "request");
+
+  await next();
+
+  const duration = Date.now() - start;
+  logger.info(
+    {
+      reqId,
+      method: c.req.method,
+      path: c.req.path,
+      status: c.res.status,
+      duration,
+    },
+    "response"
+  );
+});
+
 app.use(
   "/*",
   cors({
