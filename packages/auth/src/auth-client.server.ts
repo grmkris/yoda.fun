@@ -1,14 +1,14 @@
 import type { Auth } from "@yoda.fun/auth";
+import { createAuthClient } from "better-auth/client";
 import {
   anonymousClient,
   customSessionClient,
   inferAdditionalFields,
   siweClient,
 } from "better-auth/client/plugins";
-import { createAuthClient } from "better-auth/react";
 
-export const createAuthWebClient = (props: { baseUrl: string }) =>
-  createAuthClient({
+export const createAuthServerClient = (props: { baseUrl: string }) => {
+  return createAuthClient({
     baseUrl: props.baseUrl,
     plugins: [
       anonymousClient(),
@@ -17,3 +17,4 @@ export const createAuthWebClient = (props: { baseUrl: string }) =>
       customSessionClient<Auth>(),
     ],
   });
+};

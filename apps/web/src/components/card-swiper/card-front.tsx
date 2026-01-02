@@ -2,8 +2,8 @@
 
 import { Calendar, Clock } from "lucide-react";
 import Image from "next/image";
-import type { StackMarket } from "@/lib/orpc-types";
 import { Countdown } from "@/components/countdown";
+import type { StackMarket } from "@/lib/orpc-types";
 
 export type MarketCard = StackMarket;
 
@@ -31,6 +31,7 @@ export function CardFront({ card }: CardFrontProps) {
             alt={card.title}
             className="h-full w-full object-cover"
             fill
+            loading="eager"
             src={
               card.imageUrl || `https://picsum.photos/seed/${card.id}/400/600`
             }

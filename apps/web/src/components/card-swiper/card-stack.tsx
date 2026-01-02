@@ -37,28 +37,29 @@ export interface CardStackRef {
 const { swipe: config } = NUMERIC_CONSTANTS;
 const DEFAULT_MAX_VISIBLE = 3;
 
-// GPU-optimized stack card styles
+// Animated values for stack cards - Framer Motion handles transitions
+function getStackAnimateProps(stackIndex: number, isTop: boolean) {
+  return {
+    scale: 1 - stackIndex * config.stackScaleFactor,
+    opacity: 1 - stackIndex * config.stackOpacityFactor,
+    y: stackIndex * config.stackYOffset,
+    filter: isTop ? "brightness(1)" : `brightness(${1 - stackIndex * 0.08})`,
+  };
+}
+
+// Static styles that don't animate
 function getStackStyles(
   stackIndex: number,
-  isTop: boolean,
-  _totalVisible: number
+  isTop: boolean
 ): React.CSSProperties {
-  const scale = 1 - stackIndex * config.stackScaleFactor;
-  const opacity = 1 - stackIndex * config.stackOpacityFactor;
-  const yOffset = stackIndex * config.stackYOffset;
-
   return {
-    position: isTop ? "relative" : "absolute",
-    top: isTop ? 0 : yOffset,
+    position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
     zIndex: 10 - stackIndex,
-    transform: `scale(${scale}) translateZ(0)`,
-    opacity,
     transformOrigin: "top center",
-    willChange: isTop ? "transform, opacity" : "auto",
     pointerEvents: isTop ? "auto" : "none",
-    filter: isTop ? "none" : `brightness(${1 - stackIndex * 0.08})`,
   };
 }
 
@@ -141,39 +142,41 @@ function CardStackComponent<T>(
 
               return (
                 <motion.div
+                  animate={getStackAnimateProps(stackIndex, isTop)}
+                  initial={getStackAnimateProps(stackIndex, isTop)}
                   key={globalIndex}
-                  layout={!isTop}
-                  style={getStackStyles(stackIndex, isTop, visibleCards.length)}
+                  layout
+                  style={getStackStyles(stackIndex, isTop)}
                   transition={{
                     type: "spring",
                     ...config.spring.stack,
                   }}
                 >
-                  {isTop ? (
-                    <SwipeableCard
-                      disabled={disabled}
-                      onSwipe={(dir) => handleSwipe(globalIndex, dir)}
-                      onSwipeComplete={handleSwipeComplete}
-                      onTap={() => onCardTap?.(card)}
-                      ref={topCardRef}
-                    >
-                      {renderCard(card, globalIndex)}
-                    </SwipeableCard>
-                  ) : (
-                    <>
-                      {renderCard(card, globalIndex)}
-                      {/* Cosmic tint for stacked cards */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          background: `linear-gradient(180deg, oklch(0.65 0.25 290 / ${stackIndex * 2}%) 0%, transparent 100%)`,
-                          borderRadius: "inherit",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    </>
-                  )}
+                  {/* Always use SwipeableCard to keep DOM structure consistent */}
+                  <SwipeableCard
+                    disabled={disabled || !isTop}
+                    onSwipe={
+                      isTop ? (dir) => handleSwipe(globalIndex, dir) : undefined
+                    }
+                    onSwipeComplete={isTop ? handleSwipeComplete : undefined}
+                    onTap={isTop ? () => onCardTap?.(card) : undefined}
+                    ref={isTop ? topCardRef : undefined}
+                  >
+                    {renderCard(card, globalIndex)}
+                    {/* Cosmic tint - always rendered, opacity animated */}
+                    <motion.div
+                      animate={{ opacity: isTop ? 0 : stackIndex * 0.02 }}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background:
+                          "linear-gradient(180deg, oklch(0.65 0.25 290) 0%, transparent 100%)",
+                        borderRadius: "inherit",
+                        pointerEvents: "none",
+                      }}
+                      transition={{ duration: 0.15 }}
+                    />
+                  </SwipeableCard>
                 </motion.div>
               );
             })}

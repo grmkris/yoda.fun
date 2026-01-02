@@ -73,6 +73,11 @@ export const betterAuthSiwx: SIWXConfig = {
   },
 
   async getSessions(chainId, address) {
+    // Can't check session server-side - wallet auth is browser-only
+    if (typeof window === "undefined") {
+      return [];
+    }
+
     const { data: session } = await authClient.getSession();
 
     // Must be authenticated and not anonymous

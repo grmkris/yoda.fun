@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createAuthWebClient } from "@yoda.fun/auth/auth-client.web";
+import { createAuthServerClient } from "@yoda.fun/auth/auth-client.server";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -12,7 +12,7 @@ import { env } from "@/env";
  *
  * For client components, use `authClient` from `@/lib/auth`.
  */
-export const authServerClient = createAuthWebClient({
+export const authServerClient = createAuthServerClient({
   baseUrl: SERVICE_URLS[env.NEXT_PUBLIC_ENV].authInternal,
 });
 
@@ -27,7 +27,10 @@ export const authServerClient = createAuthWebClient({
 export const getSession = cache(async () => {
   const h = await headers();
   const result = await authServerClient.getSession({
-    fetchOptions: { headers: h },
+    fetchOptions: {
+      headers: h,
+      baseURL: SERVICE_URLS[env.NEXT_PUBLIC_ENV].authInternal, // this is needed because the auth client is not aware of the baseURL ( i think fetch options overwrites waht we defined in the auth client)
+    },
   });
   return result.data; // Unwrap { data, error } to return { session, user } directly
 });

@@ -25,8 +25,8 @@ export interface SwipeableCardRef {
 
 export interface SwipeableCardProps {
   children: React.ReactNode;
-  onSwipe: (direction: SwipeDirection) => void;
-  onSwipeComplete: (direction: SwipeDirection) => void;
+  onSwipe?: (direction: SwipeDirection) => void;
+  onSwipeComplete?: (direction: SwipeDirection) => void;
   onTap?: () => void;
   disabled?: boolean;
   className?: string;
@@ -160,7 +160,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         }
 
         setIsExiting(true);
-        onSwipe(direction);
+        onSwipe?.(direction);
         vibrateOnSwipe();
 
         const exit = getExitPosition(direction, config.exitDistance);
@@ -184,7 +184,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           transition,
         });
 
-        onSwipeComplete(direction);
+        onSwipeComplete?.(direction);
       },
       [controls, isExiting, onSwipe, onSwipeComplete, vibrateOnSwipe]
     );

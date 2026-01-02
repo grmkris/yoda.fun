@@ -2,8 +2,8 @@
 
 import { Calendar, Clock, ExternalLink, Users } from "lucide-react";
 import { motion } from "motion/react";
-import type { MarketCard } from "./card-front";
 import { Countdown } from "@/components/countdown";
+import type { MarketCard } from "./card-front";
 
 interface GameCardBackProps {
   card: MarketCard;

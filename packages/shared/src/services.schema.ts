@@ -24,9 +24,9 @@ export const SERVICE_URLS: Record<
   }
 > = {
   dev: {
-    auth: "http://localhost:4200/auth",
-    authInternal: "http://localhost:4200",
-    api: "http://localhost:4200",
+    auth: "https://localhost:4201/api/auth",
+    authInternal: "http://localhost:4200/api/auth",
+    api: "https://localhost:4201/api",
     apiInternal: "http://localhost:4200",
     web: "https://localhost:4201",
     cookieDomain: "localhost",
