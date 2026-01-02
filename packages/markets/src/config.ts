@@ -40,8 +40,8 @@ export const WORKFLOW_MODELS = {
 } as const satisfies Record<string, Record<string, AIModelConfig>>;
 
 export const MARKET_GENERATION = {
-  BATCH_SIZE: 8,
-  CRON: "*/30 * * * *",
+  BATCH_SIZE: 1,
+  CRON: "0 * * * *",
 } as const;
 
 export const CATEGORY_DISTRIBUTION = {
@@ -59,6 +59,6 @@ export const CATEGORY_DISTRIBUTION = {
 } as const;
 
 export const TRENDING_CACHE = {
-  TTL_MS: 65 * 60 * 1000, // 65 min (guarantees 2 cache hits with 30 min cron)
+  TTL_MS: 65 * 60 * 1000, // 65 min (guarantees cache hit with 1 hour cron)
   SWR_MS: 5 * 60 * 1000, // 5 min stale-while-revalidate
 } as const;
