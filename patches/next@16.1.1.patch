@@ -1,0 +1,33 @@
+diff --git a/dist/server/lib/router-utils/proxy-request.js b/dist/server/lib/router-utils/proxy-request.js
+index de8549da03855f8ac804a26a240184d443dec6fc..c660cc9837ca1a8d0a55954b26ae09a8d009bc6f 100644
+--- a/dist/server/lib/router-utils/proxy-request.js
++++ b/dist/server/lib/router-utils/proxy-request.js
+@@ -12,6 +12,7 @@ const _url = /*#__PURE__*/ _interop_require_default(require("url"));
+ const _serverrouteutils = require("../../server-route-utils");
+ const _stream = require("stream");
+ const _detachedpromise = require("../../../lib/detached-promise");
++const HttpProxy = require('next/dist/compiled/http-proxy');
+ function _interop_require_default(obj) {
+     return obj && obj.__esModule ? obj : {
+         default: obj
+@@ -22,11 +23,11 @@ async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, proxyTime
+     delete parsedUrl.query;
+     parsedUrl.search = (0, _serverrouteutils.stringifyQuery)(req, query);
+     const target = _url.default.format(parsedUrl);
+-    const HttpProxy = require('next/dist/compiled/http-proxy');
+     const proxy = new HttpProxy({
+         target,
+         changeOrigin: true,
+         ignorePath: true,
++        xfwd: true,
+         ws: true,
+         // we limit proxy requests to 30s by default, in development
+         // we don't time out WebSocket requests to allow proxying
+@@ -44,6 +45,7 @@ async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, proxyTime
+     // object will detect the disconnect, and we can abort the proxy's
+     // connection.
+     proxy.on('proxyReq', (proxyReq)=>{
++        proxyReq.removeHeader('accept-encoding');
+         res.on('close', ()=>proxyReq.destroy());
+     });
+     proxy.on('proxyRes', (proxyRes)=>{

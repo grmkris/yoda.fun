@@ -9,7 +9,7 @@ const posthogKey = env.NEXT_PUBLIC_POSTHOG_KEY;
 
 if (posthogKey) {
   posthog.init(posthogKey, {
-    api_host: "/_ph",
+    api_host: "/ph",
     ui_host: services.posthogUi,
     // Use latest defaults for optimal pageview/pageleave tracking
     defaults: "2025-05-24",

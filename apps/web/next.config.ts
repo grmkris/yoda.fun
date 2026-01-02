@@ -5,6 +5,19 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@takumi-rs/image-response"],
   typedRoutes: true,
   reactCompiler: true,
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: "/ph/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ph/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
