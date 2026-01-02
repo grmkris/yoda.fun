@@ -40,7 +40,7 @@ export const SERVICE_URLS: Record<
   },
   prod: {
     auth: "https://yoda.fun/api/auth",
-    authInternal: "http://api.internal:4200",
+    authInternal: "http://api.internal:4200/api/auth",
     api: "https://yoda.fun/api",
     apiInternal: "http://api.internal:4200",
     web: "https://yoda.fun",
