@@ -4,6 +4,10 @@
     ".": {
       "types": "./dist/auth-config.d.ts",
       "default": "./src/auth-config.ts"
+    },
+    "./auth-client.web": {
+      "types": "./dist/auth-client.d.ts",
+      "default": "./src/auth-client.ts"
     }
   },
   "type": "module",

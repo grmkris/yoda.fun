@@ -1,18 +1,5 @@
-import type { Auth } from "@yoda.fun/auth";
-import {
-  anonymousClient,
-  customSessionClient,
-  inferAdditionalFields,
-  siweClient,
-} from "better-auth/client/plugins";
-import { createAuthClient } from "better-auth/react";
+import { createAuthWebClient } from "@yoda.fun/auth/auth-client.web";
 
-export const authClient = createAuthClient({
+export const authClient = createAuthWebClient({
   basePath: "/api/api/auth",
-  plugins: [
-    anonymousClient(),
-    inferAdditionalFields<Auth>(),
-    siweClient(),
-    customSessionClient<Auth>(),
-  ],
 });
