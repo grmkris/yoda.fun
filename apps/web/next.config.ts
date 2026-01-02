@@ -1,5 +1,5 @@
+import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import type { NextConfig } from "next";
-import { SERVICE_URLS, type Environment } from "@yoda.fun/shared/services";
 
 const currentEnv = (process.env.NEXT_PUBLIC_ENV || "dev") as Environment;
 
