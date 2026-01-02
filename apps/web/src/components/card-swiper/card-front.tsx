@@ -1,7 +1,9 @@
 "use client";
 
+import { Calendar, Clock } from "lucide-react";
 import Image from "next/image";
 import type { StackMarket } from "@/lib/orpc-types";
+import { Countdown } from "@/components/countdown";
 
 export type MarketCard = StackMarket;
 
@@ -100,6 +102,41 @@ export function CardFront({ card }: CardFrontProps) {
           >
             {card.description}
           </p>
+
+          {/* Countdown Pills */}
+          <div className="mb-3 flex items-center gap-2">
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 backdrop-blur-md"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.65 0.25 290 / 20%), oklch(0.70 0.15 200 / 12%))",
+                border: "1px solid oklch(1 0 0 / 12%)",
+              }}
+            >
+              <Clock
+                className="h-3 w-3"
+                style={{ color: "oklch(0.75 0.12 200)" }}
+              />
+              <Countdown targetDate={card.votingEndsAt} variant="compact" />
+            </div>
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 backdrop-blur-md"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.65 0.25 290 / 20%), oklch(0.70 0.15 200 / 12%))",
+                border: "1px solid oklch(1 0 0 / 12%)",
+              }}
+            >
+              <Calendar
+                className="h-3 w-3"
+                style={{ color: "oklch(0.75 0.12 290)" }}
+              />
+              <Countdown
+                targetDate={card.resolutionDeadline}
+                variant="compact"
+              />
+            </div>
+          </div>
 
           {/* Tags */}
           {(card.tags?.length ?? 0) > 0 ? (

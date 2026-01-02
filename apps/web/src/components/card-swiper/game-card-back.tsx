@@ -3,6 +3,7 @@
 import { Calendar, Clock, ExternalLink, Users } from "lucide-react";
 import { motion } from "motion/react";
 import type { MarketCard } from "./card-front";
+import { Countdown } from "@/components/countdown";
 
 interface GameCardBackProps {
   card: MarketCard;
@@ -13,26 +14,18 @@ interface GameCardBackProps {
   inSheet?: boolean;
 }
 
-function formatDate(date: Date | string | null): string {
-  if (!date) {
-    return "TBD";
-  }
+function extractDomain(url: string): string {
+  return new URL(url).hostname.replace("www.", "");
+}
+
+function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace("www.", "");
-  } catch {
-    return url;
-  }
 }
 
 export function GameCardBack({
@@ -152,7 +145,7 @@ export function GameCardBack({
           </div>
         </div>
 
-        {/* Dates */}
+        {/* Countdown Timers */}
         <div className="mb-6 grid grid-cols-2 gap-3">
           <div
             className="rounded-xl p-3"
@@ -162,15 +155,16 @@ export function GameCardBack({
             }}
           >
             <div
-              className="mb-1 flex items-center gap-1.5 text-xs"
+              className="mb-1.5 flex items-center gap-1.5 text-xs"
               style={{ color: "oklch(0.60 0.02 280)" }}
             >
               <Clock className="h-3.5 w-3.5" />
               Betting Ends
             </div>
+            <Countdown targetDate={card.votingEndsAt} variant="compact" />
             <div
-              className="font-heading font-medium text-sm"
-              style={{ color: "oklch(0.85 0.02 280)" }}
+              className="mt-1 text-xs"
+              style={{ color: "oklch(0.55 0.02 280)" }}
             >
               {formatDate(card.votingEndsAt)}
             </div>
@@ -183,15 +177,16 @@ export function GameCardBack({
             }}
           >
             <div
-              className="mb-1 flex items-center gap-1.5 text-xs"
+              className="mb-1.5 flex items-center gap-1.5 text-xs"
               style={{ color: "oklch(0.60 0.02 280)" }}
             >
               <Calendar className="h-3.5 w-3.5" />
               Market Ends
             </div>
+            <Countdown targetDate={card.resolutionDeadline} variant="compact" />
             <div
-              className="font-heading font-medium text-sm"
-              style={{ color: "oklch(0.85 0.02 280)" }}
+              className="mt-1 text-xs"
+              style={{ color: "oklch(0.55 0.02 280)" }}
             >
               {formatDate(card.resolutionDeadline)}
             </div>
