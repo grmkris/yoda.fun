@@ -28,21 +28,20 @@ export const queryClient = new QueryClient({
   }),
 });
 
+const getApiUrl = () => {
+  if (env.NEXT_PUBLIC_ENV === "dev") {
+    return `${SERVICE_URLS.dev.api}/rpc`;
+  }
+  return "/api/rpc"; // Proxied in prod
+};
+
 export const link = new RPCLink({
-  url: `${SERVICE_URLS[env.NEXT_PUBLIC_ENV].api}/rpc`,
+  url: getApiUrl(),
   fetch(_url, options) {
     return fetch(_url, {
       ...options,
       credentials: "include",
     });
-  },
-  headers: async () => {
-    if (typeof window !== "undefined") {
-      return {};
-    }
-
-    const { headers } = await import("next/headers");
-    return Object.fromEntries(await headers());
   },
 });
 

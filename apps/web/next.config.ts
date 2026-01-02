@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         source: "/ph/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
+      // API proxy (prod - dev uses localhost directly)
+      {
+        source: "/api/:path*",
+        destination: "https://api.yoda.fun/:path*",
+      },
     ];
   },
   images: {

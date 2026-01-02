@@ -19,6 +19,9 @@ WORKDIR /app
 COPY package.json bun.lock turbo.json ./
 COPY tsconfig.json tsconfig.base.json ./
 
+# Copy patches
+COPY patches ./patches
+
 # Copy all package.json files for dependency resolution
 COPY apps/web/package.json ./apps/web/
 COPY apps/server/package.json ./apps/server/

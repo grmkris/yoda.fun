@@ -1,7 +1,7 @@
 import { ImageResponse } from "@takumi-rs/image-response";
 import type { MarketId } from "@yoda.fun/shared/typeid";
 import { COLORS } from "@/components/og/og-background";
-import { client } from "@/utils/orpc";
+import { serverClient } from "@/utils/orpc.server";
 
 export const runtime = "nodejs";
 
@@ -22,7 +22,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const market = await client.market.get({ marketId: id as MarketId });
+    const market = await serverClient.market.get({ marketId: id as MarketId });
 
     const totalVotes = market.totalYesVotes + market.totalNoVotes;
     const yesPercent =

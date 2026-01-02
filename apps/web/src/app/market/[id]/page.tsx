@@ -7,7 +7,7 @@ import { MarketId } from "@yoda.fun/shared/typeid";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { marketQueryKey } from "@/hooks/market-query-key";
-import { client } from "@/utils/orpc";
+import { serverClient } from "@/utils/orpc.server";
 import { MarketDetail } from "./market-detail";
 
 interface Props {
@@ -41,7 +41,7 @@ export default async function MarketPage({ params }: Props) {
 
   await queryClient.prefetchQuery({
     queryKey: marketQueryKey(marketId),
-    queryFn: () => client.market.get({ marketId }),
+    queryFn: () => serverClient.market.get({ marketId }),
   });
 
   return (
