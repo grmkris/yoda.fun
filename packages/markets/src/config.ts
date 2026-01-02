@@ -45,18 +45,17 @@ export const MARKET_GENERATION = {
 } as const;
 
 export const CATEGORY_DISTRIBUTION = {
-  movies: 0.13,
-  tv: 0.08,
-  music: 0.08,
-  celebrities: 0.08,
-  gaming: 0.08,
-  sports: 0.22,
-  politics: 0.08,
-  tech: 0.08,
-  viral: 0.07,
+  movies: 0.18,
+  tv: 0.1,
+  music: 0.1,
+  celebrities: 0.1,
+  gaming: 0.13,
+  politics: 0.13,
+  tech: 0.13,
+  viral: 0.08,
   memes: 0.05,
-  weather: 0.02,
-  other: 0.03,
+  weather: 0.0,
+  other: 0.0,
 } as const;
 
 export const TRENDING_CACHE = {

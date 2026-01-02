@@ -72,7 +72,6 @@ describe("Market Generation Service", () => {
         expect(market.id).toBeTruthy();
         expect(market.title).toBeTruthy();
         expect(market.status).toBe("LIVE");
-        expect(market.resolutionType).toBeDefined();
         expect(market.votingEndsAt).toBeInstanceOf(Date);
         expect(market.resolutionDeadline).toBeInstanceOf(Date);
         expect(market.resolutionDeadline.getTime()).toBeGreaterThan(

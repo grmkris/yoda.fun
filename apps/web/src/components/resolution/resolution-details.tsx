@@ -1,12 +1,10 @@
 "use client";
 
-import type { ResolutionStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
   Globe,
-  Search,
   XCircle,
   Zap,
 } from "lucide-react";
@@ -59,12 +57,7 @@ const DEFAULT_METHOD = {
 interface ResolutionDetailsProps {
   result: MarketResult;
   confidence: BetMarket["resolutionConfidence"];
-  /** @deprecated - kept for backwards compatibility */
-  resolutionType?: BetMarket["resolutionType"];
   sources: BetMarket["resolutionSources"];
-  /** @deprecated - kept for backwards compatibility */
-  strategy?: ResolutionStrategy | null;
-  criteria?: string | null;
   reasoning?: string | null;
   className?: string;
 }
@@ -145,59 +138,6 @@ function ConfidenceArc({ value }: { value: number }) {
   );
 }
 
-/** @deprecated - Legacy strategy details, kept for backwards compat with old markets */
-function LegacyStrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
-  // Only show details for WEB_SEARCH, others are deprecated
-  if (strategy.type === "WEB_SEARCH") {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-start gap-2">
-          <Search
-            className="mt-0.5 h-4 w-4"
-            style={{ color: DEFAULT_METHOD.color }}
-          />
-          <div>
-            <span style={{ color: COLORS.textMuted }}>Search Query:</span>
-            <p
-              className="mt-1 font-medium text-sm"
-              style={{ color: COLORS.text }}
-            >
-              "{strategy.searchQuery}"
-            </p>
-          </div>
-        </div>
-        {strategy.successIndicators.length > 0 && (
-          <div className="flex items-start gap-2">
-            <CheckCircle2
-              className="mt-0.5 h-4 w-4"
-              style={{ color: DEFAULT_METHOD.color }}
-            />
-            <div>
-              <span style={{ color: COLORS.textMuted }}>
-                Success Indicators:
-              </span>
-              <ul className="mt-1 space-y-1">
-                {strategy.successIndicators.map((indicator) => (
-                  <li
-                    className="flex items-center gap-1.5 text-sm"
-                    key={indicator}
-                    style={{ color: COLORS.text }}
-                  >
-                    <span style={{ color: DEFAULT_METHOD.color }}>•</span>
-                    {indicator}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-  // For PRICE/SPORTS legacy markets, just return null - criteria should explain it
-  return null;
-}
-
 // Source card
 function SourceCard({
   source,
@@ -259,8 +199,6 @@ export function ResolutionDetails({
   result,
   confidence,
   sources,
-  strategy,
-  criteria,
   reasoning,
   className,
 }: ResolutionDetailsProps) {
@@ -411,52 +349,6 @@ export function ResolutionDetails({
           </span>
         </motion.div>
       </div>
-
-      {/* Resolution Criteria */}
-      {criteria && (
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-xl p-4"
-          initial={{ opacity: 0, y: 20 }}
-          style={{
-            background: COLORS.cardBg,
-            border: `1px solid ${COLORS.border}`,
-          }}
-          transition={{ delay: 0.35 }}
-        >
-          <p
-            className="mb-2 font-heading text-xs uppercase tracking-wider"
-            style={{ color: COLORS.textMuted }}
-          >
-            Resolution Criteria
-          </p>
-          <p className="leading-relaxed" style={{ color: COLORS.text }}>
-            {criteria}
-          </p>
-        </motion.div>
-      )}
-
-      {/* Legacy Strategy Details - only show if no criteria */}
-      {strategy && !criteria && (
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-xl p-4"
-          initial={{ opacity: 0, y: 20 }}
-          style={{
-            background: COLORS.cardBg,
-            border: `1px solid ${COLORS.border}`,
-          }}
-          transition={{ delay: 0.4 }}
-        >
-          <p
-            className="mb-3 font-heading text-xs uppercase tracking-wider"
-            style={{ color: COLORS.textMuted }}
-          >
-            Strategy Details
-          </p>
-          <LegacyStrategyDetails strategy={strategy} />
-        </motion.div>
-      )}
 
       {/* Evidence Sources */}
       {sources && sources.length > 0 && (

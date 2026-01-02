@@ -64,6 +64,13 @@
       "when": 1767048033015,
       "tag": "0008_rainy_cloak",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1767366332371,
+      "tag": "0009_mighty_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

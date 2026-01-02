@@ -54,12 +54,6 @@ export const settlementStatusEnum = pgEnum("settlement_status", [
   "FAILED",
 ]);
 
-export const resolutionTypeEnum = pgEnum("resolution_type", [
-  "PRICE",
-  "SPORTS",
-  "WEB_SEARCH",
-]);
-
 // Tables
 export const market = pgTable("market", {
   id: typeId("market", "id")
@@ -90,7 +84,6 @@ export const market = pgTable("market", {
     .$type<UserId>(),
   resolvedAt: createTimestampField("resolved_at"),
   resolutionCriteria: text("resolution_criteria"),
-  resolutionType: resolutionTypeEnum("resolution_type"),
   resolutionStrategy: jsonb("resolution_strategy").$type<ResolutionStrategy>(),
   resolutionSources:
     jsonb("resolution_sources").$type<
@@ -98,6 +91,8 @@ export const market = pgTable("market", {
     >(),
   resolutionConfidence: integer("resolution_confidence"),
   resolutionReasoning: text("resolution_reasoning"),
+  resolutionError: text("resolution_error"),
+  resolutionFailedAt: createTimestampField("resolution_failed_at"),
   ...baseEntityFields,
 });
 

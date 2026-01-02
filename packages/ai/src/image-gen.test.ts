@@ -31,10 +31,7 @@ const TEST_MARKETS = [
   },
 ];
 
-const MODELS: ImageModel[] = [
-  "google/nano-banana",
-  "black-forest-labs/flux-schnell",
-];
+const MODELS: ImageModel[] = ["black-forest-labs/flux-schnell"];
 
 const canRunFullPipeline =
   !!env.REPLICATE_API_KEY && !!env.GOOGLE_GEMINI_API_KEY && !!env.XAI_API_KEY;
@@ -62,7 +59,8 @@ describe.if(canRunFullPipeline)("image generation - full pipeline", () => {
       console.log(`\n--- ${market.title} ---`);
       const { prompt, tags, reuseOk } = await generateImagePromptWithTags(
         market,
-        aiClient
+        aiClient,
+        { provider: "google", modelId: "gemini-flash-latest" }
       );
       console.log(`AI Prompt: ${prompt}`);
       console.log(`Tags: ${tags.join(", ")}, ReuseOk: ${reuseOk}`);

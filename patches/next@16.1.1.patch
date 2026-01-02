@@ -22,10 +22,11 @@ index 4a86de1386e7459b855dc4c461704143578042c6..3629ca428cc40e80458c35b8cca494b3
          // we limit proxy requests to 30s by default, in development
          // we don't time out WebSocket requests to allow proxying
          proxyTimeout: proxyTimeout === null ? undefined : proxyTimeout || 30000,
-@@ -29,6 +30,6 @@ export async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, pr
+@@ -29,6 +30,7 @@ export async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, pr
      // object will detect the disconnect, and we can abort the proxy's
      // connection.
      proxy.on('proxyReq', (proxyReq)=>{
++        proxyReq.removeHeader('accept-encoding');
          res.on('close', ()=>proxyReq.destroy());
      });
      proxy.on('proxyRes', (proxyRes)=>{
@@ -53,10 +54,11 @@ index de8549da03855f8ac804a26a240184d443dec6fc..09154b3edeea0fcacf135615fea3837c
          // we limit proxy requests to 30s by default, in development
          // we don't time out WebSocket requests to allow proxying
          proxyTimeout: proxyTimeout === null ? undefined : proxyTimeout || 30000,
-@@ -44,6 +45,6 @@ async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, proxyTime
+@@ -44,6 +45,7 @@ async function proxyRequest(req, res, parsedUrl, upgradeHead, reqBody, proxyTime
      // object will detect the disconnect, and we can abort the proxy's
      // connection.
      proxy.on('proxyReq', (proxyReq)=>{
++        proxyReq.removeHeader('accept-encoding');
          res.on('close', ()=>proxyReq.destroy());
      });
      proxy.on('proxyRes', (proxyRes)=>{

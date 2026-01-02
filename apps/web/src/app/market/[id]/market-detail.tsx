@@ -208,35 +208,19 @@ function MarketHeroImage({
 
 function ResolutionSection({
   result,
-  resolutionType,
   confidence,
   sources,
-  strategy,
-  criteria,
   reasoning,
 }: {
   result: NonNullable<
     NonNullable<ReturnType<typeof useMarket>["data"]>["result"]
   >;
-  resolutionType: NonNullable<
-    ReturnType<typeof useMarket>["data"]
-  >["resolutionType"];
   confidence: NonNullable<
     ReturnType<typeof useMarket>["data"]
   >["resolutionConfidence"];
   sources: NonNullable<
     ReturnType<typeof useMarket>["data"]
   >["resolutionSources"];
-  strategy: ReturnType<typeof useMarket>["data"] extends infer T
-    ? T extends { resolutionStrategy: infer S }
-      ? S
-      : never
-    : never;
-  criteria: ReturnType<typeof useMarket>["data"] extends infer T
-    ? T extends { resolutionCriteria: infer C }
-      ? C
-      : never
-    : never;
   reasoning: ReturnType<typeof useMarket>["data"] extends infer T
     ? T extends { resolutionReasoning: infer R }
       ? R
@@ -246,12 +230,9 @@ function ResolutionSection({
   return (
     <ResolutionDetails
       confidence={confidence}
-      criteria={criteria}
       reasoning={reasoning}
-      resolutionType={resolutionType}
       result={result}
       sources={sources}
-      strategy={strategy}
     />
   );
 }
@@ -711,22 +692,15 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
       )}
 
       {isLive && (market.resolutionStrategy || market.resolutionCriteria) && (
-        <ResolutionMethodPreview
-          criteria={market.resolutionCriteria}
-          resolutionType={market.resolutionType}
-          strategy={market.resolutionStrategy}
-        />
+        <ResolutionMethodPreview criteria={market.resolutionCriteria} />
       )}
 
       {isResolved && market.result && (
         <ResolutionSection
           confidence={market.resolutionConfidence}
-          criteria={market.resolutionCriteria}
           reasoning={market.resolutionReasoning}
-          resolutionType={market.resolutionType}
           result={market.result}
           sources={market.resolutionSources}
-          strategy={market.resolutionStrategy}
         />
       )}
 

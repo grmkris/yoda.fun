@@ -141,7 +141,7 @@ For each market:
 
 2. **description**: 1-2 sentences of context. Set up the stakes. Why should someone care RIGHT NOW?
 
-3. **category**: movies | tv | music | celebrities | gaming | sports | politics | tech | viral | memes | weather | other
+3. **category**: movies | tv | music | celebrities | gaming | politics | tech | viral | memes | weather | other
 
 4. **resolutionCriteria**: Plain English for how an AI will resolve this. Be SPECIFIC:
    - Name the team/person/entity
@@ -165,18 +165,9 @@ ${getDurationGuidance(ctx.timeframe)}
 
 8. **betAmount**: 0.10 | 0.25 | 0.50 | 1.00 | 5.00
    - Spicier markets = lower amounts (more accessible for meme bets)
-   - Serious sports = can go higher`);
+   - High-stakes predictions = can go higher`);
 
       sections.push(`## EXAMPLES BY CATEGORY
-
-**SPORTS** (not just "will team win")
-- "Can the Chiefs really three-peat or is dynasty fatigue finally setting in?"
-  -> whyViral: Every NFL fan has a take on dynasty sustainability
-  -> spiceLevel: spicy
-
-- "Is 40-year-old LeBron still capable of dropping 40 tonight?"
-  -> whyViral: The age debate is eternal engagement bait
-  -> spiceLevel: medium
 
 **CELEBRITIES/VIRAL**
 - "Does MrBeast hit 100M views in 24hrs or has the algorithm finally caught up?"

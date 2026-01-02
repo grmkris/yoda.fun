@@ -282,7 +282,6 @@ export function BetsHistory() {
                     <div className="mt-3 pl-3">
                       <ResolutionDetails
                         confidence={market.resolutionConfidence}
-                        resolutionType={market.resolutionType}
                         result={market.result}
                         sources={market.resolutionSources}
                       />

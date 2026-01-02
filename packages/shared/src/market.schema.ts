@@ -31,11 +31,6 @@ export const DEFAULT_TOPICS: TopicConfig[] = [
     ],
   },
   {
-    id: "sports",
-    category: "sports",
-    querySeeds: ["major sports games today", "UFC fights scheduled"],
-  },
-  {
     id: "entertainment",
     category: "entertainment",
     querySeeds: [
@@ -84,7 +79,6 @@ export const MARKET_CATEGORIES = [
   "celebrities",
   "gaming",
   // Core
-  "sports",
   "politics",
   "tech",
   // Social/Viral
@@ -139,11 +133,6 @@ export const PriceResolutionResultSchema = ResolutionOutputSchema.extend({
 });
 export type PriceResolutionResult = z.infer<typeof PriceResolutionResultSchema>;
 
-export const SportsResolutionResultSchema = ResolutionOutputSchema;
-export type SportsResolutionResult = z.infer<
-  typeof SportsResolutionResultSchema
->;
-
 export const WebSearchResolutionResultSchema = ResolutionOutputSchema.extend({
   toolsUsed: z.array(z.string()),
 });
@@ -161,24 +150,6 @@ export const CoinGeckoPriceResponseSchema = z.record(
 export type CoinGeckoPriceResponse = z.infer<
   typeof CoinGeckoPriceResponseSchema
 >;
-
-export const TheSportsDBEventSchema = z.object({
-  idEvent: z.string(),
-  strEvent: z.string(),
-  strHomeTeam: z.string(),
-  strAwayTeam: z.string(),
-  intHomeScore: z.string().nullable(),
-  intAwayScore: z.string().nullable(),
-  strStatus: z.string(),
-  dateEvent: z.string(),
-  strLeague: z.string(),
-});
-export type TheSportsDBEvent = z.infer<typeof TheSportsDBEventSchema>;
-
-export const TheSportsDBResponseSchema = z.object({
-  events: z.array(TheSportsDBEventSchema).nullable(),
-});
-export type TheSportsDBResponse = z.infer<typeof TheSportsDBResponseSchema>;
 
 export const DurationSchema = z.object({
   value: z.number().int().min(1).describe("Duration value"),

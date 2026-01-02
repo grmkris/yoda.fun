@@ -4,21 +4,13 @@ import { z } from "zod";
 import type { AiClient } from "./ai-client";
 import type { AIModelConfig } from "./ai-providers";
 
-// Mirror of WORKFLOW_MODELS.image.promptGen from @yoda.fun/markets
-const IMAGE_PROMPT_MODEL: AIModelConfig = {
-  provider: "google",
-  modelId: "gemini-2.5-flash",
-};
-
 export interface MarketImageContext {
   title: string;
   category: string;
   description: string;
 }
 
-export type ImageModel =
-  | "black-forest-labs/flux-schnell"
-  | "google/nano-banana";
+export type ImageModel = "black-forest-labs/flux-schnell";
 
 const DEFAULT_IMAGE_MODEL: ImageModel = "black-forest-labs/flux-schnell";
 
@@ -39,28 +31,28 @@ const ImagePromptResponseSchema = z.object({
   reuseOk: z.boolean(),
 });
 
+const CATEGORY_IMAGE_STYLES: Record<string, string> = {
+  movies: "cinematic, movie poster aesthetic, dramatic lighting",
+  tv: "streaming platform vibes, screen glow aesthetic",
+  music: "concert stage, vinyl records, vibrant stage lighting",
+  celebrities: "glamorous, red carpet, spotlight, magazine cover",
+  gaming: "esports arena, neon RGB lighting, gaming setup",
+  politics: "professional setting, flags, podiums",
+  tech: "futuristic, sleek devices, digital aesthetic",
+  viral: "trending hashtag, social media icons, phone screen",
+  memes: "internet culture, viral aesthetic, bold colors",
+  weather: "dramatic sky, weather elements, meteorological",
+  other: "modern, clean, professional",
+};
+
 export async function generateImagePromptWithTags(
   market: MarketImageContext,
-  aiClient: AiClient
+  aiClient: AiClient,
+  modelConfig: AIModelConfig
 ): Promise<ImagePromptResult> {
-  const categoryStyles: Record<string, string> = {
-    movies: "cinematic, movie poster aesthetic, dramatic lighting",
-    tv: "streaming platform vibes, screen glow aesthetic",
-    music: "concert stage, vinyl records, vibrant stage lighting",
-    celebrities: "glamorous, red carpet, spotlight, magazine cover",
-    gaming: "esports arena, neon RGB lighting, gaming setup",
-    sports: "dynamic action shot, stadium atmosphere, athletic",
-    politics: "professional setting, flags, podiums",
-    tech: "futuristic, sleek devices, digital aesthetic",
-    crypto: "blockchain visualization, digital coins, cyber aesthetic",
-    viral: "trending hashtag, social media icons, phone screen",
-    memes: "internet culture, viral aesthetic, bold colors",
-    weather: "dramatic sky, weather elements, meteorological",
-    other: "modern, clean, professional",
-  };
-
-  const style = categoryStyles[market.category] || categoryStyles.other;
-  const model = aiClient.getModel(IMAGE_PROMPT_MODEL);
+  const style =
+    CATEGORY_IMAGE_STYLES[market.category] || CATEGORY_IMAGE_STYLES.other;
+  const model = aiClient.getModel(modelConfig);
 
   const result = await aiClient.generateText({
     model,
@@ -97,49 +89,6 @@ REUSE_OK:
   return result.output;
 }
 
-export function buildImagePrompt(market: MarketImageContext): string {
-  const categoryStyles: Record<string, string> = {
-    // Entertainment subcategories
-    movies:
-      "cinematic scene, movie poster aesthetic, dramatic lighting, film reel elements",
-    tv: "living room screen glow, streaming platform vibes, binge-worthy aesthetic",
-    music:
-      "concert stage, vinyl records, musical notes, vibrant stage lighting",
-    celebrities:
-      "glamorous, red carpet, paparazzi flash, spotlight, magazine cover feel",
-    gaming:
-      "esports arena, gaming setup, neon RGB lighting, controller and screen",
-    // Core categories
-    sports: "dynamic action shot, stadium atmosphere, vibrant colors, athletic",
-    politics: "professional setting, flags, podiums, dramatic lighting",
-    tech: "futuristic, sleek devices, neon accents, digital aesthetic",
-    crypto:
-      "blockchain visualization, digital coins, cyber aesthetic, gold and blue",
-    // Social/Viral
-    viral:
-      "trending hashtag, social media icons, phone screen, notification aesthetic",
-    memes: "internet culture, viral aesthetic, bold colors, humorous tone",
-    // Misc
-    weather:
-      "dramatic sky, weather elements, meteorological, clouds and sun or storms",
-    other: "modern, clean, professional, engaging",
-  };
-
-  const style = categoryStyles[market.category] || categoryStyles.other;
-
-  return `Create a visually striking, eye-catching image for a prediction market betting card.
-
-Topic: "${market.title}"
-Context: ${market.description}
-
-Style requirements:
-- ${style}
-- Suitable for a mobile card UI (2:3 aspect ratio feel)
-- ABSOLUTELY NO TEXT, NO WORDS, NO LETTERS, NO NUMBERS, NO WATERMARKS
-- High contrast, attention-grabbing
-- Professional quality, suitable for a betting app`;
-}
-
 export async function fetchImageBuffer(url: string): Promise<Buffer> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -159,15 +108,12 @@ export async function generateMarketImageWithPrompt(
   const model: ImageModel = config.model ?? DEFAULT_IMAGE_MODEL;
   const replicate = new Replicate({ auth: config.replicateApiKey });
 
-  const input =
-    model === "black-forest-labs/flux-schnell"
-      ? {
-          prompt,
-          aspect_ratio: "2:3",
-          output_format: "webp",
-          num_inference_steps: 4,
-        }
-      : { prompt, aspect_ratio: "2:3", output_format: "png" };
+  const input = {
+    prompt,
+    aspect_ratio: "2:3",
+    output_format: "webp",
+    num_inference_steps: 4,
+  };
 
   const output = await replicate.run(model, { input });
 

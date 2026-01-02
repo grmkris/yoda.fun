@@ -7,10 +7,6 @@
       "types": "./dist/ai-client.d.ts",
       "default": "./src/ai-client.ts"
     },
-    "./ai-config": {
-      "types": "./dist/ai-config.d.ts",
-      "default": "./src/ai-config.ts"
-    },
     "./image-generation": {
       "types": "./dist/image-generation.d.ts",
       "default": "./src/image-generation.ts"

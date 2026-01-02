@@ -28,11 +28,7 @@ export type BetByIdResponse = ExtractSuccess<
 >;
 
 // Resolution
-export type ResolutionStatsResponse = ExtractSuccess<
-  Awaited<ReturnType<typeof client.market.resolutionStats>>
->;
 export type MarketResult = NonNullable<Market["result"]>;
-export type ResolutionMethodType = NonNullable<Market["resolutionType"]>;
 export type MarketResolutionStrategy = Market["resolutionStrategy"];
 export type MarketResolutionSources = Market["resolutionSources"];
 export type ResolutionSource = NonNullable<MarketResolutionSources>[0];

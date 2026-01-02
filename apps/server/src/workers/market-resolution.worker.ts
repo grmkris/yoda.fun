@@ -65,13 +65,21 @@ export function createMarketResolutionWorker(
       return { success: true, marketId };
     },
     {
-      onFailed: (job: ResolveMarketJob, error: Error): Promise<void> => {
+      onFailed: async (job: ResolveMarketJob, error: Error): Promise<void> => {
         logger.error({
           msg: "Market resolution failed after all retries",
           marketId: job.marketId,
           error: error.message,
         });
-        return Promise.resolve();
+
+        // Persist error to market record
+        await db
+          .update(DB_SCHEMA.market)
+          .set({
+            resolutionError: error.message,
+            resolutionFailedAt: new Date(),
+          })
+          .where(eq(DB_SCHEMA.market.id, job.marketId));
       },
     }
   );

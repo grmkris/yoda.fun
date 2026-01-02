@@ -8,6 +8,7 @@ import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
+import { WORKFLOW_MODELS } from "@yoda.fun/markets/config";
 import { createImageService } from "@yoda.fun/markets/generation";
 import { processMarketImage } from "@yoda.fun/markets/image-processing";
 import type { QueueClient } from "@yoda.fun/queue";
@@ -59,7 +60,8 @@ export function createMarketImageWorker(config: MarketImageWorkerConfig): {
 
       const { prompt, tags, reuseOk } = await generateImagePromptWithTags(
         { title, description, category },
-        aiClient
+        aiClient,
+        WORKFLOW_MODELS.image.promptGen
       );
 
       logger.info(
