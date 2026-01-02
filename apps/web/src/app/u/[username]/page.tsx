@@ -1,4 +1,9 @@
-import { notFound } from "next/navigation";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import { serverOrpc } from "@/utils/orpc.server";
 import UserProfile from "./user-profile";
 
 interface Props {
@@ -15,14 +20,19 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function UserProfilePage({ params }: Props) {
   const { username } = await params;
+  const queryClient = new QueryClient();
 
-  if (!username) {
-    notFound();
-  }
+  await queryClient.prefetchQuery(
+    serverOrpc.profile.getByUsername.queryOptions({
+      input: { username },
+    })
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <UserProfile username={username} />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="container mx-auto px-4 py-8">
+        <UserProfile username={username} />
+      </div>
+    </HydrationBoundary>
   );
 }

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { AppRouterClient } from "@yoda.fun/api/routers";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { headers } from "next/headers";
@@ -19,3 +20,4 @@ const serverLink = new RPCLink({
 });
 
 export const serverClient: AppRouterClient = createORPCClient(serverLink);
+export const serverOrpc = createTanstackQueryUtils(serverClient);
