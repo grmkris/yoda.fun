@@ -39,7 +39,7 @@ export const SERVICE_URLS: Record<
     posthogUi: "https://eu.posthog.com",
   },
   prod: {
-    auth: "https://yoda.fun/api",
+    auth: "https://yoda.fun/api/auth",
     authInternal: "http://api.internal:4200",
     api: "https://yoda.fun/api",
     apiInternal: "http://api.internal:4200",
