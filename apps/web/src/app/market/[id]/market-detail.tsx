@@ -26,6 +26,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMarket } from "@/hooks/use-market";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { authClient } from "@/lib/auth-client";
+import type {
+  MarketResolutionSources,
+  MarketResult,
+  ResolutionConfidence,
+  ResolutionReasoning,
+} from "@/lib/orpc-types";
 
 interface MarketDetailProps {
   marketId: MarketId;
@@ -212,20 +218,10 @@ function ResolutionSection({
   sources,
   reasoning,
 }: {
-  result: NonNullable<
-    NonNullable<ReturnType<typeof useMarket>["data"]>["result"]
-  >;
-  confidence: NonNullable<
-    ReturnType<typeof useMarket>["data"]
-  >["resolutionConfidence"];
-  sources: NonNullable<
-    ReturnType<typeof useMarket>["data"]
-  >["resolutionSources"];
-  reasoning: ReturnType<typeof useMarket>["data"] extends infer T
-    ? T extends { resolutionReasoning: infer R }
-      ? R
-      : never
-    : never;
+  result: MarketResult;
+  confidence: ResolutionConfidence;
+  sources: MarketResolutionSources;
+  reasoning: ResolutionReasoning;
 }) {
   return (
     <ResolutionDetails

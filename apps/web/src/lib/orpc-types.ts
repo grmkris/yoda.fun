@@ -32,6 +32,8 @@ export type MarketResult = NonNullable<Market["result"]>;
 export type MarketResolutionStrategy = Market["resolutionStrategy"];
 export type MarketResolutionSources = Market["resolutionSources"];
 export type ResolutionSource = NonNullable<MarketResolutionSources>[0];
+export type ResolutionConfidence = Market["resolutionConfidence"];
+export type ResolutionReasoning = Market["resolutionReasoning"];
 
 // Leaderboard
 export type LeaderboardResponse = ExtractSuccess<
