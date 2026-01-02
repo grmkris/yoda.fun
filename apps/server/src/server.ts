@@ -178,7 +178,7 @@ app.use("/*", async (c, next) => {
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
-    prefix: "/rpc",
+    prefix: "/api/rpc",
     context,
   });
 

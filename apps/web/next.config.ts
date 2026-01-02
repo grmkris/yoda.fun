@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
       // API proxy - routes to apiInternal (localhost:4200 in dev, api.internal:4200 in prod)
       {
         source: "/api/:path*",
-        destination: `${SERVICE_URLS[currentEnv].api}/:path*`,
+        destination: `${SERVICE_URLS[currentEnv].apiInternal}/api/:path*`,
       },
     ];
   },

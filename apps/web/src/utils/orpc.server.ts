@@ -9,7 +9,7 @@ import { headers } from "next/headers";
 import { env } from "@/env";
 
 const serverLink = new RPCLink({
-  url: `${SERVICE_URLS[env.NEXT_PUBLIC_ENV].apiInternal}/rpc`,
+  url: `${SERVICE_URLS[env.NEXT_PUBLIC_ENV].apiInternal}/api/rpc`,
   fetch(_url, options) {
     return fetch(_url, {
       ...options,
