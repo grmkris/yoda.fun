@@ -71,6 +71,13 @@
       "when": 1767366332371,
       "tag": "0009_mighty_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1767367342251,
+      "tag": "0010_gigantic_mole_man",
+      "breakpoints": true
     }
   ]
 }

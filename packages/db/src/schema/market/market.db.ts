@@ -1,4 +1,3 @@
-import type { ResolutionStrategy } from "@yoda.fun/shared/resolution-types";
 import {
   type BetId,
   type MarketId,
@@ -84,7 +83,6 @@ export const market = pgTable("market", {
     .$type<UserId>(),
   resolvedAt: createTimestampField("resolved_at"),
   resolutionCriteria: text("resolution_criteria"),
-  resolutionStrategy: jsonb("resolution_strategy").$type<ResolutionStrategy>(),
   resolutionSources:
     jsonb("resolution_sources").$type<
       Array<{ url: string; snippet: string }>

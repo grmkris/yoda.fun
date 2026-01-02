@@ -687,7 +687,7 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
         />
       )}
 
-      {isLive && (market.resolutionStrategy || market.resolutionCriteria) && (
+      {isLive && market.resolutionCriteria && (
         <ResolutionMethodPreview criteria={market.resolutionCriteria} />
       )}
 

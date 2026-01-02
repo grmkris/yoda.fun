@@ -91,18 +91,14 @@ export const NUMERIC_CONSTANTS = {
       swipeComplete: 20,
       error: [50, 30, 50] as number[],
     },
-    // Legacy (keeping for backwards compat during migration)
-    animationDuration: 300,
+    // Button styling
     buttonSize: 60,
-    buttonBorderWidth: 2,
     buttonScale: 1.1,
     iconSize: 32,
     iconStrokeWidth: 2.5,
     transitionDuration: 0.2,
-    overlayOpacity: 0.3,
     disabledOpacity: 0.5,
     emptyStateHeight: 400,
-    millisecondsPerSecond: 1000,
   },
 };
 
