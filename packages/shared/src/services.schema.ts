@@ -24,7 +24,7 @@ export const SERVICE_URLS: Record<
   }
 > = {
   dev: {
-    auth: "http://localhost:4200",
+    auth: "http://localhost:4200/auth",
     authInternal: "http://localhost:4200",
     api: "http://localhost:4200",
     apiInternal: "http://localhost:4200",
@@ -39,9 +39,9 @@ export const SERVICE_URLS: Record<
     posthogUi: "https://eu.posthog.com",
   },
   prod: {
-    auth: "https://api.yoda.fun",
+    auth: "https://yoda.fun/api",
     authInternal: "http://api.internal:4200",
-    api: "https://api.yoda.fun",
+    api: "https://yoda.fun/api",
     apiInternal: "http://api.internal:4200",
     web: "https://yoda.fun",
     cookieDomain: ".yoda.fun",

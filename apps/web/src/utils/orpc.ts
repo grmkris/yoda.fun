@@ -6,7 +6,6 @@ import type { AppRouterClient } from "@yoda.fun/api/routers";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { toast } from "sonner";
 import { env } from "@/env";
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,15 +27,8 @@ export const queryClient = new QueryClient({
   }),
 });
 
-const getApiUrl = () => {
-  if (env.NEXT_PUBLIC_ENV === "dev") {
-    return `${SERVICE_URLS.dev.api}/rpc`;
-  }
-  return "/api/rpc"; // Proxied in prod
-};
-
 export const link = new RPCLink({
-  url: getApiUrl(),
+  url: `${SERVICE_URLS[env.NEXT_PUBLIC_ENV].web}/api/rpc`,
   fetch(_url, options) {
     return fetch(_url, {
       ...options,

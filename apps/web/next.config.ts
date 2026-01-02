@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { SERVICE_URLS, type Environment } from "@yoda.fun/shared/services";
+
+const currentEnv = (process.env.NEXT_PUBLIC_ENV || "dev") as Environment;
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -16,10 +19,10 @@ const nextConfig: NextConfig = {
         source: "/ph/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
-      // API proxy (prod - dev uses localhost directly)
+      // API proxy - routes to apiInternal (localhost:4200 in dev, api.internal:4200 in prod)
       {
         source: "/api/:path*",
-        destination: "https://api.yoda.fun/:path*",
+        destination: `${SERVICE_URLS[currentEnv].api}/:path*`,
       },
     ];
   },

@@ -12,7 +12,7 @@ export function GET() {
       iconUrl: "https://yoda.fun/favicon/web-app-manifest-512x512.png",
       splashImageUrl: "https://yoda.fun/splash.png",
       splashBackgroundColor: "#0f0a1a",
-      webhookUrl: "https://api.yoda.fun/webhooks/farcaster",
+      webhookUrl: "https://yoda.fun/api/webhooks/farcaster",
       subtitle: "AI Prediction Markets",
       description:
         "See the Future, Stake Your Claim. Pick your side on sports, crypto, politics, and culture. Win real money when you're right.",
