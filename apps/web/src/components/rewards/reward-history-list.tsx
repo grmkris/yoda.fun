@@ -72,7 +72,10 @@ function RewardListContent({
     return (
       <div className="space-y-3">
         {[...new Array(5)].map((_, i) => (
-          <Skeleton className="h-14 w-full" key={i} />
+          <Skeleton
+            className="h-14 w-full"
+            key={`${i.toString()}skeleton-key`}
+          />
         ))}
       </div>
     );

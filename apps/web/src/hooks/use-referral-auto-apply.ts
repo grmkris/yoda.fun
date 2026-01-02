@@ -31,5 +31,5 @@ export function useReferralAutoApply() {
     localStorage.removeItem(REFERRAL_CODE_KEY);
 
     applyMutation.mutate(storedCode);
-  }, [session, applyMutation.isPending]);
+  }, [session, applyMutation.isPending, applyMutation.mutate]);
 }

@@ -40,7 +40,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         {/* Starfield layer */}
         {STARS.map((star, i) => (
           <div
-            key={i}
+            key={`star-${star.x}-${star.y}`}
             style={{
               position: "absolute",
               left: `${star.x}%`,

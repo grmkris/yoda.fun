@@ -177,10 +177,10 @@ function LegacyStrategyDetails({ strategy }: { strategy: ResolutionStrategy }) {
                 Success Indicators:
               </span>
               <ul className="mt-1 space-y-1">
-                {strategy.successIndicators.map((indicator, i) => (
+                {strategy.successIndicators.map((indicator) => (
                   <li
                     className="flex items-center gap-1.5 text-sm"
-                    key={i}
+                    key={indicator}
                     style={{ color: COLORS.text }}
                   >
                     <span style={{ color: DEFAULT_METHOD.color }}>•</span>

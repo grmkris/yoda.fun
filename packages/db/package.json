@@ -18,9 +18,7 @@
   "scripts": {
     "dev": "bun db:studio",
     "build": "tsdown",
-    "lint": "bun ultracite check",
-    "fix": "bun ultracite fix",
-    "fix:unsafe": "bun ultracite fix --unsafe",
+
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "db:push": "drizzle-kit push",

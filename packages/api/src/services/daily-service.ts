@@ -132,7 +132,7 @@ export function createDailyService({ deps }: { deps: DailyServiceDeps }) {
     /**
      * Use a skip (increments counter, returns cost)
      */
-    async useSkip(
+    async skipMarketVote(
       userId: UserId
     ): Promise<{ cost: number; freeSkipsRemaining: number }> {
       const state = await this.getOrCreateDailyState(userId);

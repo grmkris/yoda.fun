@@ -211,7 +211,8 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
       }
 
       // Use skip (handles free vs paid skips)
-      const { cost, freeSkipsRemaining } = await dailyService.useSkip(userId);
+      const { cost, freeSkipsRemaining } =
+        await dailyService.skipMarketVote(userId);
 
       // If skip costs points, check balance first
       if (cost > 0) {

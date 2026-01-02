@@ -38,7 +38,7 @@ COPY packages/cache/package.json ./packages/cache/
 COPY packages/test-utils/package.json ./packages/test-utils/
 
 # Install dependencies
-RUN bun install --filter=web --frozen-lockfile && bun add @takumi-rs/core-linux-x64-gnu@0.60.8 --optional
+RUN bun install --filter=web --frozen-lockfile && bun add @takumi-rs/core-linux-x64-gnu@0.61.0 --optional
 
 # Copy source code
 COPY apps/web ./apps/web

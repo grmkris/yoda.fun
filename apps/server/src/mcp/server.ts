@@ -63,10 +63,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     "list_markets",
     {
       description: "List active prediction markets on yoda.fun",
-      inputSchema: {
+      inputSchema: z.object({
         limit: z.number().optional(),
         category: z.string().optional(),
-      },
+      }),
     },
     async ({ limit = 20 }) => {
       const markets = await db
@@ -101,7 +101,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     "get_market",
     {
       description: "Get details of a specific prediction market",
-      inputSchema: { marketId: MarketId },
+      inputSchema: z.object({ marketId: MarketId }),
     },
     async ({ marketId }) => {
       const markets = await db
@@ -131,11 +131,11 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     "get_leaderboard",
     {
       description: "View the yoda.fun leaderboard",
-      inputSchema: {
+      inputSchema: z.object({
         period: z.enum(["daily", "weekly", "monthly", "allTime"]).optional(),
         metric: z.enum(["profit", "winRate", "streak"]).optional(),
         limit: z.number().optional(),
-      },
+      }),
     },
     async ({ period = "allTime", metric = "profit", limit = 20 }) => {
       const orderColumn = getLeaderboardOrderColumn(metric);
@@ -183,10 +183,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     "place_bet",
     {
       description: "Place a bet on a prediction market. Requires x402 payment.",
-      inputSchema: {
+      inputSchema: z.object({
         marketId: MarketId,
         vote: z.enum(["YES", "NO", "SKIP"]),
-      },
+      }),
     },
     async ({ marketId, vote }) => {
       if (!userId) {
@@ -286,10 +286,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     "get_bet_history",
     {
       description: "Get your betting history. Requires x402 payment.",
-      inputSchema: {
+      inputSchema: z.object({
         limit: z.number().optional(),
         status: z.enum(["ACTIVE", "WON", "LOST", "REFUNDED"]).optional(),
-      },
+      }),
     },
     async ({ limit = 20, status }) => {
       if (!userId) {
