@@ -273,7 +273,10 @@ queue
       trigger: "scheduled",
     },
     {
-      repeat: { pattern: MARKET_GENERATION.CRON },
+      repeat: {
+        pattern: MARKET_GENERATION.CRON,
+        key: "market-generation-hourly",
+      },
     }
   )
   .then(() => {

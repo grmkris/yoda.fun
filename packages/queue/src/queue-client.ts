@@ -122,7 +122,7 @@ export function createQueueClient(config: QueueConfig) {
     options?: {
       priority?: number;
       delay?: number;
-      repeat?: { pattern: string };
+      repeat?: { pattern: string; key?: string };
     }
   ) {
     try {
