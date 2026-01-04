@@ -17,7 +17,6 @@
   "type": "module",
   "scripts": {
     "build": "tsdown",
-
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "db:auth:generate": "npx @better-auth/cli generate --config ./src/auth.ts -y"
@@ -32,6 +31,8 @@
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/test-utils": "workspace:*",
     "better-auth": "catalog:",
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3",
     "viem": "catalog:",
     "zod": "catalog:"
   }

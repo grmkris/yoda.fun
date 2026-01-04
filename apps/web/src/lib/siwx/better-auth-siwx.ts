@@ -6,7 +6,7 @@ import type {
 } from "@reown/appkit";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { env } from "@/env";
-import { authClient } from "@/lib/auth-client";
+import { authClient, type SessionWithWallet } from "@/lib/auth-client";
 
 const authBaseUrl = SERVICE_URLS[env.NEXT_PUBLIC_ENV].auth;
 const domain = SERVICE_URLS[env.NEXT_PUBLIC_ENV].siweDomain.replace(/^\./, "");
@@ -16,12 +16,17 @@ let lastVerifiedSignature: string | null = null;
 let pendingVerification: Promise<void> | null = null;
 
 const NETWORK_NAMES: Record<string, string> = {
+  // EVM
   "1": "Ethereum",
   "8453": "Base",
   "84532": "Base Sepolia",
   "137": "Polygon",
   "42161": "Arbitrum",
   "10": "Optimism",
+  // Solana (uses genesis hashes as chain IDs)
+  "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp": "Solana", // mainnet-beta
+  EtWTRABZaYq6iMfeYKouRu166VU2xqa1: "Solana Devnet",
+  "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z": "Solana Testnet",
 };
 
 function createMessageString(params: SIWXMessage.Data): string {
@@ -53,7 +58,9 @@ function createMessageString(params: SIWXMessage.Data): string {
 
 export const betterAuthSiwx: SIWXConfig = {
   createMessage: async (input: SIWXMessage.Input): Promise<SIWXMessage> => {
-    const { data: session } = await authClient.getSession();
+    const { data: session } = (await authClient.getSession()) as {
+      data: SessionWithWallet | null;
+    };
     const isPlaceholder = input.accountAddress.includes("<<");
     const alreadyAuthenticated =
       session?.walletAddress?.toLowerCase() ===
@@ -80,7 +87,9 @@ export const betterAuthSiwx: SIWXConfig = {
     const res = await fetch(`${authBaseUrl}/siwx/nonce`, {
       credentials: "include",
     });
-    if (!res.ok) throw new Error("Failed to get nonce");
+    if (!res.ok) {
+      throw new Error("Failed to get nonce");
+    }
     const { nonce } = await res.json();
 
     const messageData: SIWXMessage.Data = {
@@ -99,9 +108,13 @@ export const betterAuthSiwx: SIWXConfig = {
   },
 
   addSession: async (session: SIWXSession): Promise<void> => {
-    if (lastVerifiedSignature === session.signature) return;
+    if (lastVerifiedSignature === session.signature) {
+      return;
+    }
 
-    const { data: authSession } = await authClient.getSession();
+    const { data: authSession } = (await authClient.getSession()) as {
+      data: SessionWithWallet | null;
+    };
     if (
       authSession?.walletAddress?.toLowerCase() ===
       session.data.accountAddress.toLowerCase()
@@ -159,7 +172,9 @@ export const betterAuthSiwx: SIWXConfig = {
       credentials: "include",
     });
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      return [];
+    }
 
     const { sessions } = await res.json();
     return sessions.filter(
@@ -175,7 +190,11 @@ export const betterAuthSiwx: SIWXConfig = {
     await authClient.signOut();
   },
 
-  setSessions: async (): Promise<void> => {},
+  setSessions: (): Promise<void> => {
+    throw new Error(
+      "setSessions not implemented - sessions managed by better-auth"
+    );
+  },
 
   getRequired: () => true,
 };

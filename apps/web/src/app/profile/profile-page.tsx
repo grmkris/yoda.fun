@@ -35,7 +35,7 @@ import {
 import { useMyRank } from "@/hooks/use-leaderboard";
 import { useUploadAvatar } from "@/hooks/use-profile";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
-import { authClient } from "@/lib/auth-client";
+import { authClient, type SessionWithWallet } from "@/lib/auth-client";
 
 const COLORS = {
   teal: "oklch(0.72 0.18 175)",
@@ -121,7 +121,9 @@ function PageHeader() {
 }
 
 function ProfileCard() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = authClient.useSession() as {
+    data: SessionWithWallet | null;
+  };
   const { isAnonymous } = useIsAuthenticated();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);

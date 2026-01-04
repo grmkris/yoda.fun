@@ -143,7 +143,7 @@ export const createAuth = (config: AuthConfig) => {
           walletAddress: wallet?.address ?? null,
           chainNamespace: wallet?.chainNamespace ?? null,
           chainId: wallet?.chainId ?? null,
-        };
+        } as const;
       }),
     ],
     databaseHooks: {

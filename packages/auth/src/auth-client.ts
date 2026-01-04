@@ -7,6 +7,12 @@ import {
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
+export interface CustomSessionFields {
+  walletAddress: string | null;
+  chainNamespace: string | null;
+  chainId: string | null;
+}
+
 export const createAuthWebClient = (props: { baseUrl: string }) =>
   createAuthClient({
     baseUrl: props.baseUrl,
@@ -14,6 +20,6 @@ export const createAuthWebClient = (props: { baseUrl: string }) =>
       anonymousClient(),
       inferAdditionalFields<Auth>(),
       siweClient(),
-      customSessionClient<Auth>(),
+      customSessionClient<Auth & { Session: CustomSessionFields }>(),
     ],
   });

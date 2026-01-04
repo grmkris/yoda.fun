@@ -1,13 +1,53 @@
 import type { BetterAuthPlugin, User } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
 import { createPublicClient, http } from "viem";
 import { generateSiweNonce } from "viem/siwe";
 import { z } from "zod";
 
-const ADDRESS_REGEX = /0x[a-fA-F0-9]{40}/;
-const CHAIN_ID_REGEX = /Chain ID:\s*(\d+)/;
+// Address patterns
+const EVM_ADDRESS_REGEX = /0x[a-fA-F0-9]{40}/;
+const SOLANA_ADDRESS_REGEX = /[1-9A-HJ-NP-Za-km-z]{32,44}/;
+
+// Message field patterns
+const CHAIN_ID_REGEX = /Chain ID:\s*(\S+)/; // Changed from \d+ to \S+ to support "mainnet"
 const NONCE_REGEX = /Nonce:\s*(\S+)/;
+
+type ChainNamespace = "eip155" | "solana";
+
+function detectChainNamespace(message: string): ChainNamespace {
+  // Detect by address format: EVM addresses start with 0x
+  if (EVM_ADDRESS_REGEX.test(message)) {
+    return "eip155";
+  }
+  // Otherwise assume Solana (base58 address)
+  return "solana";
+}
+
+function parseAddressFromMessage(
+  message: string,
+  namespace: ChainNamespace
+): string | null {
+  if (namespace === "solana") {
+    // Solana address is on its own line after the domain line
+    const lines = message.split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Solana addresses are 32-44 chars, no 0x prefix
+      if (
+        trimmed.length >= 32 &&
+        trimmed.length <= 44 &&
+        SOLANA_ADDRESS_REGEX.test(trimmed)
+      ) {
+        return trimmed;
+      }
+    }
+    return null;
+  }
+  return message.match(EVM_ADDRESS_REGEX)?.[0] ?? null;
+}
 
 const CHAIN_RPC_URLS: Record<string, string> = {
   "8453": "https://mainnet.base.org",
@@ -22,7 +62,9 @@ async function verifySiweSignature(
   chainId: string
 ): Promise<boolean> {
   const rpcUrl = CHAIN_RPC_URLS[chainId];
-  if (!rpcUrl) return false;
+  if (!rpcUrl) {
+    return false;
+  }
 
   try {
     const client = createPublicClient({ transport: http(rpcUrl) });
@@ -31,6 +73,25 @@ async function verifySiweSignature(
       message,
       signature: signature as `0x${string}`,
     });
+  } catch {
+    return false;
+  }
+}
+
+function verifySolanaSignature(
+  address: string,
+  message: string,
+  signature: string
+): boolean {
+  try {
+    const messageBytes = new TextEncoder().encode(message);
+    const signatureBytes = bs58.decode(signature);
+    const publicKeyBytes = bs58.decode(address);
+    return nacl.sign.detached.verify(
+      messageBytes,
+      signatureBytes,
+      publicKeyBytes
+    );
   } catch {
     return false;
   }
@@ -102,33 +163,47 @@ export const siwx = (options: SIWXOptions) => {
             });
           }
 
-          const parsedAddress = message.match(ADDRESS_REGEX)?.[0];
+          // Detect chain namespace from message format
+          const chainNamespace = detectChainNamespace(message);
+          const parsedAddress = parseAddressFromMessage(
+            message,
+            chainNamespace
+          );
           const parsedChainId = message.match(CHAIN_ID_REGEX)?.[1];
           const parsedNonce = message.match(NONCE_REGEX)?.[1];
 
           if (!(parsedAddress && parsedChainId && parsedNonce)) {
             throw new APIError("BAD_REQUEST", {
-              message: "Invalid SIWE message",
+              message: "Invalid SIWX message",
             });
           }
           if (parsedNonce !== storedNonce) {
             throw new APIError("BAD_REQUEST", { message: "Nonce mismatch" });
           }
 
-          const isValid = await verifySiweSignature(
-            parsedAddress,
-            message,
-            signature,
-            parsedChainId
-          );
+          // Verify signature based on chain namespace
+          let isValid: boolean;
+          if (chainNamespace === "solana") {
+            isValid = verifySolanaSignature(parsedAddress, message, signature);
+          } else {
+            isValid = await verifySiweSignature(
+              parsedAddress,
+              message,
+              signature,
+              parsedChainId
+            );
+          }
           if (!isValid) {
             throw new APIError("UNAUTHORIZED", {
               message: "Invalid signature",
             });
           }
 
-          const address = parsedAddress.toLowerCase();
-          const chainNamespace = "eip155";
+          // Normalize address (lowercase for EVM, keep original for Solana)
+          const address =
+            chainNamespace === "eip155"
+              ? parsedAddress.toLowerCase()
+              : parsedAddress;
 
           const existingWallet = await ctx.context.adapter.findOne<{
             userId: string;
@@ -220,7 +295,9 @@ export const siwx = (options: SIWXOptions) => {
         { method: "GET" },
         async (ctx) => {
           const userId = ctx.context.session?.user?.id;
-          if (!userId) return ctx.json({ sessions: [] });
+          if (!userId) {
+            return ctx.json({ sessions: [] });
+          }
 
           const wallets = await ctx.context.adapter.findMany<{
             address: string;
