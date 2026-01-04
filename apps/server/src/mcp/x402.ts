@@ -87,7 +87,8 @@ export async function getOrCreateAgentUser(
     await tx.insert(DB_SCHEMA.walletAddress).values({
       userId,
       address: walletAddress.toLowerCase(),
-      chainId: BASE_CHAIN_ID,
+      chainId: BASE_CHAIN_ID.toString(),
+      chainNamespace: "eip155",
       isPrimary: true,
     });
 

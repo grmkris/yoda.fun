@@ -1,4 +1,3 @@
-import { verifySignature } from "@reown/appkit-siwe";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
@@ -6,15 +5,14 @@ import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import { UserId } from "@yoda.fun/shared/typeid";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous, customSession, siwe } from "better-auth/plugins";
-import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
+import { anonymous, customSession } from "better-auth/plugins";
+import { siwx } from "./plugins/siwx";
 
 export interface AuthConfig {
   db: Database;
   appEnv: Environment;
   secret: string;
   signupBonusEnabled?: boolean;
-  reownProjectId: string;
 }
 
 export const createAuth = (config: AuthConfig) => {
@@ -129,36 +127,8 @@ export const createAuth = (config: AuthConfig) => {
           ]);
         },
       }),
-      siwe({
-        domain: SERVICE_URLS[config.appEnv].siweDomain,
-        getNonce: async () => generateSiweNonce(),
-        verifyMessage: async ({ message, signature }) => {
-          try {
-            const { address, chainId } = parseSiweMessage(message);
-            if (!(address && chainId)) {
-              console.log("[SIWE] Failed to parse message");
-              return false;
-            }
-
-            // Use Reown's verification (supports ERC-6492 for undeployed smart accounts)
-            const isValid = await verifySignature({
-              address,
-              message,
-              signature,
-              chainId: chainId.toString(),
-              projectId: config.reownProjectId,
-            });
-
-            console.log(
-              "[SIWE] Reown verification:",
-              isValid ? "passed" : "failed"
-            );
-            return isValid;
-          } catch (err) {
-            console.log("[SIWE] Error:", err);
-            return false;
-          }
-        },
+      siwx({
+        cookieDomain: SERVICE_URLS[config.appEnv].cookieDomain,
       }),
       customSession(async ({ user, session }) => {
         const wallet = await config.db.query.walletAddress.findFirst({
@@ -171,6 +141,8 @@ export const createAuth = (config: AuthConfig) => {
           user,
           session,
           walletAddress: wallet?.address ?? null,
+          chainNamespace: wallet?.chainNamespace ?? null,
+          chainId: wallet?.chainId ?? null,
         };
       }),
     ],

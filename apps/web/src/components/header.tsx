@@ -39,7 +39,7 @@ export default function Header() {
           {session && <PointsDisplay />}
           <Link
             className="flex h-8 w-8 items-center justify-center"
-            href={session ? "/profile" : "/login"}
+            href="/profile"
           >
             <div
               className="flex h-7 w-7 items-center justify-center rounded-full"

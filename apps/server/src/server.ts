@@ -48,7 +48,6 @@ const auth = createAuth({
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
   signupBonusEnabled: true,
-  reownProjectId: env.REOWN_PROJECT_ID,
 });
 
 const posthog = createPostHogClient({

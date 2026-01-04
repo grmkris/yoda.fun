@@ -1,113 +1,181 @@
-import type { SIWXConfig } from "@reown/appkit";
+import type {
+  CaipNetworkId,
+  SIWXConfig,
+  SIWXMessage,
+  SIWXSession,
+} from "@reown/appkit";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
-import { createSiweMessage } from "viem/siwe";
 import { env } from "@/env";
 import { authClient } from "@/lib/auth-client";
 
-const domain = SERVICE_URLS[env.NEXT_PUBLIC_ENV].siweDomain;
+const authBaseUrl = SERVICE_URLS[env.NEXT_PUBLIC_ENV].auth;
+const domain = SERVICE_URLS[env.NEXT_PUBLIC_ENV].siweDomain.replace(/^\./, "");
+
+let cachedSession: SIWXSession | null = null;
+let lastVerifiedSignature: string | null = null;
+let pendingVerification: Promise<void> | null = null;
+
+const NETWORK_NAMES: Record<string, string> = {
+  "1": "Ethereum",
+  "8453": "Base",
+  "84532": "Base Sepolia",
+  "137": "Polygon",
+  "42161": "Arbitrum",
+  "10": "Optimism",
+};
+
+function createMessageString(params: SIWXMessage.Data): string {
+  const chainIdNum = params.chainId.split(":")[1];
+  const networkName = NETWORK_NAMES[chainIdNum ?? ""] || "Ethereum";
+
+  return [
+    `${params.domain} wants you to sign in with your ${networkName} account:`,
+    params.accountAddress,
+    params.statement ? `\n${params.statement}\n` : "",
+    `URI: ${params.uri}`,
+    `Version: ${params.version}`,
+    `Chain ID: ${chainIdNum}`,
+    `Nonce: ${params.nonce}`,
+    params.issuedAt && `Issued At: ${params.issuedAt}`,
+    params.expirationTime && `Expiration Time: ${params.expirationTime}`,
+    params.notBefore && `Not Before: ${params.notBefore}`,
+    params.requestId && `Request ID: ${params.requestId}`,
+    params.resources?.length &&
+      params.resources.reduce(
+        (acc, resource) => `${acc}\n- ${resource}`,
+        "Resources:"
+      ),
+  ]
+    .filter((line) => typeof line === "string")
+    .join("\n")
+    .trim();
+}
 
 export const betterAuthSiwx: SIWXConfig = {
-  async createMessage(input) {
-    // Parse chainId from CAIP format (e.g., "eip155:8453" -> 8453)
-    const chainId = Number.parseInt(input.chainId.split(":")[1] ?? "8453", 10);
+  createMessage: async (input: SIWXMessage.Input): Promise<SIWXMessage> => {
+    const { data: session } = await authClient.getSession();
+    const isPlaceholder = input.accountAddress.includes("<<");
+    const alreadyAuthenticated =
+      session?.walletAddress?.toLowerCase() ===
+        input.accountAddress.toLowerCase() || isPlaceholder;
 
-    // Get nonce from better-auth (we have address now!)
-    const { data } = await authClient.siwe.nonce({
-      walletAddress: input.accountAddress,
-      chainId,
-    });
-
-    if (!data?.nonce) {
-      throw new Error("Failed to get nonce from server");
+    if (session?.walletAddress && alreadyAuthenticated) {
+      const messageData: SIWXMessage.Data = {
+        accountAddress: input.accountAddress,
+        chainId: input.chainId,
+        notBefore: input.notBefore,
+        domain,
+        uri: globalThis.location?.origin ?? "",
+        version: "1",
+        nonce: "already-authenticated",
+        statement: "Sign in to yoda.fun",
+        issuedAt: new Date().toISOString(),
+      };
+      return {
+        ...messageData,
+        toString: () => createMessageString(messageData),
+      };
     }
 
-    // Create SIWE message
-    const message = createSiweMessage({
-      address: input.accountAddress as `0x${string}`,
-      chainId,
-      domain: domain.startsWith(".") ? domain.slice(1) : domain,
-      nonce: data.nonce,
-      uri: typeof window !== "undefined" ? window.location.origin : "",
-      version: "1",
-      statement: "Sign in to yoda.fun",
+    const res = await fetch(`${authBaseUrl}/siwx/nonce`, {
+      credentials: "include",
     });
+    if (!res.ok) throw new Error("Failed to get nonce");
+    const { nonce } = await res.json();
 
-    return {
-      ...input,
+    const messageData: SIWXMessage.Data = {
+      accountAddress: input.accountAddress,
+      chainId: input.chainId,
+      notBefore: input.notBefore,
       domain,
-      uri: typeof window !== "undefined" ? window.location.origin : "",
+      uri: globalThis.location?.origin ?? "",
       version: "1",
-      nonce: data.nonce,
-      toString: () => message,
+      nonce,
+      statement: "Sign in to yoda.fun",
+      issuedAt: new Date().toISOString(),
     };
+
+    return { ...messageData, toString: () => createMessageString(messageData) };
   },
 
-  async addSession(session) {
-    const chainId = Number.parseInt(
-      session.data.chainId.split(":")[1] ?? "8453",
-      10
-    );
+  addSession: async (session: SIWXSession): Promise<void> => {
+    if (lastVerifiedSignature === session.signature) return;
 
-    // Verify with better-auth and create session
-    const { error } = await authClient.siwe.verify({
-      message: session.message,
-      signature: session.signature,
-      walletAddress: session.data.accountAddress,
-      chainId,
-    });
-
-    if (error) {
-      throw new Error(error.message ?? "Failed to verify signature");
+    const { data: authSession } = await authClient.getSession();
+    if (
+      authSession?.walletAddress?.toLowerCase() ===
+      session.data.accountAddress.toLowerCase()
+    ) {
+      cachedSession = session;
+      lastVerifiedSignature = session.signature;
+      return;
     }
 
-    // Refresh page to load new auth state
-    window.location.reload();
+    if (pendingVerification) {
+      await pendingVerification;
+      return;
+    }
+
+    const doVerify = async () => {
+      const res = await fetch(`${authBaseUrl}/siwx/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          message: session.message,
+          signature: session.signature,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to verify signature");
+      }
+
+      lastVerifiedSignature = session.signature;
+      cachedSession = session;
+    };
+
+    pendingVerification = doVerify();
+    try {
+      await pendingVerification;
+    } finally {
+      pendingVerification = null;
+    }
   },
 
-  async revokeSession(_chainId, _address) {
+  getSessions: async (
+    chainId: CaipNetworkId,
+    address: string
+  ): Promise<SIWXSession[]> => {
+    if (
+      cachedSession?.data.chainId === chainId &&
+      cachedSession.data.accountAddress.toLowerCase() === address.toLowerCase()
+    ) {
+      return [cachedSession];
+    }
+
+    const res = await fetch(`${authBaseUrl}/siwx/sessions`, {
+      credentials: "include",
+    });
+
+    if (!res.ok) return [];
+
+    const { sessions } = await res.json();
+    return sessions.filter(
+      (s: SIWXSession) =>
+        s.data.chainId === chainId &&
+        s.data.accountAddress.toLowerCase() === address.toLowerCase()
+    );
+  },
+
+  revokeSession: async (): Promise<void> => {
+    cachedSession = null;
+    lastVerifiedSignature = null;
     await authClient.signOut();
   },
 
-  async setSessions(_sessions) {
-    // Not needed - better-auth handles single session
-  },
+  setSessions: async (): Promise<void> => {},
 
-  async getSessions(chainId, address) {
-    // Can't check session server-side - wallet auth is browser-only
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    const { data: session } = await authClient.getSession();
-
-    // Must be authenticated and not anonymous
-    if (!session?.user || session.user.isAnonymous) {
-      return [];
-    }
-
-    // Use wallet from session (populated by customSession plugin)
-    const authenticatedWallet = (
-      session as { walletAddress?: string }
-    ).walletAddress?.toLowerCase();
-    if (!authenticatedWallet || authenticatedWallet !== address.toLowerCase()) {
-      return [];
-    }
-
-    return [
-      {
-        data: {
-          accountAddress: address,
-          chainId,
-          domain,
-          uri: typeof window !== "undefined" ? window.location.origin : "",
-          version: "1",
-          nonce: "existing-session",
-        },
-        message: "existing-session",
-        signature: "existing-session",
-      },
-    ];
-  },
-
-  signOutOnDisconnect: true,
+  getRequired: () => true,
 };

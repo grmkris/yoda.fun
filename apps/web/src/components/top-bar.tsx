@@ -42,7 +42,7 @@ export function TopBar() {
         {!(isPending || session?.user) && (
           <Link
             className="flex items-center gap-2 rounded-full bg-primary px-3 py-1.5 text-primary-foreground transition-colors hover:bg-primary/90"
-            href="/login"
+            href="/profile"
           >
             <span className="font-medium text-sm">Sign In</span>
           </Link>

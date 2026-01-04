@@ -8,5 +8,4 @@ export const auth = createAuth({
   db,
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
-  reownProjectId: env.REOWN_PROJECT_ID,
 });

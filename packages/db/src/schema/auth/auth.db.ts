@@ -6,7 +6,7 @@ import {
   type VerificationId,
   type WalletAddressId,
 } from "@yoda.fun/shared/typeid";
-import { boolean, index, integer, pgTable, text } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text } from "drizzle-orm/pg-core";
 import {
   baseEntityFields,
   createTimestampField,
@@ -103,11 +103,18 @@ export const walletAddress = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .$type<UserId>(),
     address: text("address").notNull(),
-    chainId: integer("chain_id").notNull(),
+    chainNamespace: text("chain_namespace").notNull(), // "eip155" | "solana" | "bip122" // TODO make these enums
+    chainId: text("chain_id").notNull(), // "1", "8453", "mainnet" // TODO make these enums
     isPrimary: boolean("is_primary")
       .$defaultFn(() => false)
       .notNull(),
     ...baseEntityFields,
+    // SIWX session data for client-side re-verification
+    siwxMessage: text("siwx_message"),
+    siwxSignature: text("siwx_signature"),
   },
-  (table) => [index("walletAddress_userId_idx").on(table.userId)]
+  (table) => [
+    index("walletAddress_userId_idx").on(table.userId),
+    index("walletAddress_address_idx").on(table.address),
+  ]
 );

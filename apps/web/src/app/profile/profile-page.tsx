@@ -1,12 +1,11 @@
 "use client";
 
+import { AppKitButton } from "@reown/appkit/react";
 import {
-  ArrowUpRight,
   Check,
-  Clock,
+  Loader2,
   LogOut,
   Pencil,
-  Sparkles,
   TrendingDown,
   TrendingUp,
   Trophy,
@@ -14,43 +13,122 @@ import {
   User,
   Wallet,
   X,
-  Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { useDisconnect } from "wagmi";
+import { useConnection, useDisconnect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/env";
 import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
+import {
+  DEPOSIT_TIERS,
+  type DepositTier,
+  useCanDeposit,
+  useDeposit,
+  useDevDeposit,
+} from "@/hooks/use-deposit";
 import { useMyRank } from "@/hooks/use-leaderboard";
 import { useUploadAvatar } from "@/hooks/use-profile";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
 import { authClient } from "@/lib/auth-client";
-import { DepositSection } from "./deposit-section";
-import { ProfileConnectPrompt } from "./profile-connect-prompt";
 
-function ProfileHeader() {
+const COLORS = {
+  teal: "oklch(0.72 0.18 175)",
+  purple: "oklch(0.65 0.25 290)",
+  orange: "oklch(0.68 0.20 25)",
+  yellow: "oklch(0.80 0.16 90)",
+  text: "oklch(0.95 0.02 280)",
+  muted: "oklch(0.60 0.04 280)",
+  card: "oklch(0.10 0.03 280 / 60%)",
+  cardBorder: "oklch(0.65 0.25 290 / 20%)",
+  innerCard: "oklch(0.08 0.02 270 / 50%)",
+};
+
+export function ProfilePage() {
+  const { isPending: sessionPending } = authClient.useSession();
+
+  if (sessionPending) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+          style={{ borderColor: COLORS.purple, borderTopColor: "transparent" }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      animate={{ opacity: 1 }}
+      className="container mx-auto max-w-2xl space-y-5 p-4 pb-8"
+      initial={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <PageHeader />
+      <ProfileCard />
+      <StatsRow />
+      <DepositRow />
+      <RecentActivity />
+    </motion.div>
+  );
+}
+
+function PageHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { mutateAsync: disconnect } = useDisconnect();
+  const { isAnonymous } = useIsAuthenticated();
+
+  return (
+    <div className="flex items-center justify-between">
+      <h1
+        className="font-bold font-heading text-xl"
+        style={{ color: COLORS.text }}
+      >
+        Profile
+      </h1>
+      <div className="flex items-center gap-2">
+        <AppKitButton />
+        {!isAnonymous && session?.user && (
+          <button
+            className="flex h-9 items-center gap-1.5 rounded-lg px-3 transition-all hover:opacity-80"
+            onClick={async () => {
+              await disconnect();
+              await authClient.signOut({
+                fetchOptions: { onSuccess: () => router.push("/") },
+              });
+            }}
+            style={{
+              background: `${COLORS.orange}15`,
+              color: COLORS.orange,
+              border: `1px solid ${COLORS.orange}30`,
+            }}
+            type="button"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden text-sm sm:inline">Sign Out</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileCard() {
+  const { data: session } = authClient.useSession();
+  const { isAnonymous } = useIsAuthenticated();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-
-  const startEditing = () => {
-    setName(session?.user?.name ?? "");
-    setAvatarUrl(session?.user?.image ?? "");
-    setIsEditing(true);
-  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,17 +143,9 @@ function ProfileHeader() {
         return;
       }
       const base64 = result.split(",")[1];
-      uploadAvatar.mutate(base64, {
-        onSuccess: () => {
-          setIsEditing(false);
-        },
-      });
+      uploadAvatar.mutate(base64, { onSuccess: () => setIsEditing(false) });
     };
     reader.readAsDataURL(file);
-  };
-
-  const cancelEditing = () => {
-    setIsEditing(false);
   };
 
   const saveChanges = async () => {
@@ -90,770 +160,515 @@ function ProfileHeader() {
     }
   };
 
-  const currentAvatarUrl = isEditing ? avatarUrl : session?.user?.image;
+  if (isAnonymous) {
+    return (
+      <div
+        className="flex items-center gap-4 rounded-2xl p-5"
+        style={{
+          background: COLORS.card,
+          backdropFilter: "blur(20px)",
+          border: `1px solid ${COLORS.cardBorder}`,
+        }}
+      >
+        <div
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+          style={{ background: COLORS.innerCard }}
+        >
+          <User className="h-6 w-6" style={{ color: COLORS.muted }} />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium" style={{ color: COLORS.text }}>
+            Connect your wallet
+          </p>
+          <p className="text-sm" style={{ color: COLORS.muted }}>
+            to view your profile
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-5"
-      initial={{ opacity: 0, y: -20 }}
+    <div
+      className="rounded-2xl p-5"
       style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
+        background: COLORS.card,
         backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
+        border: `1px solid ${COLORS.cardBorder}`,
       }}
-      transition={{ duration: 0.5 }}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <input
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileSelect}
-            ref={fileInputRef}
-            type="file"
-          />
-          <button
-            className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all"
-            disabled={!isEditing || uploadAvatar.isPending}
-            onClick={() => isEditing && fileInputRef.current?.click()}
-            style={{
-              background: currentAvatarUrl
-                ? undefined
-                : "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-              boxShadow: "0 0 30px oklch(0.65 0.25 290 / 30%)",
-              cursor: isEditing ? "pointer" : "default",
-              opacity: uploadAvatar.isPending ? 0.5 : 1,
-            }}
-            type="button"
-          >
-            {currentAvatarUrl ? (
-              <Image
-                alt="Avatar"
-                className="h-full w-full object-cover"
-                height={64}
-                src={currentAvatarUrl}
-                width={64}
-              />
-            ) : (
-              <User className="h-8 w-8 text-white" />
-            )}
-            {isEditing && (
-              <div
-                className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 transition-opacity hover:opacity-100"
-                style={{ background: "oklch(0 0 0 / 50%)" }}
-              >
-                <Upload className="h-5 w-5 text-white" />
-              </div>
-            )}
-          </button>
-
-          {isEditing ? (
-            <div className="flex-1 space-y-2">
-              <Input
-                className="max-w-xs"
-                maxLength={50}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Display name"
-                value={name}
-              />
-              <p className="text-xs" style={{ color: "oklch(0.60 0.04 280)" }}>
-                Click avatar to upload image
-              </p>
-            </div>
+      <div className="flex items-center gap-4">
+        <input
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelect}
+          ref={fileInputRef}
+          type="file"
+        />
+        <button
+          className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all"
+          disabled={!isEditing || uploadAvatar.isPending}
+          onClick={() => isEditing && fileInputRef.current?.click()}
+          style={{
+            background: session?.user?.image
+              ? undefined
+              : `linear-gradient(135deg, ${COLORS.teal}, ${COLORS.purple})`,
+            boxShadow: `0 0 20px ${COLORS.purple}30`,
+            cursor: isEditing ? "pointer" : "default",
+            opacity: uploadAvatar.isPending ? 0.5 : 1,
+          }}
+          type="button"
+        >
+          {session?.user?.image ? (
+            <Image
+              alt="Avatar"
+              className="h-full w-full object-cover"
+              height={56}
+              src={session.user.image}
+              width={56}
+            />
           ) : (
-            <div>
-              <h1
-                className="font-bold font-heading text-2xl"
-                style={{ color: "oklch(0.95 0.02 280)" }}
-              >
-                {session?.user?.name || "User"}
-              </h1>
+            <User className="h-6 w-6 text-white" />
+          )}
+          {isEditing && (
+            <div
+              className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100"
+              style={{ background: "oklch(0 0 0 / 50%)" }}
+            >
+              <Upload className="h-4 w-4 text-white" />
             </div>
+          )}
+        </button>
+
+        <div className="min-w-0 flex-1">
+          {isEditing ? (
+            <Input
+              className="max-w-[200px]"
+              maxLength={50}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Display name"
+              value={name}
+            />
+          ) : (
+            <p
+              className="truncate font-semibold text-lg"
+              style={{ color: COLORS.text }}
+            >
+              {session?.user?.name || "User"}
+            </p>
+          )}
+          {session?.walletAddress && (
+            <p className="truncate text-sm" style={{ color: COLORS.muted }}>
+              {session.walletAddress.slice(0, 6)}...
+              {session.walletAddress.slice(-4)}
+            </p>
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 gap-2">
           {isEditing ? (
             <>
               <Button
                 disabled={isSaving}
                 onClick={saveChanges}
                 size="sm"
-                style={{
-                  background: "oklch(0.72 0.18 175)",
-                  color: "white",
-                }}
+                style={{ background: COLORS.teal, color: "white" }}
               >
-                <Check className="mr-1 h-4 w-4" />
-                {isSaving ? "Saving..." : "Save"}
+                <Check className="h-4 w-4" />
               </Button>
-              <Button onClick={cancelEditing} size="sm" variant="ghost">
+              <Button
+                onClick={() => setIsEditing(false)}
+                size="sm"
+                variant="ghost"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </>
           ) : (
-            <>
-              <button
-                className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:scale-105"
-                onClick={startEditing}
-                style={{
-                  background: "oklch(0.65 0.25 290 / 15%)",
-                  color: "oklch(0.72 0.18 175)",
-                  border: "1px solid oklch(0.65 0.25 290 / 30%)",
-                }}
-                type="button"
-              >
-                <Pencil className="h-4 w-4" />
-                <span className="hidden font-medium text-sm sm:inline">
-                  Edit
-                </span>
-              </button>
-
-              <button
-                className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:scale-105"
-                onClick={async () => {
-                  await disconnect();
-                  await authClient.signOut({
-                    fetchOptions: {
-                      onSuccess: () => router.push("/"),
-                    },
-                  });
-                }}
-                style={{
-                  background: "oklch(0.68 0.20 25 / 15%)",
-                  color: "oklch(0.68 0.20 25)",
-                  border: "1px solid oklch(0.68 0.20 25 / 30%)",
-                }}
-                type="button"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden font-medium text-sm sm:inline">
-                  Sign Out
-                </span>
-              </button>
-            </>
+            <button
+              className="flex h-9 items-center gap-1.5 rounded-lg px-3 transition-all hover:opacity-80"
+              onClick={() => {
+                setName(session?.user?.name ?? "");
+                setIsEditing(true);
+              }}
+              style={{
+                background: `${COLORS.purple}15`,
+                color: COLORS.teal,
+                border: `1px solid ${COLORS.purple}30`,
+              }}
+              type="button"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="hidden text-sm sm:inline">Edit</span>
+            </button>
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-function BalanceCard() {
-  const { data: balance, isLoading } = useBalance();
+function StatsRow() {
+  const { isAnonymous } = useIsAuthenticated();
+  const { data: balance, isLoading: balanceLoading } = useBalance();
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
     status: "WON",
     limit: 100,
   });
+  const { data: lostBets, isLoading: lostLoading } = useBetHistory({
+    status: "LOST",
+    limit: 100,
+  });
+  const { data: myRank, isLoading: rankLoading } = useMyRank();
 
-  const availableBalance = balance?.points ?? 0;
-  const totalDeposited = balance?.totalPointsPurchased ?? 0;
-  const totalWon =
-    wonBets?.bets?.reduce((sum, b) => sum + (b.bet.pointsReturned ?? 0), 0) ??
-    0;
+  const wins = wonBets?.bets?.length ?? 0;
+  const losses = lostBets?.bets?.length ?? 0;
+  const total = wins + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+  const isLoading = balanceLoading || wonLoading || lostLoading || rankLoading;
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-6"
-      initial={{ opacity: 0, y: 20 }}
-      style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
-        boxShadow: "0 0 60px oklch(0.65 0.25 290 / 10%)",
-      }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-    >
-      <div
-        className="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full blur-3xl"
-        style={{ background: "oklch(0.65 0.25 290 / 15%)" }}
+    <div className="grid grid-cols-3 gap-3">
+      <StatPill
+        color={COLORS.teal}
+        icon={<Wallet className="h-4 w-4" />}
+        isLoading={isLoading}
+        label="Balance"
+        value={
+          isAnonymous
+            ? "—"
+            : `$${(balance?.points ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        }
       />
-
-      <div className="relative mb-6">
-        <div className="mb-1 flex items-center gap-2">
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.25 290))",
-            }}
-          >
-            <Wallet className="h-4 w-4 text-white" />
-          </div>
-          <span
-            className="font-heading font-medium text-sm"
-            style={{ color: "oklch(0.65 0.04 280)" }}
-          >
-            Available Balance
-          </span>
-        </div>
-
-        {isLoading ? (
-          <Skeleton className="h-14 w-48" />
-        ) : (
-          <div
-            className="font-bold font-heading text-5xl tracking-tight"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.95 0.02 280), oklch(0.72 0.18 175))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            $
-            {availableBalance.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        )}
-      </div>
-
-      <div
-        className="grid grid-cols-2 gap-3 rounded-xl p-3"
-        style={{
-          background: "oklch(0.08 0.02 270 / 50%)",
-          border: "1px solid oklch(0.65 0.25 290 / 10%)",
-        }}
-      >
-        <StatItem
-          color="oklch(0.72 0.18 175)"
-          icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-          isLoading={isLoading}
-          label="Deposited"
-          value={totalDeposited}
-        />
-        <StatItem
-          color="oklch(0.80 0.16 90)"
-          icon={<Sparkles className="h-3.5 w-3.5" />}
-          isLoading={isLoading || wonLoading}
-          label="Won"
-          value={totalWon}
-        />
-      </div>
-    </motion.div>
+      <StatPill
+        color={winRate >= 50 ? COLORS.teal : COLORS.orange}
+        icon={
+          winRate >= 50 ? (
+            <TrendingUp className="h-4 w-4" />
+          ) : (
+            <TrendingDown className="h-4 w-4" />
+          )
+        }
+        isLoading={isLoading}
+        label="Win Rate"
+        secondary={isAnonymous ? undefined : `${wins}W / ${losses}L`}
+        value={isAnonymous ? "—" : `${winRate}%`}
+      />
+      <StatPill
+        color={COLORS.yellow}
+        icon={<Trophy className="h-4 w-4" />}
+        isLoading={isLoading}
+        label="Rank"
+        value={isAnonymous || !myRank?.rank ? "—" : `#${myRank.rank}`}
+      />
+    </div>
   );
 }
 
-function StatItem({
+function StatPill({
   icon,
   label,
   value,
+  secondary,
   color,
   isLoading,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: number;
+  value: string;
+  secondary?: string;
   color: string;
   isLoading: boolean;
 }) {
   return (
-    <div className="text-center">
+    <div
+      className="rounded-xl p-4 text-center"
+      style={{
+        background: COLORS.card,
+        backdropFilter: "blur(20px)",
+        border: `1px solid ${COLORS.cardBorder}`,
+      }}
+    >
       <div
-        className="mb-1 flex items-center justify-center gap-1"
-        style={{ color }}
+        className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-lg"
+        style={{ background: `${color}20`, color }}
       >
         {icon}
-        <span
-          className="font-medium text-xs"
-          style={{ color: "oklch(0.60 0.04 280)" }}
-        >
-          {label}
-        </span>
       </div>
       {isLoading ? (
-        <Skeleton className="mx-auto h-5 w-16" />
+        <Skeleton className="mx-auto mb-1 h-6 w-16" />
       ) : (
-        <span
-          className="font-heading font-semibold text-sm"
-          style={{ color: "oklch(0.90 0.02 280)" }}
-        >
-          $
-          {value.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </span>
+        <p className="font-bold font-heading text-lg" style={{ color }}>
+          {value}
+        </p>
+      )}
+      <p className="text-xs" style={{ color: COLORS.muted }}>
+        {label}
+      </p>
+      {secondary && (
+        <p className="mt-1 text-xs" style={{ color: COLORS.muted }}>
+          {secondary}
+        </p>
       )}
     </div>
   );
 }
 
-function PerformanceCard() {
-  const { data: wonBets, isLoading: wonLoading } = useBetHistory({
-    status: "WON",
-    limit: 100,
-  });
-  const { data: lostBets, isLoading: lostLoading } = useBetHistory({
-    status: "LOST",
-    limit: 100,
-  });
+function DepositRow() {
+  const { isConnected } = useConnection();
+  const { isAnonymous } = useIsAuthenticated();
+  const canDeposit = useCanDeposit();
+  const deposit = useDeposit();
+  const devDeposit = useDevDeposit();
+  const { isPending, variables: pendingTier } = deposit;
 
-  const wins = wonBets?.bets?.length ?? 0;
-  const losses = lostBets?.bets?.length ?? 0;
-  const total = wins + losses;
-  const winRate = total > 0 ? (wins / total) * 100 : 0;
-  const winPercent = Math.round(winRate);
-  const isLoading = wonLoading || lostLoading;
+  const showDeposit = isConnected && canDeposit && !isAnonymous;
+  const showDev = env.NEXT_PUBLIC_ENV === "dev" && !isAnonymous;
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-5"
-      initial={{ opacity: 0, y: 20 }}
+    <div
+      className="rounded-2xl p-5"
       style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
+        background: COLORS.card,
         backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
+        border: `1px solid ${COLORS.cardBorder}`,
       }}
-      transition={{ delay: 0.2, duration: 0.5 }}
     >
-      <h3
-        className="mb-4 flex items-center gap-2 font-heading font-medium text-sm"
-        style={{ color: "oklch(0.65 0.04 280)" }}
-      >
-        <Zap className="h-4 w-4" style={{ color: "oklch(0.80 0.16 90)" }} />
-        Performance
-      </h3>
-
-      <div className="flex items-center gap-5">
-        <div className="relative">
-          {isLoading ? (
-            <Skeleton className="h-20 w-20 rounded-full" />
-          ) : (
-            <div className="relative h-20 w-20">
-              <div
-                className="absolute inset-0 rounded-full"
+      <div className="mb-4 flex items-center justify-between">
+        <h2
+          className="flex items-center gap-2 font-heading font-semibold"
+          style={{ color: COLORS.text }}
+        >
+          <Wallet className="h-5 w-5" style={{ color: COLORS.teal }} />
+          Add Points
+        </h2>
+        {showDev && (
+          <div className="flex gap-1">
+            {DEPOSIT_TIERS.map((tier) => (
+              <button
+                className="rounded px-2 py-1 text-xs transition-opacity hover:opacity-80"
+                disabled={devDeposit.isPending}
+                key={tier}
+                onClick={() => devDeposit.mutate(tier)}
                 style={{
-                  background: `conic-gradient(
-                    oklch(0.72 0.18 175) 0% ${winPercent}%,
-                    oklch(0.68 0.20 25 / 40%) ${winPercent}% 100%
-                  )`,
-                  boxShadow:
-                    winPercent > 50
-                      ? "0 0 25px oklch(0.72 0.18 175 / 30%)"
-                      : "0 0 25px oklch(0.68 0.20 25 / 20%)",
+                  background: `${COLORS.yellow}20`,
+                  color: COLORS.yellow,
                 }}
-              />
-              <div
-                className="absolute inset-2 flex items-center justify-center rounded-full"
-                style={{ background: "oklch(0.10 0.03 280)" }}
+                type="button"
               >
-                <span
-                  className="font-bold font-heading text-lg"
-                  style={{
-                    color:
-                      winPercent >= 50
-                        ? "oklch(0.72 0.18 175)"
-                        : "oklch(0.68 0.20 25)",
-                  }}
-                >
-                  {winPercent}%
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-2">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-4 w-32" />
-            </>
-          ) : (
-            <>
-              <div>
-                <span
-                  className="font-heading font-semibold text-lg"
-                  style={{ color: "oklch(0.95 0.02 280)" }}
-                >
-                  Win Rate
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span className="flex items-center gap-1">
-                  <TrendingUp
-                    className="h-3.5 w-3.5"
-                    style={{ color: "oklch(0.72 0.18 175)" }}
-                  />
-                  <span style={{ color: "oklch(0.72 0.18 175)" }}>
-                    {wins} Won
-                  </span>
-                </span>
-                <span style={{ color: "oklch(0.45 0.04 280)" }}>/</span>
-                <span className="flex items-center gap-1">
-                  <TrendingDown
-                    className="h-3.5 w-3.5"
-                    style={{ color: "oklch(0.68 0.20 25)" }}
-                  />
-                  <span style={{ color: "oklch(0.68 0.20 25)" }}>
-                    {losses} Lost
-                  </span>
-                </span>
-              </div>
-              <div
-                className="text-sm"
-                style={{ color: "oklch(0.60 0.04 280)" }}
-              >
-                {total} Total Bets
-              </div>
-            </>
-          )}
-        </div>
+                {devDeposit.isPending ? "..." : `+$${tier}`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    </motion.div>
-  );
-}
 
-function LeaderboardBadge() {
-  const { data: myRank, isLoading } = useMyRank();
-
-  const rank = myRank?.rank ?? null;
-
-  return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-5"
-      initial={{ opacity: 0, y: 20 }}
-      style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
-      }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-    >
-      <div
-        className="pointer-events-none absolute -top-8 -right-8 h-24 w-24 rounded-full blur-2xl"
-        style={{ background: "oklch(0.80 0.16 90 / 15%)" }}
-      />
-
-      <div className="relative flex items-center gap-4">
+      {showDeposit ? (
+        <div className="grid grid-cols-4 gap-2">
+          {DEPOSIT_TIERS.map((tier) => (
+            <DepositButton
+              amount={tier}
+              isLoading={isPending && pendingTier === tier}
+              key={tier}
+              onSelect={() => deposit.mutate(tier)}
+            />
+          ))}
+        </div>
+      ) : (
         <div
-          className="flex h-12 w-12 items-center justify-center rounded-xl"
-          style={{
-            background:
-              "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.70 0.18 60))",
-            boxShadow: "0 0 25px oklch(0.80 0.16 90 / 30%)",
-          }}
+          className="rounded-xl p-4 text-center"
+          style={{ background: COLORS.innerCard }}
         >
-          <Trophy className="h-6 w-6 text-white" />
+          <p className="text-sm" style={{ color: COLORS.muted }}>
+            {isAnonymous
+              ? "Connect wallet to deposit"
+              : "Wallet not ready for deposits"}
+          </p>
         </div>
-
-        <div className="flex-1">
-          {isLoading && (
-            <>
-              <Skeleton className="mb-1 h-6 w-24" />
-              <Skeleton className="h-4 w-32" />
-            </>
-          )}
-          {!isLoading && rank && (
-            <>
-              <span
-                className="font-bold font-heading text-2xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.95 0.02 280))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                #{rank}
-              </span>
-              <div
-                className="font-medium text-sm"
-                style={{ color: "oklch(0.60 0.04 280)" }}
-              >
-                Global Rank
-              </div>
-            </>
-          )}
-          {!(isLoading || rank) && (
-            <div className="text-sm" style={{ color: "oklch(0.60 0.04 280)" }}>
-              Place a bet to join the leaderboard
-            </div>
-          )}
-        </div>
-
-        <Link
-          className="rounded-lg px-3 py-1.5 font-medium text-xs transition-all hover:scale-105"
-          href="/leaderboard"
-          style={{
-            background: "oklch(0.80 0.16 90 / 15%)",
-            color: "oklch(0.80 0.16 90)",
-            border: "1px solid oklch(0.80 0.16 90 / 30%)",
-          }}
-        >
-          View All
-        </Link>
-      </div>
-    </motion.div>
+      )}
+    </div>
   );
 }
 
-const VOTE_STYLES = {
-  YES: {
-    color: "oklch(0.72 0.18 175)",
-    bg: "oklch(0.72 0.18 175 / 15%)",
-    border: "oklch(0.72 0.18 175 / 20%)",
-  },
-  NO: {
-    color: "oklch(0.68 0.20 25)",
-    bg: "oklch(0.68 0.20 25 / 15%)",
-    border: "oklch(0.68 0.20 25 / 20%)",
-  },
-  SKIP: {
-    color: "oklch(0.60 0.04 280)",
-    bg: "oklch(0.60 0.04 280 / 15%)",
-    border: "oklch(0.60 0.04 280 / 20%)",
-  },
-} as const;
+function DepositButton({
+  amount,
+  isLoading,
+  onSelect,
+}: {
+  amount: DepositTier;
+  isLoading: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      className="rounded-xl p-3 text-center transition-all hover:scale-[1.02]"
+      disabled={isLoading}
+      onClick={onSelect}
+      style={{
+        background: COLORS.innerCard,
+        border: `1px solid ${COLORS.cardBorder}`,
+      }}
+      type="button"
+    >
+      <p
+        className="font-bold font-heading text-lg"
+        style={{ color: COLORS.text }}
+      >
+        ${amount}
+      </p>
+      <p
+        className="flex items-center justify-center gap-1 text-xs"
+        style={{ color: COLORS.teal }}
+      >
+        {isLoading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <Wallet className="h-3 w-3" />
+        )}
+        {isLoading ? "..." : "Deposit"}
+      </p>
+    </button>
+  );
+}
 
-function ActiveBets() {
-  const { data: activeBets, isLoading } = useBetHistory({
+function RecentActivity() {
+  const { isAnonymous } = useIsAuthenticated();
+  const { data: activeBets, isLoading: activeLoading } = useBetHistory({
     status: "ACTIVE",
     limit: 5,
   });
-
-  return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-5"
-      initial={{ opacity: 0, y: 20 }}
-      style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
-      }}
-      transition={{ delay: 0.4, duration: 0.5 }}
-    >
-      <h3
-        className="mb-4 flex items-center gap-2 font-heading font-medium text-sm"
-        style={{ color: "oklch(0.65 0.04 280)" }}
-      >
-        <Sparkles
-          className="h-4 w-4"
-          style={{ color: "oklch(0.65 0.25 290)" }}
-        />
-        Active Bets
-      </h3>
-
-      {isLoading && (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton className="h-16 w-full" key={i} />
-          ))}
-        </div>
-      )}
-      {!(isLoading || activeBets?.bets?.length) && (
-        <div
-          className="py-8 text-center text-sm"
-          style={{ color: "oklch(0.60 0.04 280)" }}
-        >
-          No active bets. Start predicting!
-        </div>
-      )}
-      {!isLoading && activeBets?.bets?.length && (
-        <div className="space-y-2">
-          {activeBets.bets.map(({ bet, market }) => (
-            <div
-              className="flex items-center justify-between rounded-xl p-3"
-              key={bet.id}
-              style={{
-                background: "oklch(0.08 0.02 270 / 50%)",
-                border: `1px solid ${VOTE_STYLES[bet.vote]?.border ?? VOTE_STYLES.NO.border}`,
-              }}
-            >
-              <div className="min-w-0 flex-1">
-                <p
-                  className="line-clamp-1 font-medium text-sm"
-                  style={{ color: "oklch(0.90 0.02 280)" }}
-                >
-                  {market.title}
-                </p>
-                <span
-                  className="font-semibold text-xs"
-                  style={{
-                    color: VOTE_STYLES[bet.vote]?.color ?? VOTE_STYLES.NO.color,
-                  }}
-                >
-                  {bet.vote}
-                </span>
-              </div>
-              <div
-                className="shrink-0 rounded-lg px-2.5 py-1 font-heading font-semibold text-sm"
-                style={{
-                  background: VOTE_STYLES[bet.vote]?.bg ?? VOTE_STYLES.NO.bg,
-                  color: VOTE_STYLES[bet.vote]?.color ?? VOTE_STYLES.NO.color,
-                }}
-              >
-                {bet.pointsSpent} pts
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-function ActivityFeed() {
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
     status: "WON",
-    limit: 100,
+    limit: 5,
   });
   const { data: lostBets, isLoading: lostLoading } = useBetHistory({
     status: "LOST",
-    limit: 100,
+    limit: 5,
   });
 
-  const isLoading = wonLoading || lostLoading;
+  const isLoading = activeLoading || wonLoading || lostLoading;
 
-  const activities = [
-    ...(wonBets?.bets?.slice(0, 3).map((b) => ({
-      id: `win-${b.bet.id}`,
-      type: "win" as const,
-      title: b.market.title,
-      amount: String(b.bet.pointsReturned ?? b.bet.pointsSpent),
-    })) ?? []),
-    ...(lostBets?.bets?.slice(0, 2).map((b) => ({
-      id: `loss-${b.bet.id}`,
-      type: "loss" as const,
-      title: b.market.title,
-      amount: String(b.bet.pointsSpent),
-    })) ?? []),
-  ].slice(0, 5);
+  interface Activity {
+    id: string;
+    type: "active" | "won" | "lost";
+    title: string;
+    amount: number;
+    vote?: "YES" | "NO" | "SKIP";
+  }
 
-  const activityStyles = {
-    win: { bg: "oklch(0.72 0.18 175)", shadow: "0 0 8px oklch(0.72 0.18 175)" },
-    loss: { bg: "oklch(0.68 0.20 25)", shadow: "0 0 8px oklch(0.68 0.20 25)" },
+  const activities: Activity[] = [
+    ...(activeBets?.bets?.map((b) => ({
+      id: `active-${b.bet.id}`,
+      type: "active" as const,
+      title: b.market.title,
+      amount: b.bet.pointsSpent,
+      vote: b.bet.vote,
+    })) ?? []),
+    ...(wonBets?.bets?.map((b) => ({
+      id: `won-${b.bet.id}`,
+      type: "won" as const,
+      title: b.market.title,
+      amount: b.bet.pointsReturned ?? b.bet.pointsSpent,
+    })) ?? []),
+    ...(lostBets?.bets?.map((b) => ({
+      id: `lost-${b.bet.id}`,
+      type: "lost" as const,
+      title: b.market.title,
+      amount: b.bet.pointsSpent,
+    })) ?? []),
+  ].slice(0, 6);
+
+  const typeStyles = {
+    active: { color: COLORS.purple, label: "ACTIVE", prefix: "" },
+    won: { color: COLORS.teal, label: "WON", prefix: "+" },
+    lost: { color: COLORS.orange, label: "LOST", prefix: "-" },
   };
 
+  if (isAnonymous) {
+    return null;
+  }
+
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl p-5"
-      initial={{ opacity: 0, y: 20 }}
+    <div
+      className="rounded-2xl p-5"
       style={{
-        background: "oklch(0.10 0.03 280 / 60%)",
+        background: COLORS.card,
         backdropFilter: "blur(20px)",
-        border: "1px solid oklch(0.65 0.25 290 / 20%)",
+        border: `1px solid ${COLORS.cardBorder}`,
       }}
-      transition={{ delay: 0.5, duration: 0.5 }}
     >
-      <h3
-        className="mb-4 flex items-center gap-2 font-heading font-medium text-sm"
-        style={{ color: "oklch(0.65 0.04 280)" }}
+      <h2
+        className="mb-4 font-heading font-semibold"
+        style={{ color: COLORS.text }}
       >
-        <Clock className="h-4 w-4" style={{ color: "oklch(0.65 0.25 290)" }} />
         Recent Activity
-      </h3>
+      </h2>
 
       {isLoading && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton className="h-12 w-full" key={i} />
+            <Skeleton className="h-14 w-full rounded-xl" key={i} />
           ))}
         </div>
       )}
+
       {!isLoading && activities.length === 0 && (
         <div
-          className="py-8 text-center text-sm"
-          style={{ color: "oklch(0.60 0.04 280)" }}
+          className="rounded-xl p-6 text-center"
+          style={{ background: COLORS.innerCard }}
         >
-          No recent activity. Start predicting!
+          <p className="text-sm" style={{ color: COLORS.muted }}>
+            No bets yet. Start predicting!
+          </p>
         </div>
       )}
+
       {!isLoading && activities.length > 0 && (
         <div className="space-y-2">
-          {activities.map((activity) => (
-            <div
-              className="flex items-center gap-3 rounded-xl p-3"
-              key={activity.id}
-              style={{
-                background: "oklch(0.08 0.02 270 / 50%)",
-                border: "1px solid oklch(0.65 0.25 290 / 8%)",
-              }}
-            >
+          {activities.map((activity) => {
+            const style = typeStyles[activity.type];
+            return (
               <div
-                className="h-2 w-2 rounded-full"
+                className="flex items-center gap-3 rounded-xl p-3"
+                key={activity.id}
                 style={{
-                  background: activityStyles[activity.type].bg,
-                  boxShadow: activityStyles[activity.type].shadow,
+                  background: COLORS.innerCard,
+                  borderLeft: `3px solid ${style.color}`,
                 }}
-              />
-              <div className="min-w-0 flex-1">
+              >
+                <div
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: style.color }}
+                />
                 <p
-                  className="truncate font-medium text-sm"
-                  style={{ color: "oklch(0.90 0.02 280)" }}
+                  className="min-w-0 flex-1 truncate text-sm"
+                  style={{ color: COLORS.text }}
                 >
-                  {activity.type === "win" && "Won "}
-                  {activity.type === "loss" && "Lost "}
-                  <span style={{ color: activityStyles[activity.type].bg }}>
-                    ${activity.amount}
-                  </span>
-                  {" on "}
                   {activity.title}
                 </p>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span
+                    className="rounded px-2 py-0.5 font-medium text-xs"
+                    style={{
+                      background: `${style.color}20`,
+                      color: style.color,
+                    }}
+                  >
+                    {style.label}
+                  </span>
+                  <span
+                    className="font-heading font-semibold text-sm"
+                    style={{ color: style.color }}
+                  >
+                    {style.prefix}${activity.amount}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-    </motion.div>
-  );
-}
-
-// PROFILE DASHBOARD (for users who completed setup)
-function ProfileDashboard() {
-  return (
-    <div className="container mx-auto space-y-6 p-4 pb-8">
-      <ProfileHeader />
-
-      <BalanceCard />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <PerformanceCard />
-        <LeaderboardBadge />
-      </div>
-
-      <DepositSection />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ActiveBets />
-        <ActivityFeed />
-      </div>
     </div>
   );
-}
-
-// MAIN PROFILE PAGE (with routing logic)
-export function ProfilePage() {
-  const { isPending: sessionPending } = authClient.useSession();
-  const { isAnonymous } = useIsAuthenticated();
-
-  if (sessionPending) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-          style={{
-            borderColor: "oklch(0.65 0.25 290)",
-            borderTopColor: "transparent",
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (isAnonymous) {
-    return <ProfileConnectPrompt />;
-  }
-
-  return <ProfileDashboard />;
 }

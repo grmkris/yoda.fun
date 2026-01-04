@@ -12,7 +12,7 @@ export function RewardIndicator() {
   return (
     <Link
       className="relative flex h-9 items-center gap-1.5 rounded-lg px-3 transition-all hover:opacity-80"
-      href="/rewards"
+      href="/profile"
       style={{
         background:
           count > 0
