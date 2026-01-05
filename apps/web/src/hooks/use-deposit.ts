@@ -85,7 +85,6 @@ export function useDeposit() {
             address: solanaProvider.publicKey.toString(),
             signTransaction: (tx) => solanaProvider.signTransaction(tx),
           },
-          maxPaymentAmount: 10_000_000n, // Max 10 USDC
         });
 
         response = await solanaFetch(`${apiUrl}/deposit/${tier}`, {

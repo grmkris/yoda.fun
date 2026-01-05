@@ -13,14 +13,18 @@ export function x402BodyCompat(): MiddlewareHandler {
     await next();
 
     // Only process 402 responses
-    if (c.res.status !== 402) return;
+    if (c.res.status !== 402) {
+      return;
+    }
 
     // Get the payment-required header (base64 encoded)
     const headers = c.res.headers.entries();
     const headersObject = Object.fromEntries(headers);
     const paymentRequiredHeader = headersObject["payment-required"];
 
-    if (!paymentRequiredHeader) return;
+    if (!paymentRequiredHeader) {
+      return;
+    }
 
     // Decode and parse the payment requirements
     const decoded = JSON.parse(

@@ -242,7 +242,9 @@ export function createX402SolanaFetch(config: X402ClientConfig) {
   } = config;
 
   const log = (...args: unknown[]) => {
-    if (verbose) console.log("[x402-solana]", ...args);
+    if (verbose) {
+      console.log("[x402-solana]", ...args);
+    }
   };
 
   return async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
@@ -283,7 +285,7 @@ export function createX402SolanaFetch(config: X402ClientConfig) {
     const paymentAmount = BigInt(selectedRequirements.amount || "0");
     if (
       maxPaymentAmount &&
-      maxPaymentAmount > 0n &&
+      maxPaymentAmount > BigInt(0) &&
       paymentAmount > maxPaymentAmount
     ) {
       throw new Error("Payment amount exceeds maximum allowed");

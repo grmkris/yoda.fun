@@ -9,6 +9,7 @@ import { createAuth } from "@yoda.fun/auth";
 import { createRedisCache } from "@yoda.fun/cache";
 import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
 import { count } from "@yoda.fun/db/drizzle";
+import { createERC8004Client } from "@yoda.fun/erc8004";
 import { createLogger } from "@yoda.fun/logger";
 import { MARKET_GENERATION } from "@yoda.fun/markets/config";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
@@ -32,6 +33,7 @@ import { createAvatarImageWorker } from "@/workers/avatar-image.worker";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketImageWorker } from "@/workers/market-image.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
+import { createReputationCacheWorker } from "@/workers/reputation-cache.worker";
 
 const logger = createLogger({
   level: env.APP_ENV === "prod" ? "info" : "debug",
@@ -83,6 +85,12 @@ const queue: QueueClient = createQueueClient({
   logger,
 });
 
+// ERC-8004 client for agent identity (optional)
+const erc8004Client = createERC8004Client({
+  privateKey: env.YODA_AGENT_PRIVATE_KEY as `0x${string}`,
+  logger,
+});
+
 // HTTP request logging with Pino
 app.use(async (c, next) => {
   const start = Date.now();
@@ -110,7 +118,12 @@ app.use(
   cors({
     origin: [SERVICE_URLS[env.APP_ENV].web],
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-PAYMENT", "PAYMENT-SIGNATURE"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-PAYMENT",
+      "PAYMENT-SIGNATURE",
+    ],
     exposeHeaders: ["X-PAYMENT-RESPONSE"],
     credentials: true,
   })
@@ -173,6 +186,7 @@ app.use("/*", async (c, next) => {
     posthog,
     storage,
     queue,
+    erc8004Client,
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
@@ -252,6 +266,12 @@ const avatarWorker = createAvatarImageWorker({
 });
 logger.info({ msg: "Avatar image worker started" });
 
+const reputationCacheWorker = createReputationCacheWorker({
+  db,
+  logger,
+  erc8004Client,
+});
+
 // Seed initial markets if database is empty
 const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
 
@@ -296,6 +316,7 @@ process.on("SIGTERM", async () => {
   await generationWorker.close();
   await imageWorker.close();
   await avatarWorker.close();
+  await reputationCacheWorker.close();
   await queue.close();
   await shutdownPostHog();
   process.exit(0);

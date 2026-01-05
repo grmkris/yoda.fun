@@ -338,3 +338,5 @@ export function createBetService({ deps }: { deps: BetServiceDeps }) {
     },
   };
 }
+
+export type BetService = ReturnType<typeof createBetService>;

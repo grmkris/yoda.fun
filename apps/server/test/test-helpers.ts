@@ -25,9 +25,10 @@ export async function createTestContext(props: {
     session,
     db: deps.db,
     logger: deps.logger,
+    erc8004Service: deps.erc8004Service,
     posthog: undefined,
     storage: deps.storage,
-    queue: undefined,
+    queue: deps.queue,
     betService: deps.betService,
     pointsService: deps.pointsService,
     dailyService: deps.dailyService,
@@ -45,7 +46,7 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     logger: testEnv.deps.logger,
     posthog: undefined,
     storage: testEnv.deps.storage,
-    queue: undefined,
+    queue: testEnv.deps.queue,
     betService: testEnv.deps.betService,
     pointsService: testEnv.deps.pointsService,
     dailyService: testEnv.deps.dailyService,
@@ -53,6 +54,7 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     profileService: testEnv.deps.profileService,
     followService: testEnv.deps.followService,
     rewardService: testEnv.deps.rewardService,
+    erc8004Service: testEnv.deps.erc8004Service,
   };
 }
 

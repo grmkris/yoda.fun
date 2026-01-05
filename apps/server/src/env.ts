@@ -1,6 +1,8 @@
 import { Environment } from "@yoda.fun/shared/services";
 import { z } from "zod";
 
+const ETH_PRIVATE_KEY_REGEX = /^0x[a-fA-F0-9]{64}$/;
+
 export const envSchema = z.object({
   APP_ENV: Environment,
   DATABASE_URL: z.string(),
@@ -29,6 +31,16 @@ export const envSchema = z.object({
   // CDP (Coinbase Developer Platform) for x402
   CDP_API_KEY_ID: z.string(),
   CDP_API_KEY_SECRET: z.string(),
+  // ERC-8004 Agent Identity
+  YODA_AGENT_PRIVATE_KEY: z
+    .custom<`0x${string}`>()
+    .refine((val) => val.startsWith("0x"), {
+      message: "YODA_AGENT_PRIVATE_KEY must start with 0x",
+    })
+    .refine((val) => ETH_PRIVATE_KEY_REGEX.test(val), {
+      message: "YODA_AGENT_PRIVATE_KEY must be 64 hex characters",
+    }),
+  YODA_AGENT_ID: z.coerce.number().optional(),
 });
 
 export const env = envSchema.parse(process.env);

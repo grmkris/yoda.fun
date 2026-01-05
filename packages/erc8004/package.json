@@ -1,0 +1,27 @@
+{
+  "name": "@yoda.fun/erc8004",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./src/client.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "tsdown": "catalog:"
+  },
+  "dependencies": {
+    "@yoda.fun/logger": "workspace:*",
+    "viem": "catalog:"
+  }
+}

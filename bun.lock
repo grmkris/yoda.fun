@@ -36,6 +36,7 @@
         "@yoda.fun/blockchain": "workspace:*",
         "@yoda.fun/cache": "workspace:*",
         "@yoda.fun/db": "workspace:*",
+        "@yoda.fun/erc8004": "workspace:*",
         "@yoda.fun/logger": "workspace:*",
         "@yoda.fun/markets": "workspace:*",
         "@yoda.fun/queue": "workspace:*",
@@ -153,6 +154,7 @@
         "@yoda.fun/ai": "workspace:*",
         "@yoda.fun/auth": "workspace:*",
         "@yoda.fun/db": "workspace:*",
+        "@yoda.fun/erc8004": "workspace:*",
         "@yoda.fun/logger": "workspace:*",
         "@yoda.fun/queue": "workspace:*",
         "@yoda.fun/shared": "workspace:*",
@@ -220,6 +222,17 @@
       "devDependencies": {
         "dotenv": "catalog:",
         "drizzle-kit": "catalog:",
+        "tsdown": "catalog:",
+      },
+    },
+    "packages/erc8004": {
+      "name": "@yoda.fun/erc8004",
+      "dependencies": {
+        "@yoda.fun/logger": "workspace:*",
+        "viem": "catalog:",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
         "tsdown": "catalog:",
       },
     },
@@ -1574,6 +1587,8 @@
     "@yoda.fun/cache": ["@yoda.fun/cache@workspace:packages/cache"],
 
     "@yoda.fun/db": ["@yoda.fun/db@workspace:packages/db"],
+
+    "@yoda.fun/erc8004": ["@yoda.fun/erc8004@workspace:packages/erc8004"],
 
     "@yoda.fun/logger": ["@yoda.fun/logger@workspace:packages/logger"],
 

@@ -13,6 +13,8 @@ import * as authSchema from "./schema/auth/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as configSchema from "./schema/config/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
+import * as erc8004Schema from "./schema/erc8004/schema.db";
+// biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as marketSchema from "./schema/market/schema.db";
 // biome-ignore lint/performance/noNamespaceImport: Drizzle requires full schema object for type inference
 import * as mediaSchema from "./schema/media/schema.db";
@@ -29,6 +31,7 @@ const schema = {
   ...socialSchema,
   ...rewardsSchema,
   ...mediaSchema,
+  ...erc8004Schema,
 };
 export const DB_SCHEMA = schema;
 export type Database =

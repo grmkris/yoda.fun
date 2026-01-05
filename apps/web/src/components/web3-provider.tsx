@@ -1,6 +1,6 @@
 "use client";
 
-import { base, solana } from "@reown/appkit/networks";
+import { base, baseSepolia, solana } from "@reown/appkit/networks";
 import { createAppKit } from "@reown/appkit/react";
 import { SolanaAdapter } from "@reown/appkit-adapter-solana";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
@@ -13,14 +13,15 @@ import { env } from "@/env";
 import { betterAuthSiwx } from "@/lib/siwx/better-auth-siwx";
 
 const chain = base;
+const erc8004Chain = baseSepolia; // For ERC-8004 feedback on testnet
 const projectId = env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 
-// WagmiAdapter for EVM chains
+// WagmiAdapter for EVM chains (Base mainnet + Base Sepolia for ERC-8004)
 const wagmiAdapter = new WagmiAdapter({
   storage: createStorage({ storage: cookieStorage }),
   ssr: true,
   projectId,
-  networks: [chain],
+  networks: [chain, erc8004Chain],
 });
 
 // SolanaAdapter for Solana
@@ -32,7 +33,7 @@ const solanaAdapter = new SolanaAdapter({
 createAppKit({
   adapters: [wagmiAdapter, solanaAdapter],
   projectId,
-  networks: [base, solana],
+  networks: [base, baseSepolia, solana],
   features: { analytics: false },
   siwx: betterAuthSiwx,
 });

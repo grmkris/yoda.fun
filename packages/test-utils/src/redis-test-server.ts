@@ -31,3 +31,5 @@ export async function createTestRedisSetup() {
     shutdown,
   };
 }
+
+export type RedisSetup = Awaited<ReturnType<typeof createTestRedisSetup>>;

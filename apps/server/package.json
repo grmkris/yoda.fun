@@ -32,6 +32,7 @@
     "@yoda.fun/blockchain": "workspace:*",
     "@yoda.fun/cache": "workspace:*",
     "@yoda.fun/db": "workspace:*",
+    "@yoda.fun/erc8004": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
     "@yoda.fun/markets": "workspace:*",
     "@yoda.fun/queue": "workspace:*",

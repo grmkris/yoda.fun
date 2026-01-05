@@ -1,8 +1,9 @@
 import type { Network } from "@yoda.fun/shared/constants";
 
 export const USDC_ADDRESSES = {
-  'eip155:8453': "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "eip155:8453": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp":
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 } as const satisfies Record<Network, string>;
 
 export const ERC20_ABI = [

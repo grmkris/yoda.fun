@@ -1,21 +1,50 @@
 import { type AiClient, createAiClient } from "@yoda.fun/ai";
-import { createBetService } from "@yoda.fun/api/services/bet-service";
-import { createDailyService } from "@yoda.fun/api/services/daily-service";
-import { createFollowService } from "@yoda.fun/api/services/follow-service";
-import { createLeaderboardService } from "@yoda.fun/api/services/leaderboard-service";
-import { createPointsService } from "@yoda.fun/api/services/points-service";
-import { createProfileService } from "@yoda.fun/api/services/profile-service";
-import { createRewardService } from "@yoda.fun/api/services/reward-service";
+import {
+  type BetService,
+  createBetService,
+} from "@yoda.fun/api/services/bet-service";
+import {
+  createDailyService,
+  type DailyService,
+} from "@yoda.fun/api/services/daily-service";
+import {
+  createFollowService,
+  type FollowService,
+} from "@yoda.fun/api/services/follow-service";
+import {
+  createLeaderboardService,
+  type LeaderboardService,
+} from "@yoda.fun/api/services/leaderboard-service";
+import {
+  createPointsService,
+  type PointsService,
+} from "@yoda.fun/api/services/points-service";
+import {
+  createProfileService,
+  type ProfileService,
+} from "@yoda.fun/api/services/profile-service";
+import {
+  createRewardService,
+  type RewardService,
+} from "@yoda.fun/api/services/reward-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
+import { createERC8004Client } from "@yoda.fun/erc8004";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
-import { createStorageClient } from "@yoda.fun/storage";
+import { createStorageClient, type StorageClient } from "@yoda.fun/storage";
 import { createPgLite, type PGlite } from "@yoda.fun/test-utils/pg-lite";
-import { createTestRedisSetup } from "@yoda.fun/test-utils/redis-test-server";
+import {
+  createTestRedisSetup,
+  type RedisSetup,
+} from "@yoda.fun/test-utils/redis-test-server";
 import { createTestS3Setup } from "@yoda.fun/test-utils/s3-test-server";
 import type { User } from "better-auth";
 import type { Logger as DrizzleLogger } from "drizzle-orm";
+import {
+  createERC8004Service,
+  type ERC8004Service,
+} from "node_modules/@yoda.fun/api/src/services/erc8004-service";
 import { env } from "@/env";
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
@@ -34,17 +63,18 @@ export interface TestSetup {
     pgLite: PGlite;
     authClient: Auth;
     logger: Logger;
-    storage: ReturnType<typeof createStorageClient>;
+    storage: StorageClient;
     aiClient: AiClient;
-    redis: Awaited<ReturnType<typeof createTestRedisSetup>>;
+    redis: RedisSetup;
     queue: QueueClient;
-    betService: ReturnType<typeof createBetService>;
-    pointsService: ReturnType<typeof createPointsService>;
-    dailyService: ReturnType<typeof createDailyService>;
-    leaderboardService: ReturnType<typeof createLeaderboardService>;
-    profileService: ReturnType<typeof createProfileService>;
-    followService: ReturnType<typeof createFollowService>;
-    rewardService: ReturnType<typeof createRewardService>;
+    betService: BetService;
+    pointsService: PointsService;
+    dailyService: DailyService;
+    leaderboardService: LeaderboardService;
+    profileService: ProfileService;
+    followService: FollowService;
+    rewardService: RewardService;
+    erc8004Service: ERC8004Service;
   };
   users: {
     authenticated: TestUser;
@@ -188,6 +218,16 @@ export async function createTestSetup(): Promise<TestSetup> {
   const rewardService = createRewardService({
     deps: { db, pointsService },
   });
+  const erc8004Service = createERC8004Service({
+    deps: {
+      db,
+      logger,
+      erc8004Client: createERC8004Client({
+        logger,
+        privateKey: env.YODA_AGENT_PRIVATE_KEY,
+      }),
+    },
+  });
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
@@ -238,6 +278,7 @@ export async function createTestSetup(): Promise<TestSetup> {
       profileService,
       followService,
       rewardService,
+      erc8004Service,
     },
     users: {
       authenticated: authenticatedUser,
