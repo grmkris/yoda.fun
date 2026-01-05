@@ -1,3 +1,4 @@
+import type { CaipNetworkId } from "@reown/appkit";
 import { createAuthWebClient } from "@yoda.fun/auth/auth-client.web";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { env } from "@/env";
@@ -25,7 +26,7 @@ export interface SessionWithWallet {
   };
   walletAddress: string | null;
   chainNamespace: string | null;
-  chainId: string | null;
+  chainId: CaipNetworkId | null;
 }
 
 export const authClient = createAuthWebClient({

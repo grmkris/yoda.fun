@@ -3,9 +3,9 @@ import {
   anonymousClient,
   customSessionClient,
   inferAdditionalFields,
-  siweClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { siwxClient } from "./plugins/siwx";
 
 export interface CustomSessionFields {
   walletAddress: string | null;
@@ -19,7 +19,7 @@ export const createAuthWebClient = (props: { baseUrl: string }) =>
     plugins: [
       anonymousClient(),
       inferAdditionalFields<Auth>(),
-      siweClient(),
+      siwxClient(),
       customSessionClient<Auth & { Session: CustomSessionFields }>(),
     ],
   });

@@ -1,3 +1,4 @@
+import type { BetterAuthClientPlugin } from "better-auth/client";
 import type { BetterAuthPlugin, User } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
@@ -289,45 +290,21 @@ export const siwx = (options: SIWXOptions) => {
           });
         }
       ),
-
-      getSessions: createAuthEndpoint(
-        "/siwx/sessions",
-        { method: "GET" },
-        async (ctx) => {
-          const userId = ctx.context.session?.user?.id;
-          if (!userId) {
-            return ctx.json({ sessions: [] });
-          }
-
-          const wallets = await ctx.context.adapter.findMany<{
-            address: string;
-            chainNamespace: string;
-            chainId: string;
-            siwxMessage: string | null;
-            siwxSignature: string | null;
-          }>({
-            model: "walletAddress",
-            where: [{ field: "userId", operator: "eq", value: userId }],
-          });
-
-          const sessions = wallets
-            .filter((w) => w.siwxMessage && w.siwxSignature)
-            .map((w) => ({
-              data: {
-                accountAddress: w.address,
-                chainId: `${w.chainNamespace}:${w.chainId}`,
-                domain: options.emailDomainName?.replace("@", "") || "yoda.fun",
-                uri: ctx.headers?.get("origin") || "",
-                version: "1",
-                nonce: "stored-session",
-              },
-              message: w.siwxMessage,
-              signature: w.siwxSignature,
-            }));
-
-          return ctx.json({ sessions });
-        }
-      ),
     },
   } satisfies BetterAuthPlugin;
+};
+
+export const siwxClient = () => {
+  return {
+    id: "siwx",
+    $InferServerPlugin: {} as ReturnType<typeof siwx>,
+    atomListeners: [
+      {
+        matcher(path: string) {
+          return path === "/siwx/verify";
+        },
+        signal: "$sessionSignal",
+      },
+    ],
+  } satisfies BetterAuthClientPlugin;
 };
