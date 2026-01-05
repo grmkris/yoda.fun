@@ -12,7 +12,7 @@ import { count } from "@yoda.fun/db/drizzle";
 import { createLogger } from "@yoda.fun/logger";
 import { MARKET_GENERATION } from "@yoda.fun/markets/config";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
-import { ENV_CONFIG } from "@yoda.fun/shared/constants";
+import { X402_CONFIG } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
 import { RedisClient, S3Client } from "bun";
@@ -110,7 +110,8 @@ app.use(
   cors({
     origin: [SERVICE_URLS[env.APP_ENV].web],
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "X-PAYMENT", "PAYMENT-SIGNATURE"],
+    exposeHeaders: ["X-PAYMENT-RESPONSE"],
     credentials: true,
   })
 );
@@ -130,19 +131,17 @@ app.onError(async (err, c) => {
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-const envConfig = ENV_CONFIG[env.APP_ENV];
-if (envConfig.depositWalletAddress) {
-  const depositRoutes = createDepositRoutes({
-    db,
-    auth,
-    logger,
-    depositWalletAddress: envConfig.depositWalletAddress,
-    network: envConfig.network,
-    appEnv: env.APP_ENV,
-  });
-  app.route("/api", depositRoutes);
-  logger.info({ network: envConfig.network }, "x402 deposit routes enabled");
-}
+const depositRoutes = createDepositRoutes({
+  db,
+  auth,
+  logger,
+  appEnv: env.APP_ENV,
+});
+app.route("/api", depositRoutes);
+logger.info(
+  { networks: [X402_CONFIG.evm.network, X402_CONFIG.solana.network] },
+  "x402 deposit routes enabled (EVM + Solana)"
+);
 
 // MCP endpoint for AI agents (proper SDK pattern)
 app.all("/mcp", (c) => handleMcpRequest(c, { db, logger }));

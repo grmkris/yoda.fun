@@ -1,5 +1,5 @@
 import type { Logger } from "@yoda.fun/logger";
-import type { Network } from "@yoda.fun/shared/constants";
+import type { EvmNetwork } from "@yoda.fun/shared/constants";
 import {
   createPublicClient,
   createWalletClient,
@@ -13,13 +13,13 @@ import { ERC20_ABI, USDC_ADDRESSES } from "./constants";
 
 export interface UsdcClientConfig {
   privateKey: `0x${string}`;
-  network: Network;
+  network: EvmNetwork;
   logger: Logger;
 }
 
-const CHAINS = {
-  base,
-} as const;
+const CHAINS: Record<EvmNetwork, typeof base> = {
+  "eip155:8453": base,
+};
 
 const USDC_DECIMALS = 6;
 

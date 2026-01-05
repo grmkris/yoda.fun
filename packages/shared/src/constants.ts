@@ -30,18 +30,21 @@ export const WORKER_CONFIG = {
   } satisfies Record<JobType, RateLimitConfig>,
 } as const;
 
-// Network types
-export type Network = "base";
+// Network types (CAIP-2 format)
+export type EvmNetwork = "eip155:8453";
+export type SolanaNetwork = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
+export type Network = EvmNetwork | SolanaNetwork;
 
-// Environment-specific configuration
-export const ENV_CONFIG = {
-  dev: {
-    network: "base" as const,
-    depositWalletAddress: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
+// x402 payment configuration
+export const X402_CONFIG = {
+  facilitatorUrl: "https://api.cdp.coinbase.com/platform/v2/x402",
+  evm: {
+    network: "eip155:8453" as const,
+    depositWallet: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
   },
-  prod: {
-    network: "base" as const,
-    depositWalletAddress: "0x81d786b35f3ea2f39aa17cb18d9772e4ecd97206" as const,
+  solana: {
+    network: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" as const,
+    depositWallet: "62xjHXCdzLWHPbK6HmFjw2sDyWJpTJEM8SfMC7ZTcn3s" as const,
   },
 } as const;
 

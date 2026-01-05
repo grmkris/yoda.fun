@@ -26,6 +26,9 @@ export const envSchema = z.object({
   REPLICATE_API_KEY: z.string(),
   // Reown (WalletConnect)
   REOWN_PROJECT_ID: z.string(),
+  // CDP (Coinbase Developer Platform) for x402
+  CDP_API_KEY_ID: z.string(),
+  CDP_API_KEY_SECRET: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

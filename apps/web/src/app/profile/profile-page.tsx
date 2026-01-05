@@ -18,7 +18,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { useConnection, useDisconnect } from "wagmi";
+import { useDisconnect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -418,14 +418,22 @@ function StatPill({
 }
 
 function DepositRow() {
-  const { isConnected } = useConnection();
+  // const { isConnected } = useConnection();
   const { isAnonymous } = useIsAuthenticated();
   const canDeposit = useCanDeposit();
   const deposit = useDeposit();
   const devDeposit = useDevDeposit();
   const { isPending, variables: pendingTier } = deposit;
 
-  const showDeposit = isConnected && canDeposit && !isAnonymous;
+  const showDeposit = canDeposit && !isAnonymous;
+  console.log("=================CAN DEPOSIT==================");
+  console.log({
+    canDeposit,
+    isAnonymous,
+    showDeposit,
+  });
+  console.log("=================CAN DEPOSIT==================");
+
   const showDev = env.NEXT_PUBLIC_ENV === "dev" && !isAnonymous;
 
   return (

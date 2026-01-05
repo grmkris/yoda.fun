@@ -8,18 +8,11 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import type { Network } from "@yoda.fun/shared/constants";
-import { ENV_CONFIG } from "@yoda.fun/shared/constants";
 import { cookieStorage, createStorage, WagmiProvider } from "wagmi";
 import { env } from "@/env";
 import { betterAuthSiwx } from "@/lib/siwx/better-auth-siwx";
 
-const NETWORKS: Record<Network, typeof base> = {
-  base,
-};
-
-const network = ENV_CONFIG[env.NEXT_PUBLIC_ENV].network;
-const chain = NETWORKS[network];
+const chain = base;
 const projectId = env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 
 // WagmiAdapter for EVM chains

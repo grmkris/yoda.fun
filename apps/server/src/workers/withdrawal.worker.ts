@@ -5,7 +5,7 @@ import { eq } from "@yoda.fun/db/drizzle";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
 import type { ProcessWithdrawalJob } from "@yoda.fun/queue/jobs/process-withdrawal-job";
-import type { Network } from "@yoda.fun/shared/constants";
+import type { EvmNetwork } from "@yoda.fun/shared/constants";
 import type { WithdrawalId } from "@yoda.fun/shared/typeid";
 
 export interface WithdrawalWorkerConfig {
@@ -13,7 +13,7 @@ export interface WithdrawalWorkerConfig {
   db: Database;
   logger: Logger;
   treasuryPrivateKey: `0x${string}`;
-  network: Network;
+  network: EvmNetwork;
 }
 
 export function createWithdrawalWorker(config: WithdrawalWorkerConfig): {

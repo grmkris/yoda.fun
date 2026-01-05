@@ -19,8 +19,12 @@ export const FREE_TOOLS = new Set([
   "get_profile",
 ]);
 
+// Address detection for multi-chain support
+const EVM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
+const isEvmAddress = (addr: string) => EVM_ADDRESS_REGEX.test(addr);
+
 export interface X402PaymentInfo {
-  walletAddress: `0x${string}`;
+  walletAddress: string;
   amount: number;
   txHash?: string;
 }
@@ -37,10 +41,9 @@ export function parseX402Headers(headers: Headers): X402PaymentInfo | null {
   }
 
   try {
-    // Parse the payment response (format depends on x402 implementation)
     const decoded = JSON.parse(atob(paymentResponse));
     return {
-      walletAddress: decoded.payer as `0x${string}`,
+      walletAddress: decoded.payer as string,
       amount: decoded.amount,
       txHash: decoded.txHash,
     };
@@ -51,21 +54,24 @@ export function parseX402Headers(headers: Headers): X402PaymentInfo | null {
 
 /**
  * Get or create a user for an agent wallet address
- * This enables wallet-based identity for AI agents
+ * Supports both EVM and Solana wallets for AI agents
  */
-// Base chain ID
-const BASE_CHAIN_ID = 8453;
-
 export async function getOrCreateAgentUser(
   db: Database,
   logger: Logger,
-  walletAddress: `0x${string}`
+  walletAddress: string
 ): Promise<UserId> {
+  // Normalize address (lowercase for EVM, keep original for Solana)
+  const isEvm = isEvmAddress(walletAddress);
+  const normalizedAddress = isEvm ? walletAddress.toLowerCase() : walletAddress;
+  const chainNamespace = isEvm ? "eip155" : "solana";
+  const chainId = isEvm ? "8453" : "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
+
   // Check if wallet is already linked to a user
   const existing = await db
     .select()
     .from(DB_SCHEMA.walletAddress)
-    .where(eq(DB_SCHEMA.walletAddress.address, walletAddress.toLowerCase()))
+    .where(eq(DB_SCHEMA.walletAddress.address, normalizedAddress))
     .limit(1);
 
   if (existing[0]) {
@@ -76,30 +82,26 @@ export async function getOrCreateAgentUser(
   const userId = typeIdGenerator("user");
 
   await db.transaction(async (tx) => {
-    // Create user
     await tx.insert(DB_SCHEMA.user).values({
       id: userId,
       name: `Agent ${walletAddress.slice(0, 8)}`,
-      email: `${walletAddress.toLowerCase()}@agent.yoda.fun`,
+      email: `${normalizedAddress}@agent.yoda.fun`,
     });
 
-    // Link wallet
     await tx.insert(DB_SCHEMA.walletAddress).values({
       userId,
-      address: walletAddress.toLowerCase(),
-      chainId: BASE_CHAIN_ID.toString(),
-      chainNamespace: "eip155",
+      address: normalizedAddress,
+      chainId,
+      chainNamespace,
       isPrimary: true,
     });
 
-    // Create balance record with signup bonus (30 starting points)
     await tx.insert(DB_SCHEMA.userBalance).values({
       userId,
       points: 30,
       totalPointsPurchased: 0,
     });
 
-    // Create transaction record
     await tx.insert(DB_SCHEMA.transaction).values({
       userId,
       type: "SIGNUP_BONUS",
@@ -110,7 +112,7 @@ export async function getOrCreateAgentUser(
   });
 
   logger.info(
-    { userId, walletAddress },
+    { userId, walletAddress, chainNamespace },
     "Created agent user from x402 payment"
   );
 
