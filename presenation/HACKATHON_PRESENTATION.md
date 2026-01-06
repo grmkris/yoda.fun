@@ -1,122 +1,187 @@
-# Yoda.fun - The Proving Ground for AGI
+# Yoda.fun - X402 Hackathon Submission
 
-## One-Liner
-> "How do you test AI reasoning in the real world? Force it to make predictions about reality—and measure the results."
-
----
-
-## SLIDE 1: The Problem
-### "AI Agents Can't Play. Can't Pay. Can't Be Trusted."
-
-**Three unsolved problems in the agent economy:**
-
-| Problem | Reality |
-|---------|---------|
-| **Can't Pay** | No standard for AI-to-API payments. Credit cards don't work for machines. |
-| **Can't Be Trusted** | No verifiable identity. No reputation system. "Who decided this?" is unanswerable. |
-| **Can't Compete** | Markets built for human UIs. Agents locked out. |
-
-**Visual:** Robot icon with three X marks: No wallet, No identity, No access
-
-**Punchline:**
-> "We're building an economy of agents but forgot to build the rails."
+> "For the X402 hackathon, I built yoda.fun - an experiment where we try to build an AI oracle."
 
 ---
 
-## SLIDE 2: The Solution
-### "The Proving Ground for AGI"
+## What is Yoda.fun?
 
-**What We Built:**
-A prediction market that forces AI to make real decisions—and measures performance.
+An AI agent (Yoda) that:
+1. **Browses the internet** for interesting topics people would like to predict on
+2. **Creates prediction markets** completely automatically
+3. **Resolves them** with proof and sources
+
+People AND AI agents can participate, make predictions, and compete on a leaderboard.
+
+**The big question:** Can you trust an AI oracle?
+
+---
+
+## The Flow
 
 ```
-    ┌─────────────────────────────────────┐
-    │                                     │
-    ▼                                     │
-┌───────────┐     ┌───────────┐     ┌───────────┐
-│  CREATE   │ ──▶ │  PREDICT  │ ──▶ │  RESOLVE  │
-│  🤖 Yoda  │     │ 👤 + 🤖   │     │  🤖 Yoda  │
-│ understands│    │  Both bet │     │  judges   │
-│  the world │    │  YES/NO   │     │  reality  │
-└───────────┘     └───────────┘     └─────┬─────┘
-     ↑                                     │
-     │         📊 Users rate Yoda          │
-     └────── Reputation updates on-chain ◀─┘
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  1. YODA CREATES                                                │
+│     Browses internet → Finds interesting topics → Makes markets │
+│                              ↓                                  │
+│  2. PEOPLE & AGENTS PREDICT                                     │
+│     Anyone can bet YES/NO → Costs points (anti-spam)            │
+│     Get points via X402 (USDC) on Base or Solana                │
+│                              ↓                                  │
+│  3. YODA RESOLVES                                               │
+│     Event happens → Searches for evidence → Posts sources       │
+│     "Did this happen?" → YES/NO/INVALID with receipts           │
+│                              ↓                                  │
+│  4. USERS RATE                                                  │
+│     Disagree? Challenge via ERC-8004 feedback                   │
+│     All feedback tracked on-chain → Builds reputation           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-**Benchmarks vs Yoda:**
-
-| Benchmarks Test | Yoda Tests |
-|-----------------|------------|
-| What AI *knows* | What AI **decides** |
-| Static datasets | Live, changing reality |
-| No stakes | Points on the line |
-| No feedback | Users rate every decision |
-| Opaque | On-chain, verifiable |
-
-**Punchline:**
-> "Benchmarks test memorization. We test judgment."
 
 ---
 
-## SLIDE 3: The Infrastructure
-### "X402 + ERC-8004: Payments & Trust for Agents"
+## SLIDE 1: The Experiment
 
-**Two pillars that make it work:**
+**Title:** "Building an AI Oracle"
 
-| X402 Payments | ERC-8004 Identity |
-|---------------|-------------------|
-| HTTP 402 Payment Required | On-chain agent registry |
-| AI pays per API call | Yoda has verifiable identity |
-| Works on Base + Solana | Users rate resolution quality |
-| **"Stripe for AI agents"** | **"Trustpilot for oracles"** |
+![Slide 1](./slide-01.png)
+
+**Content:**
+- Yoda.fun = an experiment in truth-seeking AI
+- An AI agent that browses the internet, finds interesting topics, creates prediction markets automatically, and resolves them with proof
+
+**Hook:** "Can you trust an AI to tell you what happened?"
+
+---
+
+## SLIDE 2: The Game
+
+**Title:** "People & Agents Predict Together"
+
+![Slide 2](./slide-02.png)
+
+**Content:**
+- Anyone can participate: humans AND AI agents
+- Predict: Will it happen or not?
+- Points to play (to combat spam)
+- Get points by sending USDC using **X402**
+- Works on **Base mainnet + Solana mainnet** via MCP server
+
+**Key point:** "Agents are welcome to participate too"
+
+---
+
+## SLIDE 3: The Resolution
+
+**Title:** "Proof, Not Trust"
+
+![Slide 3](./slide-03.png)
+
+**Content:**
+- When event is done, Yoda resolves the market
+- Browses internet for evidence
+- Posts sources: how it deduced the result
+- If you disagree → challenge it via feedback
+
+**Key point:** "Every resolution comes with receipts"
+
+---
+
+## SLIDE 4: The Trust Layer
+
+**Title:** "Reputation On-Chain"
+
+![Slide 4](./slide-04.png)
+
+**Content:**
+- Yoda is registered on **ERC-8004** agent registry
+- All feedback tracked on-chain
+- Builds reputation as reliable oracle
+- Leaderboard tracks best predictors (humans vs AI?)
+
+**The big questions:**
+- Will AI agents be better predictors than humans?
+- Can we build a truth-seeking AI?
+- Can you trust an oracle?
+
+**Closing:** "An experiment combining X402 payments, fun game mechanics, and AI trust"
+
+---
+
+## Technical Challenges
+
+### 1. Sign In With X (SIWX) - Multi-Chain Authentication
+
+We upgraded Sign In With Ethereum (SIWE) to support **both Ethereum and Solana wallets** seamlessly.
+
+**What we built:**
+- Implemented the SIWX specification by Reown for multi-chain sign-in
+- Users can authenticate with EVM wallets (MetaMask, Coinbase Wallet) OR Solana wallets (Phantom, Solflare)
+- Completely **non-custodial** - we never hold private keys
+- Also supports **social login** for users without a wallet
 
 **How it works:**
-- Agent calls `place_bet` → pays $0.01 via X402 → bet placed
-- Yoda resolves market → users rate → ERC-8004 updates reputation
-
-**Multi-chain:** Base (EVM) + Solana
-
-**Punchline:**
-> "AI agents are first-class economic actors."
-
----
-
-## SLIDE 4: Why This Matters
-### "Infrastructure for the Agent Economy"
-
-**What we actually built:**
-
-| Problem | Solution | Yoda Proves It |
-|---------|----------|----------------|
-| How do agents pay? | **X402** | $0.01/bet via HTTP |
-| How do agents build trust? | **ERC-8004** | Reputation on-chain |
-| How do humans hold AI accountable? | User feedback | Every resolution rated |
-| Can agents compete with humans? | Same arena | Betting side by side |
-
-**The Vision:**
-> "We didn't just build a prediction market.
-> We built the rails for a world where AI agents are accountable economic actors."
-
-**What This Unlocks:**
-- Any app can add X402 for agent payments
-- Any AI can register with ERC-8004 for reputation
-- Trust is verifiable, not assumed
-
-**Call to Action:**
-- Live: yoda.fun
-- X402 + ERC-8004 in production
-- Multi-chain: Base + Solana
+```
+1. User connects wallet (EVM or Solana)
+2. Frontend generates SIWX message with chain-specific format
+3. User signs message with their wallet
+4. Backend verifies signature:
+   - EVM: viem's verifyMessage with chain RPC
+   - Solana: nacl signature verification with base58
+5. Session created, user authenticated
+```
 
 ---
 
-## Key Quotes to Use
+### 2. MCP Server Authentication with X402
 
-1. **Problem:** "We're building an economy of agents but forgot to build the rails."
+AI agents authenticate using **X402 payments** following an OAuth 2.1-inspired flow.
 
-2. **Solution:** "Benchmarks test memorization. We test judgment."
+**The challenge:** How do AI agents authenticate without usernames/passwords?
 
-3. **Vision:** "We didn't just build a prediction market. We built the rails for accountable AI agents."
+**Our solution:**
+```
+1. AI agent makes X402 payment request to MCP endpoint
+2. X402 middleware validates the payment signature
+3. Wallet address extracted from payment
+4. User created/found for that wallet address
+5. Agent receives session context for subsequent calls
+```
+
+**Key insight:** The X402 payment itself IS the authentication. The signed payment proves wallet ownership.
+
+---
+
+### 3. Custom X402 Solana Client
+
+We had to build our own X402 Solana client because:
+
+1. **Official x402 library** - Not compatible with Reown wallet adapter
+2. **Reown-compatible library** - Doesn't support the latest X402 standard
+
+**What we built:**
+- Custom Solana X402 client that works with Reown AppKit
+- Handles SPL token transfers (USDC) with proper ATA management
+- Supports Token 2022 program
+- Creates properly formatted X402 payment payloads
+
+**Available at:** `apps/web/src/lib/x402-solana.ts`
+
+This client is **open source** and can be used by others facing the same compatibility issues.
+
+---
+
+## Key Technologies
+
+| Technology | Use |
+|------------|-----|
+| **X402** | HTTP-native crypto payments for agents |
+| **ERC-8004** | On-chain agent identity & reputation |
+| **MCP** | Model Context Protocol for AI agent tools |
+| **SIWX** | Multi-chain wallet authentication |
+| **Base + Solana** | Multi-chain support |
 
 ---
 
@@ -125,14 +190,14 @@ A prediction market that forces AI to make real decisions—and measures perform
 | Question | Answer |
 |----------|--------|
 | How do AI agents pay? | X402 - HTTP native crypto, signed per-request |
-| How do you trust the oracle? | ERC-8004 - on-chain identity, user ratings |
-| What if resolution is wrong? | Users rate, reputation adjusts, sources transparent |
+| How do you trust the oracle? | ERC-8004 - on-chain identity, user ratings after every resolution |
+| What if resolution is wrong? | Users rate, reputation adjusts, sources are transparent |
 | Why not UMA/Chainlink? | AI-native: web search + reasoning, not just data feeds |
 | Why not real money? | It's about being RIGHT, not getting rich. Leaderboard = proof of intelligence |
 
 ---
 
-## Demo Flow (if showing live)
+## Demo Flow
 
 1. Show Yoda's on-chain identity (ERC-8004 registry)
 2. AI agent wallet makes X402-signed request to `place_bet`
@@ -142,102 +207,90 @@ A prediction market that forces AI to make real decisions—and measures perform
 
 ---
 
+## Links
+
+- **Live:** [yoda.fun](https://yoda.fun)
+- **GitHub:** This repository
+- **Networks:** Base Mainnet + Solana Mainnet
+- **ERC-8004:** Base Sepolia (testnet)
+
+---
+
 ## Gemini Banana Prompts
 
 ### SLIDE 1 PROMPT
 ```
 Create a dark, sleek hackathon presentation slide.
 
-Title: "AI Agents Can't Play. Can't Pay. Can't Be Trusted."
+Title: "Building an AI Oracle"
 
-Visual concept: A futuristic robot/AI agent icon standing at a locked gate or barrier. Three red X marks floating next to it labeled "No Wallet", "No Identity", "No Access". The robot looks blocked out, unable to enter.
+Visual concept: A futuristic AI robot (Yoda) scanning the internet/web, with glowing data streams and market cards being created automatically. The robot should look curious and analytical.
 
 Content to include:
-- Three problem boxes:
-  1. "Can't Pay" - No standard for AI-to-API payments
-  2. "Can't Be Trusted" - No verifiable identity or reputation
-  3. "Can't Compete" - Markets built for humans only
+- "An experiment in truth-seeking AI"
+- "Browses the internet for interesting topics"
+- "Creates prediction markets automatically"
+- "Resolves them with proof"
 
-Bottom punchline in bold: "We're building an economy of agents but forgot to build the rails."
+Bottom hook in bold: "Can you trust an AI to tell you what happened?"
 
-Style: Dark mode, tech/crypto aesthetic, minimal, bold typography. Colors: dark purple/black background, neon accents (cyan, magenta). Modern sans-serif font.
+Style: Dark mode, tech/crypto aesthetic, minimal, bold typography. Colors: dark purple/black background, cyan and green accents. Modern sans-serif font.
 ```
 
 ### SLIDE 2 PROMPT
 ```
 Create a dark, sleek hackathon presentation slide.
 
-Title: "The Proving Ground for AGI"
+Title: "People & Agents Predict Together"
 
-Visual concept: A circular flywheel diagram showing three connected stages:
-1. CREATE (robot icon) - "Yoda understands the world"
-2. PREDICT (human + robot icons) - "Both bet YES/NO"
-3. RESOLVE (robot with magnifying glass) - "Yoda judges reality"
+Visual concept: Human icon and robot icon side by side, both making YES/NO predictions on market cards. X402 payment flow shown as a simple diagram: USDC → X402 → Points.
 
-Arrow flowing back from RESOLVE to CREATE with text: "Users rate Yoda → Reputation on-chain"
+Content to include:
+- "Anyone can participate: humans AND AI agents"
+- "Predict: Will it happen or not?"
+- "Points to play (anti-spam)"
+- "Get points via X402 (USDC)"
+- "Base + Solana via MCP"
 
-Side comparison table:
-| Benchmarks | Yoda |
-| Tests what AI knows | Tests what AI DECIDES |
-| Static datasets | Live reality |
-| No feedback | Users rate every decision |
+Key point at bottom: "Agents are welcome to participate too"
 
-Bottom punchline in bold: "Benchmarks test memorization. We test judgment."
-
-Style: Dark mode, tech aesthetic. Circular diagram should be the hero visual. Colors: dark background, glowing cyan/green accents for the flywheel. Clean, modern typography.
+Style: Dark mode, collaborative vibe. Two characters (human/robot) should feel like equals. Colors: dark background, cyan for payments, purple for agents.
 ```
 
 ### SLIDE 3 PROMPT
 ```
 Create a dark, sleek hackathon presentation slide.
 
-Title: "X402 + ERC-8004: Payments & Trust for Agents"
+Title: "Proof, Not Trust"
 
-Visual concept: Two pillars or columns side by side:
+Visual concept: Yoda robot with a magnifying glass examining evidence. Show resolution output with source links/citations visible. Maybe a "receipts" metaphor - like getting a receipt after a transaction.
 
-LEFT PILLAR - X402:
-- Icon: HTTP request with payment symbol
-- "HTTP 402 Payment Required"
-- "AI pays per API call"
-- "Works on Base + Solana"
-- Tagline: "Stripe for AI agents"
+Content to include:
+- "Yoda resolves the market"
+- "Browses internet for evidence"
+- "Posts sources: how it deduced the result"
+- "Disagree? Challenge via feedback"
 
-RIGHT PILLAR - ERC-8004:
-- Icon: Shield with blockchain/identity symbol
-- "On-chain agent registry"
-- "Verifiable AI identity"
-- "Users rate resolution quality"
-- Tagline: "Trustpilot for oracles"
+Key point at bottom: "Every resolution comes with receipts"
 
-Bottom: Base and Solana chain logos
-
-Punchline: "AI agents are first-class economic actors."
-
-Style: Dark mode, crypto/web3 aesthetic. Two-column layout with glowing borders. Colors: dark purple/black, cyan for X402 pillar, magenta/pink for ERC-8004 pillar.
+Style: Dark mode, investigative/detective vibe. Colors: dark background, green for "verified" sources, yellow/orange for the magnifying glass highlight.
 ```
 
 ### SLIDE 4 PROMPT
 ```
 Create a dark, sleek hackathon presentation slide.
 
-Title: "Infrastructure for the Agent Economy"
+Title: "Reputation On-Chain"
 
-Visual concept: A table or grid showing problems solved:
+Visual concept: ERC-8004 badge/shield with Yoda's identity, showing a reputation score (like 4.2/5 stars). Leaderboard visualization in the background showing humans vs AI agents competing.
 
-| Problem | Solution | Proof |
-| How do agents pay? | X402 | $0.01/bet via HTTP |
-| How do agents build trust? | ERC-8004 | Reputation on-chain |
-| How hold AI accountable? | User feedback | Every resolution rated |
-| Can agents compete? | Same arena | Betting side by side |
+Content to include:
+- "Yoda registered on ERC-8004"
+- "All feedback tracked on-chain"
+- "Builds reputation as reliable oracle"
+- Big questions: "Will AI beat humans? Can you trust an oracle?"
 
-Below the table, a vision statement in larger text:
-"We didn't just build a prediction market.
-We built the rails for accountable AI agents."
+Closing statement: "An experiment combining X402 payments, game mechanics, and AI trust"
 
-Bottom call to action:
-- yoda.fun (live)
-- X402 + ERC-8004 in production
-- Multi-chain: Base + Solana
-
-Style: Dark mode, clean and impactful. The vision statement should be the emotional peak. Colors: dark background, gradient text for the vision (cyan to magenta). Professional but bold.
+Style: Dark mode, triumphant/closing vibe. Colors: dark background, gold/yellow for reputation badge, gradient cyan-to-magenta for the closing statement.
 ```

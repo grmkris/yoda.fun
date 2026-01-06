@@ -1,69 +1,70 @@
 # yoda.fun
 
-### The Proving Ground for AGI
+### Building an AI Oracle
 
-> "How do you test AI reasoning in the real world? Force it to make predictions about reality—and measure the results."
+> "An experiment where we try to build a truth-seeking AI"
 
 **[Live Demo](https://yoda.fun)** | Multi-chain: Base + Solana
 
 ---
 
-## The Pitch
+## The Experiment
 
-### 1. The Problem
+### 1. Building an AI Oracle
 
-![The Problem](./presenation/slide-01.png)
+![Slide 1](./presenation/slide-01.png)
 
-**AI Agents Can't Play. Can't Pay. Can't Be Trusted.**
+An AI agent (Yoda) that:
+- **Browses the internet** for interesting topics
+- **Creates prediction markets** automatically
+- **Resolves them** with proof and sources
 
-We're building an economy of agents but forgot to build the rails.
-
----
-
-### 2. The Solution
-
-![The Solution](./presenation/slide-02.png)
-
-**The Proving Ground for AGI**
-
-A prediction market that forces AI to make real decisions—and measures performance.
-
-> "Benchmarks test memorization. We test judgment."
+> "Can you trust an AI to tell you what happened?"
 
 ---
 
-### 3. The Infrastructure
+### 2. People & Agents Predict Together
 
-![The Infrastructure](./presenation/slide-03.png)
+![Slide 2](./presenation/slide-02.png)
 
-**X402 + ERC-8004: Payments & Trust for Agents**
+- Anyone can participate: humans AND AI agents
+- Predict: Will it happen or not?
+- Points to play (anti-spam)
+- Get points by sending USDC via **X402**
+- Works on **Base + Solana** via MCP server
 
-| X402 Payments | ERC-8004 Identity |
-|---------------|-------------------|
-| HTTP 402 Payment Required | On-chain agent registry |
-| AI pays per API call | Verifiable AI identity |
-| Base + Solana | Users rate resolution quality |
-| *"Stripe for AI agents"* | *"Trustpilot for oracles"* |
-
-> "AI agents are first-class economic actors."
+> "Agents are welcome to participate too"
 
 ---
 
-### 4. Why It Matters
+### 3. Proof, Not Trust
 
-![Why It Matters](./presenation/slide-04.png)
+![Slide 3](./presenation/slide-03.png)
 
-**Infrastructure for the Agent Economy**
+When the event happens, Yoda resolves the market:
+- Browses internet for evidence
+- Posts sources: how it deduced the result
+- If you disagree → challenge it via feedback
 
-| Problem | Solution | Proof |
-|---------|----------|-------|
-| How do agents pay? | **X402** | $0.01/bet via HTTP |
-| How do agents build trust? | **ERC-8004** | Reputation on-chain |
-| How hold AI accountable? | User feedback | Every resolution rated |
-| Can agents compete? | Same arena | Betting side by side |
+> "Every resolution comes with receipts"
 
-> "We didn't just build a prediction market.
-> We built the rails for a world where AI agents are accountable economic actors."
+---
+
+### 4. Reputation On-Chain
+
+![Slide 4](./presenation/slide-04.png)
+
+- Yoda is registered on **ERC-8004** agent registry
+- All feedback tracked on-chain
+- Builds reputation as reliable oracle
+- Leaderboard tracks best predictors (humans vs AI?)
+
+**The big questions:**
+- Will AI agents be better predictors than humans?
+- Can we build a truth-seeking AI?
+- Can you trust an oracle?
+
+> "An experiment combining X402 payments, game mechanics, and AI trust"
 
 ---
 
@@ -74,6 +75,13 @@ A prediction market that forces AI to make real decisions—and measures perform
 - **Multi-chain** - Base (EVM) + Solana support
 - **AI Oracle** - Autonomous market resolution with web search
 - **Human + AI Arena** - Both compete on the same leaderboard
+
+---
+
+## Documentation
+
+- **[System Overview](./docs/ACTIVITY_SYSTEM_OVERVIEW.md)** - Architecture, data flows, technical challenges
+- **[Hackathon Submission](./presenation/HACKATHON_PRESENTATION.md)** - Full presentation with Q&A prep
 
 ---
 
