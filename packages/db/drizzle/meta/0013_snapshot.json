@@ -246,12 +246,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -339,12 +335,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -354,9 +346,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -438,16 +428,12 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "user_username_unique": {
           "name": "user_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},
@@ -623,12 +609,8 @@
           "name": "wallet_address_user_id_user_id_fk",
           "tableFrom": "wallet_address",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -835,12 +817,8 @@
           "name": "agent_feedback_user_id_user_id_fk",
           "tableFrom": "agent_feedback",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -848,12 +826,8 @@
           "name": "agent_feedback_market_id_market_id_fk",
           "tableFrom": "agent_feedback",
           "tableTo": "market",
-          "columnsFrom": [
-            "market_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["market_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -863,11 +837,7 @@
         "unique_user_market_feedback_type": {
           "name": "unique_user_market_feedback_type",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "market_id",
-            "feedback_type"
-          ]
+          "columns": ["user_id", "market_id", "feedback_type"]
         }
       },
       "policies": {},
@@ -974,9 +944,7 @@
         "agent_identity_agent_id_unique": {
           "name": "agent_identity_agent_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "agent_id"
-          ]
+          "columns": ["agent_id"]
         }
       },
       "policies": {},
@@ -1204,12 +1172,8 @@
           "name": "ai_event_market_id_market_id_fk",
           "tableFrom": "ai_event",
           "tableTo": "market",
-          "columnsFrom": [
-            "market_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["market_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1312,12 +1276,8 @@
           "name": "bet_user_id_user_id_fk",
           "tableFrom": "bet",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1325,12 +1285,8 @@
           "name": "bet_market_id_market_id_fk",
           "tableFrom": "bet",
           "tableTo": "market",
-          "columnsFrom": [
-            "market_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["market_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1340,10 +1296,7 @@
         "unique_user_market_bet": {
           "name": "unique_user_market_bet",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "market_id"
-          ]
+          "columns": ["user_id", "market_id"]
         }
       },
       "policies": {},
@@ -1526,12 +1479,8 @@
           "name": "market_created_by_id_user_id_fk",
           "tableFrom": "market",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1593,12 +1542,8 @@
           "name": "user_balance_user_id_user_id_fk",
           "tableFrom": "user_balance",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1608,9 +1553,7 @@
         "user_balance_user_id_unique": {
           "name": "user_balance_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -1770,12 +1713,8 @@
           "name": "deposit_user_id_user_id_fk",
           "tableFrom": "deposit",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1783,12 +1722,8 @@
           "name": "deposit_transaction_id_transaction_id_fk",
           "tableFrom": "deposit",
           "tableTo": "transaction",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1869,12 +1804,8 @@
           "name": "transaction_user_id_user_id_fk",
           "tableFrom": "transaction",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1985,12 +1916,8 @@
           "name": "withdrawal_user_id_user_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1998,12 +1925,8 @@
           "name": "withdrawal_transaction_id_transaction_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "transaction",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2011,12 +1934,8 @@
           "name": "withdrawal_settlement_batch_id_settlement_batch_id_fk",
           "tableFrom": "withdrawal",
           "tableTo": "settlement_batch",
-          "columnsFrom": [
-            "settlement_batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["settlement_batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2184,12 +2103,8 @@
           "name": "media_user_id_user_id_fk",
           "tableFrom": "media",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2257,12 +2172,8 @@
           "name": "daily_state_user_id_user_id_fk",
           "tableFrom": "daily_state",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2272,10 +2183,7 @@
         "unique_user_date_state": {
           "name": "unique_user_date_state",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "date"
-          ]
+          "columns": ["user_id", "date"]
         }
       },
       "policies": {},
@@ -2354,12 +2262,8 @@
           "name": "referral_referrer_id_user_id_fk",
           "tableFrom": "referral",
           "tableTo": "user",
-          "columnsFrom": [
-            "referrer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["referrer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2367,12 +2271,8 @@
           "name": "referral_referee_id_user_id_fk",
           "tableFrom": "referral",
           "tableTo": "user",
-          "columnsFrom": [
-            "referee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["referee_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2382,9 +2282,7 @@
         "referral_referee_id_unique": {
           "name": "referral_referee_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "referee_id"
-          ]
+          "columns": ["referee_id"]
         }
       },
       "policies": {},
@@ -2519,12 +2417,8 @@
           "name": "reward_claim_user_id_user_id_fk",
           "tableFrom": "reward_claim",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2532,12 +2426,8 @@
           "name": "reward_claim_transaction_id_transaction_id_fk",
           "tableFrom": "reward_claim",
           "tableTo": "transaction",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2667,12 +2557,8 @@
           "name": "user_reward_state_user_id_user_id_fk",
           "tableFrom": "user_reward_state",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2682,16 +2568,12 @@
         "user_reward_state_user_id_unique": {
           "name": "user_reward_state_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "user_reward_state_referral_code_unique": {
           "name": "user_reward_state_referral_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "referral_code"
-          ]
+          "columns": ["referral_code"]
         }
       },
       "policies": {},
@@ -2772,12 +2654,8 @@
           "name": "follow_follower_id_user_id_fk",
           "tableFrom": "follow",
           "tableTo": "user",
-          "columnsFrom": [
-            "follower_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["follower_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2785,12 +2663,8 @@
           "name": "follow_following_id_user_id_fk",
           "tableFrom": "follow",
           "tableTo": "user",
-          "columnsFrom": [
-            "following_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["following_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2800,10 +2674,7 @@
         "unique_follow_relationship": {
           "name": "unique_follow_relationship",
           "nullsNotDistinct": false,
-          "columns": [
-            "follower_id",
-            "following_id"
-          ]
+          "columns": ["follower_id", "following_id"]
         }
       },
       "policies": {},
@@ -2906,12 +2777,8 @@
           "name": "user_profile_user_id_user_id_fk",
           "tableFrom": "user_profile",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2921,9 +2788,7 @@
         "user_profile_user_id_unique": {
           "name": "user_profile_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -3167,12 +3032,8 @@
           "name": "user_stats_user_id_user_id_fk",
           "tableFrom": "user_stats",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3182,9 +3043,7 @@
         "user_stats_user_id_unique": {
           "name": "user_stats_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {},
@@ -3196,103 +3055,57 @@
     "public.network": {
       "name": "network",
       "schema": "public",
-      "values": [
-        "BASE_MAINNET"
-      ]
+      "values": ["BASE_MAINNET"]
     },
     "public.feedback_status": {
       "name": "feedback_status",
       "schema": "public",
-      "values": [
-        "PENDING_AUTH",
-        "SUBMITTED",
-        "CONFIRMED",
-        "FAILED"
-      ]
+      "values": ["PENDING_AUTH", "SUBMITTED", "CONFIRMED", "FAILED"]
     },
     "public.feedback_type": {
       "name": "feedback_type",
       "schema": "public",
-      "values": [
-        "RESOLUTION",
-        "QUALITY"
-      ]
+      "values": ["RESOLUTION", "QUALITY"]
     },
     "public.bet_status": {
       "name": "bet_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "WON",
-        "LOST",
-        "REFUNDED"
-      ]
+      "values": ["ACTIVE", "WON", "LOST", "REFUNDED"]
     },
     "public.bet_vote": {
       "name": "bet_vote",
       "schema": "public",
-      "values": [
-        "YES",
-        "NO",
-        "SKIP"
-      ]
+      "values": ["YES", "NO", "SKIP"]
     },
     "public.market_result": {
       "name": "market_result",
       "schema": "public",
-      "values": [
-        "YES",
-        "NO",
-        "INVALID"
-      ]
+      "values": ["YES", "NO", "INVALID"]
     },
     "public.market_status": {
       "name": "market_status",
       "schema": "public",
-      "values": [
-        "PROCESSING",
-        "LIVE",
-        "VOTING_ENDED",
-        "SETTLED",
-        "CANCELLED"
-      ]
+      "values": ["PROCESSING", "LIVE", "VOTING_ENDED", "SETTLED", "CANCELLED"]
     },
     "public.settlement_status": {
       "name": "settlement_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "SETTLED",
-        "FAILED"
-      ]
+      "values": ["PENDING", "SETTLED", "FAILED"]
     },
     "public.settlement_batch_status": {
       "name": "settlement_batch_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "PROCESSING",
-        "COMPLETED",
-        "FAILED"
-      ]
+      "values": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
     },
     "public.deposit_status": {
       "name": "deposit_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "CONFIRMED",
-        "FAILED"
-      ]
+      "values": ["PENDING", "CONFIRMED", "FAILED"]
     },
     "public.transaction_status": {
       "name": "transaction_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "COMPLETED",
-        "FAILED"
-      ]
+      "values": ["PENDING", "COMPLETED", "FAILED"]
     },
     "public.transaction_type": {
       "name": "transaction_type",
@@ -3313,50 +3126,27 @@
     "public.withdrawal_status": {
       "name": "withdrawal_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "PROCESSING",
-        "COMPLETED",
-        "FAILED"
-      ]
+      "values": ["PENDING", "PROCESSING", "COMPLETED", "FAILED"]
     },
     "public.media_source": {
       "name": "media_source",
       "schema": "public",
-      "values": [
-        "replicate",
-        "upload",
-        "external"
-      ]
+      "values": ["replicate", "upload", "external"]
     },
     "public.media_status": {
       "name": "media_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "source_ready",
-        "processed",
-        "failed"
-      ]
+      "values": ["pending", "source_ready", "processed", "failed"]
     },
     "public.media_type": {
       "name": "media_type",
       "schema": "public",
-      "values": [
-        "market_image",
-        "market_thumbnail",
-        "user_avatar"
-      ]
+      "values": ["market_image", "market_thumbnail", "user_avatar"]
     },
     "public.reward_status": {
       "name": "reward_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "CLAIMED",
-        "AUTO_CREDITED",
-        "EXPIRED"
-      ]
+      "values": ["PENDING", "CLAIMED", "AUTO_CREDITED", "EXPIRED"]
     },
     "public.reward_type": {
       "name": "reward_type",
@@ -3372,12 +3162,7 @@
     "public.leaderboard_period": {
       "name": "leaderboard_period",
       "schema": "public",
-      "values": [
-        "DAILY",
-        "WEEKLY",
-        "MONTHLY",
-        "ALL_TIME"
-      ]
+      "values": ["DAILY", "WEEKLY", "MONTHLY", "ALL_TIME"]
     }
   },
   "schemas": {
