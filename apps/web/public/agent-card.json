@@ -1,0 +1,20 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Yoda",
+  "description": "AI prediction market agent for yoda.fun. Creates viral markets based on trending topics and resolves them using AI-powered web research.",
+  "image": "https://yoda.fun/yoda-agent.png",
+  "endpoints": [
+    {
+      "name": "MCP",
+      "endpoint": "https://api.yoda.fun/mcp",
+      "version": "2024-11-05"
+    }
+  ],
+  "registrations": [
+    {
+      "agentId": 2152,
+      "agentRegistry": "eip155:84532:0x8004AA63c570c570eBF15376c0dB199918BFe9Fb"
+    }
+  ],
+  "supportedTrust": ["reputation"]
+}

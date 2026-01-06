@@ -1,6 +1,6 @@
-import type { BetterAuthClientPlugin } from "better-auth/client";
 import type { BetterAuthPlugin, User } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
+import type { BetterAuthClientPlugin } from "better-auth/client";
 import { setSessionCookie } from "better-auth/cookies";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
@@ -52,9 +52,12 @@ function parseAddressFromMessage(
 
 const CHAIN_RPC_URLS: Record<string, string> = {
   "8453": "https://mainnet.base.org",
-  "84532": "https://sepolia.base.org",
-  "1": "https://eth.llamarpc.com",
 };
+
+const SUPPORTED_CHAINS = {
+  eip155: ["8453"],
+  solana: ["5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"],
+} as const;
 
 async function verifySiweSignature(
   address: string,
@@ -180,6 +183,14 @@ export const siwx = (options: SIWXOptions) => {
           }
           if (parsedNonce !== storedNonce) {
             throw new APIError("BAD_REQUEST", { message: "Nonce mismatch" });
+          }
+
+          const supportedChains = SUPPORTED_CHAINS[chainNamespace];
+          // @ts-expect-error - TODO: fix this
+          if (!supportedChains.includes(parsedChainId)) {
+            throw new APIError("BAD_REQUEST", {
+              message: `Unsupported chain: ${parsedChainId}`,
+            });
           }
 
           // Verify signature based on chain namespace

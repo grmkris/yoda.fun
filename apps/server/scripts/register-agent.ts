@@ -17,16 +17,13 @@
 import { createDb, DB_SCHEMA } from "@yoda.fun/db";
 import { createERC8004Client, ERC8004_CONTRACTS } from "@yoda.fun/erc8004";
 import { createLogger } from "@yoda.fun/logger";
+import { env } from "../src/env";
 
 const logger = createLogger({
   level: "debug",
   environment: "dev",
   appName: "register-agent",
 });
-
-// Configuration
-const YODA_AGENT_PRIVATE_KEY = process.env.YODA_AGENT_PRIVATE_KEY;
-const DATABASE_URL = process.env.DATABASE_URL;
 
 // Agent metadata (host this JSON somewhere accessible)
 const AGENT_CARD = {
@@ -46,7 +43,7 @@ const AGENT_CARD = {
 };
 
 async function main() {
-  if (!YODA_AGENT_PRIVATE_KEY) {
+  if (!env.YODA_AGENT_PRIVATE_KEY) {
     console.error("ERROR: YODA_AGENT_PRIVATE_KEY env var not set");
     console.error(
       "Generate a new wallet and set the private key (0x prefixed 64 hex chars)"
@@ -54,12 +51,14 @@ async function main() {
     process.exit(1);
   }
 
-  if (!DATABASE_URL) {
+  if (!env.DATABASE_URL) {
     console.error("ERROR: DATABASE_URL env var not set");
     process.exit(1);
   }
 
-  const db = createDb({ dbData: { type: "pg", databaseUrl: DATABASE_URL } });
+  const db = createDb({
+    dbData: { type: "pg", databaseUrl: env.DATABASE_URL },
+  });
 
   // Check if agent already registered
   const existingAgents = await db
@@ -80,7 +79,7 @@ async function main() {
   }
 
   const client = createERC8004Client({
-    privateKey: YODA_AGENT_PRIVATE_KEY as `0x${string}`,
+    privateKey: env.YODA_AGENT_PRIVATE_KEY,
     logger,
   });
 

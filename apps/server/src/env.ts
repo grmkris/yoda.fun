@@ -40,7 +40,7 @@ export const envSchema = z.object({
     .refine((val) => ETH_PRIVATE_KEY_REGEX.test(val), {
       message: "YODA_AGENT_PRIVATE_KEY must be 64 hex characters",
     }),
-  YODA_AGENT_ID: z.coerce.number().optional(),
+  YODA_AGENT_ID: z.coerce.number(),
 });
 
 export const env = envSchema.parse(process.env);

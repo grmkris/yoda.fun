@@ -11,22 +11,13 @@ import { authClient, type SessionWithWallet } from "@/lib/auth-client";
 const domain = SERVICE_URLS[env.NEXT_PUBLIC_ENV].siweDomain.replace(/^\./, "");
 
 const NETWORK_NAMES: Record<string, string> = {
-  // EVM
-  "1": "Ethereum",
   "8453": "Base",
-  "84532": "Base Sepolia",
-  "137": "Polygon",
-  "42161": "Arbitrum",
-  "10": "Optimism",
-  // Solana (uses genesis hashes as chain IDs)
   "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp": "Solana",
-  EtWTRABZaYq6iMfeYKouRu166VU2xqa1: "Solana Devnet",
-  "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z": "Solana Testnet",
 };
 
 function createMessageString(params: SIWXMessage.Data): string {
   const chainIdNum = params.chainId.split(":")[1];
-  const networkName = NETWORK_NAMES[chainIdNum ?? ""] || "Ethereum";
+  const networkName = NETWORK_NAMES[chainIdNum ?? ""] || "Base";
 
   return [
     `${params.domain} wants you to sign in with your ${networkName} account:`,
