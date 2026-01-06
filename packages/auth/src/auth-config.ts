@@ -1,6 +1,7 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
+import { POINTS_CONFIG } from "@yoda.fun/shared/constants";
 import { type Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
 import { UserId } from "@yoda.fun/shared/typeid";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
@@ -153,14 +154,14 @@ export const createAuth = (config: AuthConfig) => {
             if (config.signupBonusEnabled) {
               await config.db.insert(DB_SCHEMA.userBalance).values({
                 userId: UserId.parse(user.id),
-                points: 1000,
+                points: POINTS_CONFIG.startingPoints,
                 totalPointsPurchased: 0,
               });
 
               await config.db.insert(DB_SCHEMA.transaction).values({
                 userId: UserId.parse(user.id),
                 type: "SIGNUP_BONUS",
-                points: 1000,
+                points: POINTS_CONFIG.startingPoints,
                 status: "COMPLETED",
                 metadata: { reason: "signup_bonus" },
               });
