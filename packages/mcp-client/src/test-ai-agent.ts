@@ -18,8 +18,8 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createMCPClient } from "@ai-sdk/mcp";
 import { createXai } from "@ai-sdk/xai";
 import { createLogger } from "@yoda.fun/logger";
-import { Environment, SERVICE_URLS } from "@yoda.fun/shared/services.schema";
-import { generateText } from "ai";
+import { Environment, SERVICE_URLS } from "@yoda.fun/shared/services";
+import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 
 const TestEnvSchema = z.object({
@@ -67,8 +67,7 @@ async function main() {
     const result = await generateText({
       model,
       tools,
-      maxSteps: 10,
-      maxTokens: 2048,
+      stopWhen: stepCountIs(10),
       toolChoice: "auto",
       system:
         "You are a prediction market analyst. After calling a tool and receiving results, you MUST analyze the data and provide your recommendation. Never stop after just calling a tool.",
@@ -85,7 +84,7 @@ async function main() {
       if (step.toolCalls.length > 0) {
         for (const call of step.toolCalls) {
           logger.debug(
-            { step: i + 1, tool: call.toolName, args: call.args },
+            { step: i + 1, tool: call.toolName, input: call.input },
             "Tool call"
           );
         }

@@ -8,8 +8,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev:disabled": "tsc --watch"
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@yoda.fun/shared": "workspace:*",
