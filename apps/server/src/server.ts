@@ -26,6 +26,7 @@ import {
   createPostHogClient,
   shutdownPostHog,
 } from "@/lib/posthog";
+import { createMcpDepositRoutes } from "@/mcp/deposit";
 import { handleMcpRequest } from "@/mcp/transport";
 import { createDepositRoutes } from "@/routes/deposit";
 import { createFarcasterWebhookRoutes } from "@/routes/farcaster-webhook";
@@ -159,6 +160,15 @@ logger.info(
 // MCP endpoint for AI agents (proper SDK pattern)
 app.all("/mcp", (c) => handleMcpRequest(c, { db, logger }));
 logger.info({ msg: "MCP endpoint enabled at /mcp" });
+
+// MCP deposit routes for agents (x402 payment, no session required)
+const mcpDepositRoutes = createMcpDepositRoutes({
+  db,
+  logger,
+  appEnv: env.APP_ENV,
+});
+app.route("/mcp", mcpDepositRoutes);
+logger.info({ msg: "MCP deposit routes enabled at /mcp/deposit/*" });
 
 // Farcaster webhook endpoint
 const farcasterWebhookRoutes = createFarcasterWebhookRoutes({ logger });

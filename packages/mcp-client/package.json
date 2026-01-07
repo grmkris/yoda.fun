@@ -12,7 +12,13 @@
     "dev:disabled": "tsc --watch"
   },
   "dependencies": {
+    "@yoda.fun/shared": "workspace:*",
+    "@yoda.fun/logger": "workspace:*",
+    "@ai-sdk/google": "^3.0.5",
+    "@ai-sdk/mcp": "^1.0.5",
+    "@ai-sdk/xai": "^3.0.10",
     "@modelcontextprotocol/sdk": "^1.25.1",
+    "ai": "^6.0.14",
     "viem": "catalog:",
     "x402-fetch": "^1.1.0",
     "zod": "catalog:"
