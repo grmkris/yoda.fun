@@ -36,6 +36,7 @@ export async function createTestContext(props: {
     profileService: deps.profileService,
     followService: deps.followService,
     rewardService: deps.rewardService,
+    fhevmClient: null as unknown as Context["fhevmClient"],
   };
 }
 
@@ -55,6 +56,7 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     followService: testEnv.deps.followService,
     rewardService: testEnv.deps.rewardService,
     erc8004Service: testEnv.deps.erc8004Service,
+    fhevmClient: null as unknown as Context["fhevmClient"],
   };
 }
 

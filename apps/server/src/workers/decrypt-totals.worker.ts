@@ -1,4 +1,3 @@
-import type { Database } from "@yoda.fun/db";
 import type { FhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
@@ -9,7 +8,6 @@ const RETRY_DELAY_MS = 30_000;
 
 export interface DecryptTotalsWorkerConfig {
   queue: QueueClient;
-  db: Database;
   logger: Logger;
   fhevmClient: FhevmClient;
 }
@@ -17,7 +15,7 @@ export interface DecryptTotalsWorkerConfig {
 export function createDecryptTotalsWorker(config: DecryptTotalsWorkerConfig): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, fhevmClient } = config;
+  const { queue, logger, fhevmClient } = config;
 
   logger.info({ msg: "Starting decrypt totals worker" });
 

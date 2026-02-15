@@ -26,6 +26,7 @@ describe("Market Resolution Queue", () => {
       db: testEnv.deps.db,
       logger: testEnv.deps.logger,
       aiClient: testEnv.deps.aiClient,
+      fhevmClient: null as never,
     });
   });
 

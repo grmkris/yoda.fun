@@ -6,7 +6,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
-import { mishaTokenAbi, confidentialMishaAbi, mishaMarketAbi } from "./abis";
+import { mishaTokenAbi, mishaMarketAbi } from "./abis";
 import { FHEVM_CONFIG } from "./config";
 
 export interface FhevmClientConfig {
@@ -54,7 +54,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
 
       // Parse MarketCreated event for marketId
       const marketCreatedLog = receipt.logs.find(
-        (log) => log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
+        (log: { address: string; topics: string[] }) => log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
       );
 
       if (!marketCreatedLog?.topics[1]) {

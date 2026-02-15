@@ -5,7 +5,7 @@ import { UserId } from "@yoda.fun/shared/typeid";
 import { z } from "zod";
 import { protectedProcedure } from "../api";
 
-const FAUCET_AMOUNT = 1000n;
+const FAUCET_AMOUNT = BigInt(1000);
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export const faucetRouter = {

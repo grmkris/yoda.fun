@@ -40,7 +40,7 @@ export function WrapUnwrap() {
     return null;
   }
 
-  const parsedAmount = amount ? parseEther(amount) : 0n;
+  const parsedAmount = amount ? parseEther(amount) : BigInt(0);
   const isPending =
     approve.isPending ||
     approveReceipt.isLoading ||
@@ -126,7 +126,7 @@ export function WrapUnwrap() {
           value={amount}
         />
         <Button
-          disabled={isPending || !amount || parsedAmount === 0n}
+          disabled={isPending || !amount || parsedAmount === BigInt(0)}
           onClick={handleSubmit}
           size="sm"
         >

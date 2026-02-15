@@ -22,7 +22,8 @@
     "@fhevm/host-contracts": "0.10.0",
     "@fhevm/mock-utils": "^0.4.0",
     "@fhevm/solidity": "^0.10.0",
-    "encrypted-types": "^0.0.4"
+    "encrypted-types": "^0.0.4",
+    "viem": "^2.46.0"
   },
   "devDependencies": {
     "@fhevm/hardhat-plugin": "^0.4.0",

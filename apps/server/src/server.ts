@@ -296,7 +296,6 @@ const reputationCacheWorker = createReputationCacheWorker({
 
 const decryptTotalsWorker = createDecryptTotalsWorker({
   queue,
-  db,
   logger,
   fhevmClient,
 });

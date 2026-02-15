@@ -39,6 +39,7 @@ describe("E2E: Complete User Journey", () => {
       db: testEnv.deps.db,
       logger: testEnv.deps.logger,
       aiClient: testEnv.deps.aiClient,
+      fhevmClient: null as never,
     });
 
     // Create test users with funds

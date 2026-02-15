@@ -67,9 +67,9 @@ export function usePlaceBet() {
         functionName: "placeBet",
         args: [
           BigInt(input.onChainMarketId),
-          encrypted.encryptedVote as `0x${string}`,
-          encrypted.encryptedAmount as `0x${string}`,
-          encrypted.inputProof as `0x${string}`,
+          encrypted.encryptedVote as unknown as `0x${string}`,
+          encrypted.encryptedAmount as unknown as `0x${string}`,
+          encrypted.inputProof as unknown as `0x${string}`,
         ],
       });
 

@@ -35,6 +35,7 @@
     "@x402/svm": "^2.1.0",
     "@yoda.fun/api": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
+    "@yoda.fun/fhevm": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "catalog:",
