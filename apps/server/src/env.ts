@@ -41,6 +41,12 @@ export const envSchema = z.object({
       message: "YODA_AGENT_PRIVATE_KEY must be 64 hex characters",
     }),
   YODA_AGENT_ID: z.coerce.number(),
+  // FHEVM (Sepolia) — uses YODA_AGENT_PRIVATE_KEY by default
+  FHEVM_PRIVATE_KEY: z
+    .custom<`0x${string}`>()
+    .refine((val) => ETH_PRIVATE_KEY_REGEX.test(val))
+    .optional(),
+  FHEVM_RPC_URL: z.string().url().optional(),
 });
 
 export const env = envSchema.parse(process.env);

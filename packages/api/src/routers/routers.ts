@@ -2,6 +2,7 @@ import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../api";
 import { agentRouter } from "./agent-router";
 import { betRouter } from "./bet-router";
+import { faucetRouter } from "./faucet-router";
 import { followRouter } from "./follow-router";
 import { leaderboardRouter } from "./leaderboard-router";
 import { marketRouter } from "./market-router";
@@ -23,6 +24,7 @@ export const appRouter = {
   follow: followRouter,
   reward: rewardRouter,
   agent: agentRouter,
+  faucet: faucetRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

@@ -3,7 +3,8 @@ import { withTrace } from "@yoda.fun/ai/observability";
 import type { Cache } from "@yoda.fun/cache";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import { desc, gte } from "@yoda.fun/db/drizzle";
+import { desc, eq, gte } from "@yoda.fun/db/drizzle";
+import type { FhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
 import type { Logger } from "@yoda.fun/logger";
 import {
   generateAndInsertMarkets,
@@ -18,6 +19,7 @@ export interface MarketGenerationWorkerConfig {
   logger: Logger;
   aiClient: AiClient;
   cache: Cache;
+  fhevmClient: FhevmClient;
 }
 
 const getTimeframe = () => {
@@ -41,7 +43,7 @@ export function createMarketGenerationWorker(
 ): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, aiClient, cache } = config;
+  const { queue, db, logger, aiClient, cache, fhevmClient } = config;
 
   logger.info({ msg: "Starting market generation worker" });
 
@@ -111,6 +113,45 @@ export function createMarketGenerationWorker(
         });
 
         for (const market of inserted) {
+          // Create market on-chain
+          try {
+            const votingEndsAt = BigInt(
+              Math.floor(new Date(market.votingEndsAt).getTime() / 1000)
+            );
+            const resolutionDeadline = BigInt(
+              Math.floor(new Date(market.resolutionDeadline).getTime() / 1000)
+            );
+
+            const { marketId: onChainId, txHash } =
+              await fhevmClient.createMarket(
+                market.title,
+                votingEndsAt,
+                resolutionDeadline
+              );
+
+            await db
+              .update(DB_SCHEMA.market)
+              .set({
+                onChainMarketId: Number(onChainId),
+                onChainTxHash: txHash,
+              })
+              .where(eq(DB_SCHEMA.market.id, market.id));
+
+            logger.info(
+              {
+                marketId: market.id,
+                onChainMarketId: Number(onChainId),
+                txHash,
+              },
+              "Market created on-chain"
+            );
+          } catch (error) {
+            logger.error(
+              { marketId: market.id, error },
+              "Failed to create market on-chain (continuing)"
+            );
+          }
+
           await queue.addJob("generate-market-image", {
             marketId: market.id,
             title: market.title,

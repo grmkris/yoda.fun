@@ -1,6 +1,7 @@
 import type { Auth } from "@yoda.fun/auth";
 import type { Database } from "@yoda.fun/db";
 import type { ERC8004Client } from "@yoda.fun/erc8004";
+import type { FhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
 import type { Logger } from "@yoda.fun/logger";
 import type { QueueClient } from "@yoda.fun/queue";
 import type { StorageClient } from "@yoda.fun/storage";
@@ -24,6 +25,7 @@ export interface CreateContextOptions {
   storage: StorageClient;
   queue: QueueClient;
   erc8004Client: ERC8004Client;
+  fhevmClient: FhevmClient;
 }
 
 export async function createContext({
@@ -35,6 +37,7 @@ export async function createContext({
   storage,
   queue,
   erc8004Client,
+  fhevmClient,
 }: CreateContextOptions) {
   const session = await auth.api.getSession({
     headers: context.req.raw.headers,
@@ -75,6 +78,7 @@ export async function createContext({
     followService,
     rewardService,
     erc8004Service,
+    fhevmClient,
   };
 }
 

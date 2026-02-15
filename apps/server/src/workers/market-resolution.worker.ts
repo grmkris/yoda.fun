@@ -6,6 +6,8 @@ import { createSettlementService } from "@yoda.fun/api/services/settlement-servi
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
+import type { FhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
+import { MarketResult } from "@yoda.fun/fhevm/sdk/types";
 import type { Logger } from "@yoda.fun/logger";
 import { resolveMarket } from "@yoda.fun/markets/resolution";
 import type { QueueClient } from "@yoda.fun/queue";
@@ -16,6 +18,7 @@ export interface MarketResolutionWorkerConfig {
   db: Database;
   logger: Logger;
   aiClient: AiClient;
+  fhevmClient: FhevmClient;
 }
 
 export function createMarketResolutionWorker(
@@ -23,7 +26,7 @@ export function createMarketResolutionWorker(
 ): {
   close: () => Promise<void>;
 } {
-  const { queue, db, logger, aiClient } = config;
+  const { queue, db, logger, aiClient, fhevmClient } = config;
 
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const pointsService = createPointsService({ deps: { db, logger } });
@@ -61,6 +64,66 @@ export function createMarketResolutionWorker(
       }
 
       await resolveMarket(market, { aiClient, settlementService, logger });
+
+      // Resolve on-chain if market has on-chain ID
+      if (market.onChainMarketId) {
+        try {
+          // Re-read market to get the AI result
+          const updatedMarket = await db
+            .select({ result: DB_SCHEMA.market.result })
+            .from(DB_SCHEMA.market)
+            .where(eq(DB_SCHEMA.market.id, marketId))
+            .limit(1);
+
+          const marketResult = updatedMarket[0]?.result;
+          if (marketResult) {
+            const resultMap: Record<string, number> = {
+              YES: MarketResult.Yes,
+              NO: MarketResult.No,
+              INVALID: MarketResult.Invalid,
+            };
+
+            const onChainResult = resultMap[marketResult] ?? MarketResult.Invalid;
+
+            await fhevmClient.resolveMarket(
+              BigInt(market.onChainMarketId),
+              onChainResult
+            );
+
+            logger.info(
+              {
+                marketId,
+                onChainMarketId: market.onChainMarketId,
+                result: marketResult,
+              },
+              "Market resolved on-chain"
+            );
+
+            // Schedule decrypt-totals job for YES/NO results
+            if (marketResult === "YES" || marketResult === "NO") {
+              await queue.addJob(
+                "decrypt-totals",
+                {
+                  marketId,
+                  onChainMarketId: market.onChainMarketId,
+                  attempt: 0,
+                },
+                { delay: 30_000 }
+              );
+
+              logger.info(
+                { marketId, onChainMarketId: market.onChainMarketId },
+                "Scheduled decrypt-totals job"
+              );
+            }
+          }
+        } catch (error) {
+          logger.error(
+            { marketId, onChainMarketId: market.onChainMarketId, error },
+            "Failed to resolve market on-chain"
+          );
+        }
+      }
 
       return { success: true, marketId };
     },

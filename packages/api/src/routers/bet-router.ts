@@ -1,4 +1,6 @@
 import { ORPCError } from "@orpc/server";
+import { DB_SCHEMA } from "@yoda.fun/db";
+import { and, eq } from "@yoda.fun/db/drizzle";
 import type { SelectMarket } from "@yoda.fun/db/schema";
 import { NUMERIC_CONSTANTS } from "@yoda.fun/shared/constants";
 import { BetId, MarketId, UserId } from "@yoda.fun/shared/typeid";
@@ -136,6 +138,72 @@ export const betRouter = {
       return {
         bet: bet.bet,
         market: withSignedImageUrl(bet.market, context.storage),
+      };
+    }),
+
+  /**
+   * Record an on-chain bet (DB record only, no point deduction)
+   */
+  recordOnChain: protectedProcedure
+    .input(
+      z.object({
+        marketId: MarketId,
+        txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
+        vote: z.enum(["YES", "NO"]),
+        amount: z.number().int().positive(),
+      })
+    )
+    .handler(async ({ context, input }) => {
+      const userId = UserId.parse(context.session.user.id);
+
+      // Verify market exists and has on-chain ID
+      const market = await context.db.query.market.findFirst({
+        where: eq(DB_SCHEMA.market.id, input.marketId),
+      });
+
+      if (!market?.onChainMarketId) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Market not found or not on-chain",
+        });
+      }
+
+      // Check for existing bet
+      const existing = await context.db.query.bet.findFirst({
+        where: and(
+          eq(DB_SCHEMA.bet.userId, userId),
+          eq(DB_SCHEMA.bet.marketId, input.marketId)
+        ),
+      });
+
+      if (existing) {
+        throw new ORPCError("BAD_REQUEST", {
+          message: "Already bet on this market",
+        });
+      }
+
+      // Record the on-chain bet in DB (no points deduction)
+      const [bet] = await context.db
+        .insert(DB_SCHEMA.bet)
+        .values({
+          userId,
+          marketId: input.marketId,
+          vote: input.vote,
+          pointsSpent: 0,
+          status: "ACTIVE",
+          onChainTxHash: input.txHash,
+          onChainBetAmount: input.amount,
+        })
+        .returning();
+
+      context.logger.info(
+        { userId, marketId: input.marketId, txHash: input.txHash },
+        "On-chain bet recorded"
+      );
+
+      return {
+        success: true,
+        betId: bet?.id ?? null,
+        txHash: input.txHash,
       };
     }),
 };

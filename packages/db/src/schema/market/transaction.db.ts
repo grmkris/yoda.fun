@@ -39,6 +39,8 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "DAILY_CLAIM",
   "SKIP",
   "SIGNUP_BONUS",
+  // FHEVM on-chain
+  "FAUCET_CLAIM",
 ]);
 
 export const transactionStatusEnum = pgEnum("transaction_status", [

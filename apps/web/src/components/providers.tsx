@@ -6,6 +6,7 @@ import { env } from "@/env";
 import { useReferralAutoApply } from "@/hooks/use-referral-auto-apply";
 import { queryClient } from "@/utils/orpc";
 import { AuthProvider } from "./auth-provider";
+import { FhevmProvider } from "./fhevm-provider";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
 import { Web3Provider } from "./web3-provider";
@@ -26,9 +27,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       >
         {env.NEXT_PUBLIC_ENV === "dev" && <ReactQueryDevtools />}
         <Web3Provider>
-          <AuthProvider>
-            <ReferralAutoApply>{children}</ReferralAutoApply>
-          </AuthProvider>
+          <FhevmProvider>
+            <AuthProvider>
+              <ReferralAutoApply>{children}</ReferralAutoApply>
+            </AuthProvider>
+          </FhevmProvider>
         </Web3Provider>
         <Toaster richColors />
       </ThemeProvider>

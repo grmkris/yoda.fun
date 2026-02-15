@@ -91,6 +91,9 @@ export const market = pgTable("market", {
   resolutionReasoning: text("resolution_reasoning"),
   resolutionError: text("resolution_error"),
   resolutionFailedAt: createTimestampField("resolution_failed_at"),
+  // On-chain (FHEVM) tracking
+  onChainMarketId: integer("on_chain_market_id"),
+  onChainTxHash: text("on_chain_tx_hash"),
   ...baseEntityFields,
 });
 
@@ -114,6 +117,9 @@ export const bet = pgTable(
     pointsSpent: integer("points_spent").notNull().default(0),
     pointsReturned: integer("points_returned").default(0),
     status: betStatusEnum("status").notNull().default("ACTIVE"),
+    // On-chain (FHEVM) tracking
+    onChainTxHash: text("on_chain_tx_hash"),
+    onChainBetAmount: integer("on_chain_bet_amount"),
     // Settlement tracking
     settlementStatus: settlementStatusEnum("settlement_status")
       .notNull()

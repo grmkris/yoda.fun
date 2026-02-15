@@ -4,7 +4,8 @@ export type JobType =
   | "generate-market"
   | "generate-market-image"
   | "process-avatar-image"
-  | "process-withdrawal";
+  | "process-withdrawal"
+  | "decrypt-totals";
 export interface RateLimitConfig {
   max: number;
   duration: number;
@@ -19,6 +20,7 @@ export const WORKER_CONFIG = {
     "generate-market-image": 1,
     "process-avatar-image": 2,
     "process-withdrawal": 1,
+    "decrypt-totals": 1,
   } satisfies Record<JobType, number>,
   // Per-queue rate limits (optimized for Gemini API limits)
   RATE_LIMITS: {
@@ -27,6 +29,7 @@ export const WORKER_CONFIG = {
     "generate-market-image": { max: 5, duration: 60_000 },
     "process-avatar-image": { max: 30, duration: 60_000 },
     "process-withdrawal": { max: 30, duration: 60_000 },
+    "decrypt-totals": { max: 10, duration: 60_000 },
   } satisfies Record<JobType, RateLimitConfig>,
 } as const;
 

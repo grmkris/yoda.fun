@@ -10,6 +10,7 @@ import { createRedisCache } from "@yoda.fun/cache";
 import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
 import { count } from "@yoda.fun/db/drizzle";
 import { createERC8004Client } from "@yoda.fun/erc8004";
+import { createFhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
 import { createLogger } from "@yoda.fun/logger";
 import { MARKET_GENERATION } from "@yoda.fun/markets/config";
 import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
@@ -34,6 +35,7 @@ import { createAvatarImageWorker } from "@/workers/avatar-image.worker";
 import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
 import { createMarketImageWorker } from "@/workers/market-image.worker";
 import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
+import { createDecryptTotalsWorker } from "@/workers/decrypt-totals.worker";
 import { createReputationCacheWorker } from "@/workers/reputation-cache.worker";
 
 const logger = createLogger({
@@ -92,6 +94,13 @@ const erc8004Client = createERC8004Client({
   logger,
 });
 
+// FHEVM client for on-chain prediction markets
+const fhevmClient = createFhevmClient({
+  privateKey: (env.FHEVM_PRIVATE_KEY ?? env.YODA_AGENT_PRIVATE_KEY) as `0x${string}`,
+  rpcUrl: env.FHEVM_RPC_URL,
+});
+logger.info({ address: fhevmClient.getAddress() }, "FHEVM client initialized");
+
 // HTTP request logging with Pino
 app.use(async (c, next) => {
   const start = Date.now();
@@ -125,7 +134,7 @@ app.use(
       "X-PAYMENT",
       "PAYMENT-SIGNATURE",
     ],
-    exposeHeaders: ["X-PAYMENT-RESPONSE"],
+    exposeHeaders: ["X-PAYMENT-RESPONSE"],  
     credentials: true,
   })
 );
@@ -197,6 +206,7 @@ app.use("/*", async (c, next) => {
     storage,
     queue,
     erc8004Client,
+    fhevmClient,
   });
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
@@ -246,6 +256,7 @@ const resolutionWorker = createMarketResolutionWorker({
   db,
   logger,
   aiClient,
+  fhevmClient,
 });
 logger.info({ msg: "Market resolution worker started" });
 
@@ -255,6 +266,7 @@ const generationWorker = createMarketGenerationWorker({
   logger,
   aiClient,
   cache,
+  fhevmClient,
 });
 logger.info({ msg: "Market generation worker started" });
 
@@ -281,6 +293,14 @@ const reputationCacheWorker = createReputationCacheWorker({
   logger,
   erc8004Client,
 });
+
+const decryptTotalsWorker = createDecryptTotalsWorker({
+  queue,
+  db,
+  logger,
+  fhevmClient,
+});
+logger.info({ msg: "Decrypt totals worker started" });
 
 // Seed initial markets if database is empty
 const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
@@ -327,6 +347,7 @@ process.on("SIGTERM", async () => {
   await imageWorker.close();
   await avatarWorker.close();
   await reputationCacheWorker.close();
+  await decryptTotalsWorker.close();
   await queue.close();
   await shutdownPostHog();
   process.exit(0);

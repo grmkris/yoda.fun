@@ -2,6 +2,7 @@ import type { Logger } from "@yoda.fun/logger";
 import { type JobType, WORKER_CONFIG } from "@yoda.fun/shared/constants";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
+import type { DecryptTotalsJob } from "./jobs/decrypt-totals-job";
 import type { GenerateMarketImageJob } from "./jobs/generate-market-image-job";
 import type { GenerateMarketJob } from "./jobs/generate-market-job";
 import type { ProcessAvatarImageJob } from "./jobs/process-avatar-image-job";
@@ -19,6 +20,7 @@ export interface JobData {
   "generate-market-image": GenerateMarketImageJob;
   "process-avatar-image": ProcessAvatarImageJob;
   "process-withdrawal": ProcessWithdrawalJob;
+  "decrypt-totals": DecryptTotalsJob;
 }
 
 export interface JobResult {
@@ -38,6 +40,12 @@ export interface JobResult {
     success: boolean;
     withdrawalId: string;
     txHash?: string;
+  };
+  "decrypt-totals": {
+    success: boolean;
+    marketId: string;
+    yesTotal?: bigint;
+    noTotal?: bigint;
   };
 }
 
@@ -110,6 +118,10 @@ export function createQueueClient(config: QueueConfig) {
         defaultJobOptions,
       }
     ),
+    "decrypt-totals": new Queue<DecryptTotalsJob>("decrypt-totals", {
+      connection,
+      defaultJobOptions,
+    }),
   };
 
   /**
@@ -169,6 +181,13 @@ export function createQueueClient(config: QueueConfig) {
         const job = await queues["process-withdrawal"].add(
           queueName,
           data as ProcessWithdrawalJob,
+          jobOptions
+        );
+        jobId = job.id;
+      } else if (queueName === "decrypt-totals") {
+        const job = await queues["decrypt-totals"].add(
+          queueName,
+          data as DecryptTotalsJob,
           jobOptions
         );
         jobId = job.id;
