@@ -9,7 +9,6 @@ export interface SessionWithWallet {
     name: string;
     email: string;
     image?: string | null;
-    isAnonymous?: boolean | null;
     createdAt: Date;
     updatedAt: Date;
     emailVerified: boolean;

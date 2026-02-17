@@ -205,10 +205,8 @@ export function createProfileService({ deps }: { deps: ProfileServiceDeps }) {
         visible: true,
         bets: bets.map((b) => ({
           id: b.bet.id,
-          vote: b.bet.vote,
-          amount: Number(b.bet.pointsSpent),
           status: b.bet.status,
-          payout: b.bet.pointsReturned ? Number(b.bet.pointsReturned) : null,
+          claimed: b.bet.claimed,
           createdAt: b.bet.createdAt,
           market: b.market,
         })),

@@ -2,10 +2,9 @@
 
 import { AppKitButton } from "@reown/appkit/react";
 import {
-  Check,
-  Loader2,
   LogOut,
   Pencil,
+  Check,
   TrendingDown,
   TrendingUp,
   Trophy,
@@ -18,21 +17,14 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { formatUnits } from "viem";
 import { useDisconnect } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { env } from "@/env";
-import { useBalance } from "@/hooks/use-balance";
 import { useBetHistory } from "@/hooks/use-bet-history";
-import {
-  DEPOSIT_TIERS,
-  type DepositTier,
-  useCanDeposit,
-  useDeposit,
-  useDevDeposit,
-} from "@/hooks/use-deposit";
 import { useMyRank } from "@/hooks/use-leaderboard";
+import { useMishaBalance } from "@/hooks/use-misha-balance";
 import { useUploadAvatar } from "@/hooks/use-profile";
 import { useIsAuthenticated } from "@/hooks/use-wallet";
 import { authClient, type SessionWithWallet } from "@/lib/auth-client";
@@ -73,7 +65,6 @@ export function ProfilePage() {
       <PageHeader />
       <ProfileCard />
       <StatsRow />
-      <DepositRow />
       <RecentActivity />
     </motion.div>
   );
@@ -83,7 +74,7 @@ function PageHeader() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { mutateAsync: disconnect } = useDisconnect();
-  const { isAnonymous } = useIsAuthenticated();
+  const { isAuthenticated } = useIsAuthenticated();
 
   return (
     <div className="flex items-center justify-between">
@@ -95,7 +86,7 @@ function PageHeader() {
       </h1>
       <div className="flex items-center gap-2">
         <AppKitButton />
-        {!isAnonymous && session?.user && (
+        {isAuthenticated && session?.user && (
           <button
             className="flex h-9 items-center gap-1.5 rounded-lg px-3 transition-all hover:opacity-80"
             onClick={async () => {
@@ -124,7 +115,7 @@ function ProfileCard() {
   const { data: session } = authClient.useSession() as {
     data: SessionWithWallet | null;
   };
-  const { isAnonymous } = useIsAuthenticated();
+  const { isAuthenticated } = useIsAuthenticated();
   const uploadAvatar = useUploadAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -162,7 +153,7 @@ function ProfileCard() {
     }
   };
 
-  if (isAnonymous) {
+  if (!isAuthenticated) {
     return (
       <div
         className="flex items-center gap-4 rounded-2xl p-5"
@@ -311,8 +302,8 @@ function ProfileCard() {
 }
 
 function StatsRow() {
-  const { isAnonymous } = useIsAuthenticated();
-  const { data: balance, isLoading: balanceLoading } = useBalance();
+  const { isAuthenticated } = useIsAuthenticated();
+  const { data: mishaBalance, isLoading: balanceLoading } = useMishaBalance();
   const { data: wonBets, isLoading: wonLoading } = useBetHistory({
     status: "WON",
     limit: 100,
@@ -330,18 +321,21 @@ function StatsRow() {
 
   const isLoading = balanceLoading || wonLoading || lostLoading || rankLoading;
 
+  const formattedBalance =
+    mishaBalance != null
+      ? Number(formatUnits(mishaBalance, 18)).toLocaleString("en-US", {
+          maximumFractionDigits: 0,
+        })
+      : "0";
+
   return (
     <div className="grid grid-cols-3 gap-3">
       <StatPill
         color={COLORS.teal}
         icon={<Wallet className="h-4 w-4" />}
         isLoading={isLoading}
-        label="Balance"
-        value={
-          isAnonymous
-            ? "—"
-            : `$${(balance?.points ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        }
+        label="MISHA"
+        value={!isAuthenticated ? "—" : formattedBalance}
       />
       <StatPill
         color={winRate >= 50 ? COLORS.teal : COLORS.orange}
@@ -354,15 +348,15 @@ function StatsRow() {
         }
         isLoading={isLoading}
         label="Win Rate"
-        secondary={isAnonymous ? undefined : `${wins}W / ${losses}L`}
-        value={isAnonymous ? "—" : `${winRate}%`}
+        secondary={!isAuthenticated ? undefined : `${wins}W / ${losses}L`}
+        value={!isAuthenticated ? "—" : `${winRate}%`}
       />
       <StatPill
         color={COLORS.yellow}
         icon={<Trophy className="h-4 w-4" />}
         isLoading={isLoading}
         label="Rank"
-        value={isAnonymous || !myRank?.rank ? "—" : `#${myRank.rank}`}
+        value={!isAuthenticated || !myRank?.rank ? "—" : `#${myRank.rank}`}
       />
     </div>
   );
@@ -417,133 +411,8 @@ function StatPill({
   );
 }
 
-function DepositRow() {
-  // const { isConnected } = useConnection();
-  const { isAnonymous } = useIsAuthenticated();
-  const canDeposit = useCanDeposit();
-  const deposit = useDeposit();
-  const devDeposit = useDevDeposit();
-  const { isPending, variables: pendingTier } = deposit;
-
-  const showDeposit = canDeposit && !isAnonymous;
-  console.log("=================CAN DEPOSIT==================");
-  console.log({
-    canDeposit,
-    isAnonymous,
-    showDeposit,
-  });
-  console.log("=================CAN DEPOSIT==================");
-
-  const showDev = env.NEXT_PUBLIC_ENV === "dev" && !isAnonymous;
-
-  return (
-    <div
-      className="rounded-2xl p-5"
-      style={{
-        background: COLORS.card,
-        backdropFilter: "blur(20px)",
-        border: `1px solid ${COLORS.cardBorder}`,
-      }}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <h2
-          className="flex items-center gap-2 font-heading font-semibold"
-          style={{ color: COLORS.text }}
-        >
-          <Wallet className="h-5 w-5" style={{ color: COLORS.teal }} />
-          Add Points
-        </h2>
-        {showDev && (
-          <div className="flex gap-1">
-            {DEPOSIT_TIERS.map((tier) => (
-              <button
-                className="rounded px-2 py-1 text-xs transition-opacity hover:opacity-80"
-                disabled={devDeposit.isPending}
-                key={tier}
-                onClick={() => devDeposit.mutate(tier)}
-                style={{
-                  background: `${COLORS.yellow}20`,
-                  color: COLORS.yellow,
-                }}
-                type="button"
-              >
-                {devDeposit.isPending ? "..." : `+$${tier}`}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {showDeposit ? (
-        <div className="grid grid-cols-4 gap-2">
-          {DEPOSIT_TIERS.map((tier) => (
-            <DepositButton
-              amount={tier}
-              isLoading={isPending && pendingTier === tier}
-              key={tier}
-              onSelect={() => deposit.mutate(tier)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          className="rounded-xl p-4 text-center"
-          style={{ background: COLORS.innerCard }}
-        >
-          <p className="text-sm" style={{ color: COLORS.muted }}>
-            {isAnonymous
-              ? "Connect wallet to deposit"
-              : "Wallet not ready for deposits"}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DepositButton({
-  amount,
-  isLoading,
-  onSelect,
-}: {
-  amount: DepositTier;
-  isLoading: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      className="rounded-xl p-3 text-center transition-all hover:scale-[1.02]"
-      disabled={isLoading}
-      onClick={onSelect}
-      style={{
-        background: COLORS.innerCard,
-        border: `1px solid ${COLORS.cardBorder}`,
-      }}
-      type="button"
-    >
-      <p
-        className="font-bold font-heading text-lg"
-        style={{ color: COLORS.text }}
-      >
-        ${amount}
-      </p>
-      <p
-        className="flex items-center justify-center gap-1 text-xs"
-        style={{ color: COLORS.teal }}
-      >
-        {isLoading ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Wallet className="h-3 w-3" />
-        )}
-        {isLoading ? "..." : "Deposit"}
-      </p>
-    </button>
-  );
-}
-
 function RecentActivity() {
-  const { isAnonymous } = useIsAuthenticated();
+  const { isAuthenticated } = useIsAuthenticated();
   const { data: activeBets, isLoading: activeLoading } = useBetHistory({
     status: "ACTIVE",
     limit: 5,
@@ -563,8 +432,6 @@ function RecentActivity() {
     id: string;
     type: "active" | "won" | "lost";
     title: string;
-    amount: number;
-    vote?: "YES" | "NO" | "SKIP";
   }
 
   const activities: Activity[] = [
@@ -572,30 +439,26 @@ function RecentActivity() {
       id: `active-${b.bet.id}`,
       type: "active" as const,
       title: b.market.title,
-      amount: b.bet.pointsSpent,
-      vote: b.bet.vote,
     })) ?? []),
     ...(wonBets?.bets?.map((b) => ({
       id: `won-${b.bet.id}`,
       type: "won" as const,
       title: b.market.title,
-      amount: b.bet.pointsReturned ?? b.bet.pointsSpent,
     })) ?? []),
     ...(lostBets?.bets?.map((b) => ({
       id: `lost-${b.bet.id}`,
       type: "lost" as const,
       title: b.market.title,
-      amount: b.bet.pointsSpent,
     })) ?? []),
   ].slice(0, 6);
 
   const typeStyles = {
-    active: { color: COLORS.purple, label: "ACTIVE", prefix: "" },
-    won: { color: COLORS.teal, label: "WON", prefix: "+" },
-    lost: { color: COLORS.orange, label: "LOST", prefix: "-" },
+    active: { color: COLORS.purple, label: "ACTIVE" },
+    won: { color: COLORS.teal, label: "WON" },
+    lost: { color: COLORS.orange, label: "LOST" },
   };
 
-  if (isAnonymous) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -657,23 +520,15 @@ function RecentActivity() {
                 >
                   {activity.title}
                 </p>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span
-                    className="rounded px-2 py-0.5 font-medium text-xs"
-                    style={{
-                      background: `${style.color}20`,
-                      color: style.color,
-                    }}
-                  >
-                    {style.label}
-                  </span>
-                  <span
-                    className="font-heading font-semibold text-sm"
-                    style={{ color: style.color }}
-                  >
-                    {style.prefix}${activity.amount}
-                  </span>
-                </div>
+                <span
+                  className="shrink-0 rounded px-2 py-0.5 font-medium text-xs"
+                  style={{
+                    background: `${style.color}20`,
+                    color: style.color,
+                  }}
+                >
+                  {style.label}
+                </span>
               </div>
             );
           })}

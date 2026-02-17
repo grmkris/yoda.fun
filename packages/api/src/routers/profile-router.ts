@@ -1,8 +1,14 @@
 import { ORPCError } from "@orpc/server";
+import { DB_SCHEMA } from "@yoda.fun/db";
+import { eq } from "@yoda.fun/db/drizzle";
 import { NUMERIC_CONSTANTS } from "@yoda.fun/shared/constants";
 import { UserId } from "@yoda.fun/shared/typeid";
+import sharp from "sharp";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../api";
+
+const AVATAR_SIZE = 256;
+const WEBP_QUALITY = 85;
 
 export const profileRouter = {
   getById: publicProcedure
@@ -69,28 +75,28 @@ export const profileRouter = {
         });
       }
 
-      if (!context.queue) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Queue not configured",
-        });
-      }
-
-      // Upload raw image to private bucket
-      const sourceKey = `temp/avatars/${userId}-${Date.now()}`;
+      // Process avatar inline (resize + convert to webp)
       const imageBuffer = Buffer.from(input.image, "base64");
-      await context.storage.upload({
-        key: sourceKey,
-        data: imageBuffer,
-        contentType: "image/png",
+      const avatarKey = `avatars/${userId}.webp`;
+
+      const processedBuffer = await sharp(imageBuffer)
+        .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: "cover" })
+        .webp({ quality: WEBP_QUALITY })
+        .toBuffer();
+
+      await context.storage.uploadPublic({
+        key: avatarKey,
+        data: processedBuffer,
+        contentType: "image/webp",
       });
 
-      // Queue processing job
-      await context.queue.addJob("process-avatar-image", {
-        userId,
-        sourceKey,
-      });
+      // Update user record with avatar key
+      await context.db
+        .update(DB_SCHEMA.user)
+        .set({ image: avatarKey })
+        .where(eq(DB_SCHEMA.user.id, userId));
 
-      return { status: "processing" as const };
+      return { status: "completed" as const, avatarKey };
     }),
 
   bets: publicProcedure

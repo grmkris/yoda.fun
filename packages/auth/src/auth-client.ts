@@ -1,6 +1,5 @@
 import type { Auth } from "@yoda.fun/auth";
 import {
-  anonymousClient,
   customSessionClient,
   inferAdditionalFields,
 } from "better-auth/client/plugins";
@@ -17,7 +16,6 @@ export const createAuthWebClient = (props: { baseUrl: string }) =>
   createAuthClient({
     baseUrl: props.baseUrl,
     plugins: [
-      anonymousClient(),
       inferAdditionalFields<Auth>(),
       siwxClient(),
       customSessionClient<Auth & { Session: CustomSessionFields }>(),

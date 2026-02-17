@@ -8,10 +8,6 @@
     "./auth-client.web": {
       "types": "./dist/auth-client.d.ts",
       "default": "./src/auth-client.ts"
-    },
-    "./auth-client.server": {
-      "types": "./dist/auth-client.server.d.ts",
-      "default": "./src/auth-client.server.ts"
     }
   },
   "type": "module",
