@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { Countdown } from "@/components/countdown";
 import { UserBetStatus } from "@/components/market/user-bet-status";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useClaimPayout } from "@/hooks/use-claim-payout";
 import { useMarket } from "@/hooks/use-market";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { authClient } from "@/lib/auth-client";
@@ -268,20 +269,18 @@ function DecryptedTotals({
 function BettingSection({
   isLive,
   userBet,
-  market,
   placeBet,
   onBet,
+  onClaim,
+  isClaiming,
 }: {
   isLive: boolean;
   userBet: NonNullable<ReturnType<typeof useMarket>["data"]>["userBet"];
-  market: { onChainMarketId: number };
   placeBet: ReturnType<typeof usePlaceBet>;
   onBet: (vote: "YES" | "NO") => void;
+  onClaim: () => void;
+  isClaiming: boolean;
 }) {
-  if (!isLive) {
-    return null;
-  }
-
   if (userBet) {
     return (
       <UserBetStatus
@@ -289,8 +288,15 @@ function BettingSection({
           status: userBet.status,
           onChainTxHash: userBet.onChainTxHash,
         }}
+        isClaimed={userBet.status === "LOST"}
+        isClaiming={isClaiming}
+        onClaim={onClaim}
       />
     );
+  }
+
+  if (!isLive) {
+    return null;
   }
 
   return (
@@ -362,6 +368,7 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
   const { data: session } = authClient.useSession();
   const { data: market, isLoading, error, refetch } = useMarket(marketId);
   const placeBet = usePlaceBet();
+  const claimPayout = useClaimPayout();
   const [copied, setCopied] = useState(false);
 
   // SSR returns userBet as null, refetch to get it for authenticated users
@@ -575,9 +582,10 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
       )}
 
       <BettingSection
+        isClaiming={claimPayout.isPending}
         isLive={isLive}
-        market={{ onChainMarketId: market.onChainMarketId }}
         onBet={handleBet}
+        onClaim={() => claimPayout.mutate(market.onChainMarketId)}
         placeBet={placeBet}
         userBet={market.userBet}
       />

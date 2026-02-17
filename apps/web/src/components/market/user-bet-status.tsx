@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Loader2,
   Trophy,
   XCircle,
 } from "lucide-react";
@@ -58,12 +59,23 @@ interface UserBetStatusProps {
     status: "ACTIVE" | "WON" | "LOST" | "REFUNDED";
     onChainTxHash: string;
   };
+  onClaim?: () => void;
+  isClaiming?: boolean;
+  isClaimed?: boolean;
   className?: string;
 }
 
-export function UserBetStatus({ bet, className }: UserBetStatusProps) {
+export function UserBetStatus({
+  bet,
+  onClaim,
+  isClaiming,
+  isClaimed,
+  className,
+}: UserBetStatusProps) {
   const status = statusConfig[bet.status];
   const StatusIcon = status.icon;
+  const canClaim =
+    !isClaimed && (bet.status === "WON" || bet.status === "REFUNDED");
 
   return (
     <motion.div
@@ -151,6 +163,68 @@ export function UserBetStatus({ bet, className }: UserBetStatusProps) {
             {bet.onChainTxHash.slice(0, 10)}...{bet.onChainTxHash.slice(-8)}
           </span>
         </motion.a>
+      )}
+
+      {/* Claim payout button */}
+      {canClaim && onClaim && (
+        <motion.button
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-bold font-heading text-sm transition-all"
+          disabled={isClaiming}
+          initial={{ opacity: 0, y: 10 }}
+          onClick={onClaim}
+          style={{
+            background:
+              bet.status === "WON"
+                ? "linear-gradient(135deg, oklch(0.80 0.16 90), oklch(0.70 0.18 70))"
+                : "linear-gradient(135deg, oklch(0.55 0.15 290), oklch(0.45 0.18 270))",
+            color: "white",
+            boxShadow:
+              bet.status === "WON"
+                ? "0 0 20px oklch(0.80 0.16 90 / 40%)"
+                : "0 0 20px oklch(0.55 0.15 290 / 30%)",
+          }}
+          transition={{ delay: 0.8 }}
+          type="button"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {isClaiming && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Claiming...
+            </>
+          )}
+          {!isClaiming && bet.status === "WON" && (
+            <>
+              <Trophy className="h-4 w-4" />
+              Claim Payout
+            </>
+          )}
+          {!isClaiming && bet.status !== "WON" && (
+            <>
+              <CheckCircle2 className="h-4 w-4" />
+              Claim Refund
+            </>
+          )}
+        </motion.button>
+      )}
+
+      {/* Already claimed */}
+      {isClaimed && (
+        <motion.p
+          animate={{ opacity: 1 }}
+          className="mt-4 text-center text-sm"
+          initial={{ opacity: 0 }}
+          style={{ color: COLORS.yes }}
+          transition={{ delay: 0.8 }}
+        >
+          <CheckCircle2
+            className="mr-1.5 inline-block h-4 w-4"
+            style={{ color: COLORS.yes }}
+          />
+          Payout claimed successfully!
+        </motion.p>
       )}
 
       {/* Message for active bets */}

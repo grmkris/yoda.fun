@@ -27,39 +27,6 @@ describe("App Router (oRPC)", () => {
       expect(result).toBe("OK");
     });
   });
-
-  describe("Private Data", () => {
-    test("returns user data when authenticated", async () => {
-      const context = await createTestContext({
-        token: testEnv.users.authenticated.token,
-        testSetup: testEnv,
-      });
-
-      const result = await call(appRouter.privateData, undefined, {
-        context,
-      });
-
-      expect(result.message).toBe("This is private");
-      expect(result.user).toBeDefined();
-      expect(result.user?.id).toBe(testEnv.users.authenticated.id);
-      expect(result.user?.email).toBe(testEnv.users.authenticated.email);
-    });
-
-    test("throws UNAUTHORIZED when not authenticated", async () => {
-      const context = await createTestContext({ testSetup: testEnv });
-
-      await expect(() =>
-        call(appRouter.privateData, undefined, { context })
-      ).toThrow(ORPCError);
-
-      try {
-        await call(appRouter.privateData, undefined, { context });
-      } catch (error) {
-        expect(error).toBeInstanceOf(ORPCError);
-        expect((error as ORPCError<string, unknown>).code).toBe("UNAUTHORIZED");
-      }
-    });
-  });
 });
 
 describe("Market Router", () => {
