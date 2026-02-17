@@ -2,41 +2,25 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { createAiClient } from "@yoda.fun/ai";
 import { createContext } from "@yoda.fun/api/context";
 import { appRouter } from "@yoda.fun/api/routers";
 import { createAuth } from "@yoda.fun/auth";
-import { createRedisCache } from "@yoda.fun/cache";
-import { createDb, DB_SCHEMA, runMigrations } from "@yoda.fun/db";
-import { count } from "@yoda.fun/db/drizzle";
-import { createERC8004Client } from "@yoda.fun/erc8004";
+import { createDb, runMigrations } from "@yoda.fun/db";
 import { createFhevmClient } from "@yoda.fun/fhevm/sdk/server-client";
 import { createLogger } from "@yoda.fun/logger";
-import { MARKET_GENERATION } from "@yoda.fun/markets/config";
-import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
-import { X402_CONFIG } from "@yoda.fun/shared/constants";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import { createStorageClient } from "@yoda.fun/storage";
-import { RedisClient, S3Client } from "bun";
+import { S3Client } from "bun";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { setupBullBoard } from "@/admin/bull-board";
 import { env } from "@/env";
 import {
   captureException,
   createPostHogClient,
   shutdownPostHog,
 } from "@/lib/posthog";
-import { createMcpDepositRoutes } from "@/mcp/deposit";
+import { createMarketIndexer } from "@/indexer/market-indexer";
 import { handleMcpRequest } from "@/mcp/transport";
-import { createDepositRoutes } from "@/routes/deposit";
-import { createFarcasterWebhookRoutes } from "@/routes/farcaster-webhook";
-import { createAvatarImageWorker } from "@/workers/avatar-image.worker";
-import { createMarketGenerationWorker } from "@/workers/market-generation.worker";
-import { createMarketImageWorker } from "@/workers/market-image.worker";
-import { createMarketResolutionWorker } from "@/workers/market-resolution.worker";
-import { createDecryptTotalsWorker } from "@/workers/decrypt-totals.worker";
-import { createReputationCacheWorker } from "@/workers/reputation-cache.worker";
 
 const logger = createLogger({
   level: env.APP_ENV === "prod" ? "info" : "debug",
@@ -52,7 +36,6 @@ const auth = createAuth({
   db,
   appEnv: env.APP_ENV,
   secret: env.BETTER_AUTH_SECRET,
-  signupBonusEnabled: true,
 });
 
 const posthog = createPostHogClient({
@@ -83,17 +66,6 @@ const storage = createStorageClient({
   logger,
 });
 
-const queue: QueueClient = createQueueClient({
-  url: env.REDIS_URL,
-  logger,
-});
-
-// ERC-8004 client for agent identity (optional)
-const erc8004Client = createERC8004Client({
-  privateKey: env.YODA_AGENT_PRIVATE_KEY as `0x${string}`,
-  logger,
-});
-
 // FHEVM client for on-chain prediction markets
 const fhevmClient = createFhevmClient({
   privateKey: (env.FHEVM_PRIVATE_KEY ?? env.YODA_AGENT_PRIVATE_KEY) as `0x${string}`,
@@ -101,7 +73,7 @@ const fhevmClient = createFhevmClient({
 });
 logger.info({ address: fhevmClient.getAddress() }, "FHEVM client initialized");
 
-// HTTP request logging with Pino
+// HTTP request logging
 app.use(async (c, next) => {
   const start = Date.now();
   const reqId = crypto.randomUUID().slice(0, 8);
@@ -128,13 +100,7 @@ app.use(
   cors({
     origin: [SERVICE_URLS[env.APP_ENV].web],
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-PAYMENT",
-      "PAYMENT-SIGNATURE",
-    ],
-    exposeHeaders: ["X-PAYMENT-RESPONSE"],  
+    allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
@@ -154,37 +120,9 @@ app.onError(async (err, c) => {
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-const depositRoutes = createDepositRoutes({
-  db,
-  auth,
-  logger,
-  appEnv: env.APP_ENV,
-});
-app.route("/api", depositRoutes);
-logger.info(
-  { networks: [X402_CONFIG.evm.network, X402_CONFIG.solana.network] },
-  "x402 deposit routes enabled (EVM + Solana)"
-);
-
-// MCP endpoint for AI agents (proper SDK pattern)
+// MCP endpoint for AI agents
 app.all("/mcp", (c) => handleMcpRequest(c, { db, logger }));
 logger.info({ msg: "MCP endpoint enabled at /mcp" });
-
-// MCP deposit routes for agents (x402 payment, no session required)
-const mcpDepositRoutes = createMcpDepositRoutes({
-  db,
-  logger,
-  appEnv: env.APP_ENV,
-});
-app.route("/mcp", mcpDepositRoutes);
-logger.info({ msg: "MCP deposit routes enabled at /mcp/deposit/*" });
-
-// Farcaster webhook endpoint
-const farcasterWebhookRoutes = createFarcasterWebhookRoutes({ logger });
-app.route("/webhooks", farcasterWebhookRoutes);
-logger.info({
-  msg: "Farcaster webhook endpoint enabled at /webhooks/farcaster",
-});
 
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
@@ -204,8 +142,6 @@ app.use("/*", async (c, next) => {
     logger,
     posthog,
     storage,
-    queue,
-    erc8004Client,
     fhevmClient,
   });
 
@@ -215,7 +151,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (rpcResult.matched) {
-    return c.newResponse(rpcResult.response.body, rpcResult.response);
+    return c.newResponse(rpcResult.response.body as ReadableStream, rpcResult.response);
   }
 
   const apiResult = await apiHandler.handle(c.req.raw, {
@@ -224,7 +160,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (apiResult.matched) {
-    return c.newResponse(apiResult.response.body, apiResult.response);
+    return c.newResponse(apiResult.response.body as ReadableStream, apiResult.response);
   }
 
   await next();
@@ -233,121 +169,19 @@ app.use("/*", async (c, next) => {
 app.get("/", (c) => c.text("OK"));
 app.get("/health", (c) => c.text("OK"));
 
-const cacheRedis = new RedisClient(env.REDIS_URL);
-const cache = createRedisCache(cacheRedis);
-
-// Bull-Board admin UI for queue monitoring
-const { serverAdapter: bullBoardAdapter } = setupBullBoard(queue);
-app.route("/admin/queues", bullBoardAdapter.registerPlugin());
-logger.info({ msg: "Bull-Board UI available at /admin/queues" });
-
-const aiClient = createAiClient({
-  logger,
-  environment: env.APP_ENV,
-  db, // Enable AI observability logging
-  providerConfigs: {
-    xaiApiKey: env.XAI_API_KEY,
-    googleGeminiApiKey: env.GOOGLE_GEMINI_API_KEY,
-  },
-});
-
-const resolutionWorker = createMarketResolutionWorker({
-  queue,
+// Start event indexer for on-chain market sync
+const indexer = createMarketIndexer({
   db,
   logger,
-  aiClient,
-  fhevmClient,
+  rpcUrl: env.FHEVM_RPC_URL,
 });
-logger.info({ msg: "Market resolution worker started" });
-
-const generationWorker = createMarketGenerationWorker({
-  queue,
-  db,
-  logger,
-  aiClient,
-  cache,
-  fhevmClient,
+indexer.start().catch((error) => {
+  logger.error({ error }, "Failed to start market indexer");
 });
-logger.info({ msg: "Market generation worker started" });
-
-const imageWorker = createMarketImageWorker({
-  queue,
-  db,
-  logger,
-  storage,
-  aiClient,
-  replicateApiKey: env.REPLICATE_API_KEY,
-});
-logger.info({ msg: "Market image worker started" });
-
-const avatarWorker = createAvatarImageWorker({
-  queue,
-  db,
-  logger,
-  storage,
-});
-logger.info({ msg: "Avatar image worker started" });
-
-const reputationCacheWorker = createReputationCacheWorker({
-  db,
-  logger,
-  erc8004Client,
-});
-
-const decryptTotalsWorker = createDecryptTotalsWorker({
-  queue,
-  logger,
-  fhevmClient,
-});
-logger.info({ msg: "Decrypt totals worker started" });
-
-// Seed initial markets if database is empty
-const marketCount = await db.select({ count: count() }).from(DB_SCHEMA.market);
-
-if (marketCount[0]?.count === 0) {
-  logger.info({ msg: "No markets found, seeding initial markets" });
-  await queue.addJob("generate-market", {
-    count: MARKET_GENERATION.BATCH_SIZE,
-    trigger: "seed",
-  });
-}
-
-queue
-  .addJob(
-    "generate-market",
-    {
-      count: MARKET_GENERATION.BATCH_SIZE,
-      trigger: "scheduled",
-    },
-    {
-      repeat: {
-        pattern: MARKET_GENERATION.CRON,
-        key: "market-generation-hourly",
-      },
-    }
-  )
-  .then(() => {
-    logger.info({
-      msg: "Market generation scheduled",
-      cron: MARKET_GENERATION.CRON,
-      count: MARKET_GENERATION.BATCH_SIZE,
-    });
-  })
-  .catch((err) => {
-    logger.error({ err }, "Failed to schedule market generation");
-  });
-
-export { queue };
 
 process.on("SIGTERM", async () => {
   logger.info({ msg: "Shutting down server..." });
-  await resolutionWorker.close();
-  await generationWorker.close();
-  await imageWorker.close();
-  await avatarWorker.close();
-  await reputationCacheWorker.close();
-  await decryptTotalsWorker.close();
-  await queue.close();
+  await indexer.close();
   await shutdownPostHog();
   process.exit(0);
 });

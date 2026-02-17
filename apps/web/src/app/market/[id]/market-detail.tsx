@@ -10,9 +10,7 @@ import {
   Share2,
   ThumbsDown,
   ThumbsUp,
-  TrendingUp,
   Users,
-  Wallet,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
@@ -20,18 +18,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Countdown } from "@/components/countdown";
 import { UserBetStatus } from "@/components/market/user-bet-status";
-import { ResolutionDetails } from "@/components/resolution/resolution-details";
-import { ResolutionMethodPreview } from "@/components/resolution/resolution-method-preview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarket } from "@/hooks/use-market";
 import { usePlaceBet } from "@/hooks/use-place-bet";
 import { authClient } from "@/lib/auth-client";
-import type {
-  MarketResolutionSources,
-  MarketResult,
-  ResolutionConfidence,
-  ResolutionReasoning,
-} from "@/lib/orpc-types";
 
 interface MarketDetailProps {
   marketId: MarketId;
@@ -46,7 +36,6 @@ const COLORS = {
   noGlow: "0 0 25px oklch(0.68 0.20 25 / 50%)",
   primary: "oklch(0.65 0.25 290)",
   primaryBg: "oklch(0.65 0.25 290 / 15%)",
-  primaryGlow: "0 0 20px oklch(0.65 0.25 290 / 40%)",
   text: "oklch(0.95 0.02 280)",
   textMuted: "oklch(0.60 0.04 280)",
   textDim: "oklch(0.45 0.04 280)",
@@ -54,76 +43,13 @@ const COLORS = {
   border: "oklch(0.65 0.25 290 / 15%)",
 } as const;
 
-function OddsBarSegment({
-  percent,
-  direction,
-  isLeading,
-}: {
-  percent: number;
-  direction: "YES" | "NO";
-  isLeading: boolean;
-}) {
-  const isYes = direction === "YES";
-  const glow = isYes ? COLORS.yesGlow : COLORS.noGlow;
-  const gradient = isYes
-    ? `linear-gradient(90deg, ${COLORS.yes} 0%, oklch(0.65 0.20 180) 100%)`
-    : `linear-gradient(270deg, ${COLORS.no} 0%, oklch(0.60 0.22 30) 100%)`;
-  const Icon = isYes ? ThumbsUp : ThumbsDown;
-
-  return (
-    <motion.div
-      animate={{ width: `${percent}%` }}
-      className={`absolute top-0 ${isYes ? "left-0" : "right-0"} flex h-full items-center justify-center`}
-      initial={{ width: 0 }}
-      style={{
-        background: gradient,
-        boxShadow: isLeading ? glow : "none",
-      }}
-      transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-    >
-      {percent >= 15 && (
-        <motion.span
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-2 font-bold font-heading text-white"
-          initial={{ opacity: 0 }}
-          transition={{ delay: 0.8 }}
-        >
-          {isYes ? <Icon className="h-5 w-5" /> : null}
-          {percent}%{isYes ? null : <Icon className="h-5 w-5" />}
-        </motion.span>
-      )}
-    </motion.div>
-  );
-}
-
-function PulsingGlow({ leadingVote }: { leadingVote: "YES" | "NO" }) {
-  const isYes = leadingVote === "YES";
-  return (
-    <motion.div
-      animate={{ opacity: [0.3, 0.6, 0.3] }}
-      className="pointer-events-none absolute inset-0"
-      style={{
-        background: isYes
-          ? `linear-gradient(90deg, ${COLORS.yes}30 0%, transparent 50%)`
-          : `linear-gradient(270deg, ${COLORS.no}30 0%, transparent 50%)`,
-      }}
-      transition={{
-        duration: 2,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut",
-      }}
-    />
-  );
-}
-
 function LoadingSkeleton() {
   return (
     <div className="space-y-6">
       <Skeleton className="h-8 w-32" />
       <Skeleton className="h-48 w-full rounded-2xl" />
       <Skeleton className="h-16 w-full rounded-xl" />
-      <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-24 rounded-xl" />
+      <div className="grid gap-4 md:grid-cols-2">
         <Skeleton className="h-24 rounded-xl" />
         <Skeleton className="h-24 rounded-xl" />
       </div>
@@ -202,34 +128,12 @@ function MarketHeroImage({
           style={{
             background: isLive ? COLORS.yesBg : COLORS.primaryBg,
             color: isLive ? COLORS.yes : COLORS.primary,
-            boxShadow: isLive ? COLORS.yesGlow : COLORS.primaryGlow,
           }}
         >
           {status}
         </span>
       </div>
     </motion.div>
-  );
-}
-
-function ResolutionSection({
-  result,
-  confidence,
-  sources,
-  reasoning,
-}: {
-  result: MarketResult;
-  confidence: ResolutionConfidence;
-  sources: MarketResolutionSources;
-  reasoning: ResolutionReasoning;
-}) {
-  return (
-    <ResolutionDetails
-      confidence={confidence}
-      reasoning={reasoning}
-      result={result}
-      sources={sources}
-    />
   );
 }
 
@@ -290,6 +194,77 @@ function CountdownSection({
   );
 }
 
+function DecryptedTotals({
+  yesTotal,
+  noTotal,
+}: {
+  yesTotal: number;
+  noTotal: number;
+}) {
+  const total = yesTotal + noTotal;
+  const yesPercent = total > 0 ? Math.round((yesTotal / total) * 100) : 50;
+  const noPercent = 100 - yesPercent;
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl p-6"
+      initial={{ opacity: 0, y: 20 }}
+      style={{
+        background: COLORS.cardBg,
+        backdropFilter: "blur(20px)",
+        border: `1px solid ${COLORS.border}`,
+      }}
+      transition={{ duration: 0.4, delay: 0.3 }}
+    >
+      <h2
+        className="mb-4 font-heading font-medium text-sm uppercase tracking-wider"
+        style={{ color: COLORS.textMuted }}
+      >
+        Final Results
+      </h2>
+
+      <div className="relative h-10 overflow-hidden rounded-xl">
+        <motion.div
+          animate={{ width: `${yesPercent}%` }}
+          className="absolute top-0 left-0 flex h-full items-center justify-center"
+          initial={{ width: 0 }}
+          style={{
+            background: `linear-gradient(90deg, ${COLORS.yes} 0%, oklch(0.65 0.20 180) 100%)`,
+          }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          {yesPercent >= 15 && (
+            <span className="font-bold font-heading text-sm text-white">
+              YES {yesPercent}%
+            </span>
+          )}
+        </motion.div>
+        <motion.div
+          animate={{ width: `${noPercent}%` }}
+          className="absolute top-0 right-0 flex h-full items-center justify-center"
+          initial={{ width: 0 }}
+          style={{
+            background: `linear-gradient(270deg, ${COLORS.no} 0%, oklch(0.60 0.22 30) 100%)`,
+          }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          {noPercent >= 15 && (
+            <span className="font-bold font-heading text-sm text-white">
+              {noPercent}% NO
+            </span>
+          )}
+        </motion.div>
+      </div>
+
+      <div className="mt-3 flex justify-between text-sm">
+        <span style={{ color: COLORS.yes }}>YES: {yesTotal} tokens</span>
+        <span style={{ color: COLORS.no }}>{noTotal} tokens: NO</span>
+      </div>
+    </motion.div>
+  );
+}
+
 function BettingSection({
   isLive,
   userBet,
@@ -299,12 +274,7 @@ function BettingSection({
 }: {
   isLive: boolean;
   userBet: NonNullable<ReturnType<typeof useMarket>["data"]>["userBet"];
-  market: {
-    totalYesVotes: number;
-    totalNoVotes: number;
-    totalPool: string;
-    betAmount: string;
-  };
+  market: { onChainMarketId: number };
   placeBet: ReturnType<typeof usePlaceBet>;
   onBet: (vote: "YES" | "NO") => void;
 }) {
@@ -315,11 +285,9 @@ function BettingSection({
   if (userBet) {
     return (
       <UserBetStatus
-        bet={userBet}
-        market={{
-          totalYesVotes: market.totalYesVotes,
-          totalNoVotes: market.totalNoVotes,
-          totalPool: market.totalPool,
+        bet={{
+          status: userBet.status,
+          onChainTxHash: userBet.onChainTxHash,
         }}
       />
     );
@@ -364,9 +332,6 @@ function BettingSection({
         >
           <ThumbsUp className="h-8 w-8" />
           <span className="text-lg">YES</span>
-          <span className="text-xs opacity-70">
-            ${Number(market.betAmount).toFixed(2)}
-          </span>
         </motion.button>
 
         <motion.button
@@ -387,9 +352,6 @@ function BettingSection({
         >
           <ThumbsDown className="h-8 w-8" />
           <span className="text-lg">NO</span>
-          <span className="text-xs opacity-70">
-            ${Number(market.betAmount).toFixed(2)}
-          </span>
         </motion.button>
       </div>
     </motion.div>
@@ -417,7 +379,11 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
   };
 
   const handleBet = (vote: "YES" | "NO") => {
-    placeBet.mutate({ marketId, vote });
+    placeBet.mutate({
+      marketId,
+      vote,
+      onChainMarketId: market?.onChainMarketId ?? 0,
+    });
   };
 
   if (isLoading) {
@@ -428,13 +394,10 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
     return <MarketNotFound />;
   }
 
-  const totalVotes = market.totalYesVotes + market.totalNoVotes;
-  const yesPercent =
-    totalVotes > 0 ? Math.round((market.totalYesVotes / totalVotes) * 100) : 50;
-  const noPercent = 100 - yesPercent;
   const isLive = market.status === "LIVE";
   const isResolved = market.status === "SETTLED";
-  const leadingVote = yesPercent >= noPercent ? "YES" : "NO";
+  const hasDecryptedTotals =
+    market.decryptedYesTotal != null && market.decryptedNoTotal != null;
 
   return (
     <div className="space-y-6">
@@ -536,117 +499,12 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
         )}
       </motion.div>
 
+      {/* Bet count stat */}
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl p-6"
-        initial={{ opacity: 0, y: 20 }}
-        style={{
-          background: COLORS.cardBg,
-          backdropFilter: "blur(20px)",
-          border: `1px solid ${COLORS.border}`,
-        }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2
-            className="font-heading font-medium text-sm uppercase tracking-wider"
-            style={{ color: COLORS.textMuted }}
-          >
-            Current Odds
-          </h2>
-          <span className="text-sm" style={{ color: COLORS.textDim }}>
-            {totalVotes} total bets
-          </span>
-        </div>
-
-        <div className="relative h-14 overflow-hidden rounded-xl">
-          <OddsBarSegment
-            direction="YES"
-            isLeading={leadingVote === "YES"}
-            percent={yesPercent}
-          />
-          <OddsBarSegment
-            direction="NO"
-            isLeading={leadingVote === "NO"}
-            percent={noPercent}
-          />
-          <PulsingGlow leadingVote={leadingVote} />
-        </div>
-
-        <div className="mt-3 flex justify-between text-sm">
-          <span style={{ color: COLORS.yes }}>
-            YES · {market.totalYesVotes} bets
-          </span>
-          <span style={{ color: COLORS.no }}>
-            {market.totalNoVotes} bets · NO
-          </span>
-        </div>
-      </motion.div>
-
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="grid gap-4 md:grid-cols-3"
         initial={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.4, delay: 0.4 }}
       >
-        <div
-          className="rounded-xl p-4"
-          style={{
-            background: COLORS.cardBg,
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${COLORS.border}`,
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ background: COLORS.primaryBg }}
-            >
-              <Wallet className="h-5 w-5" style={{ color: COLORS.primary }} />
-            </div>
-            <div>
-              <p className="text-xs" style={{ color: COLORS.textDim }}>
-                Total Pool
-              </p>
-              <p
-                className="font-bold font-heading text-xl"
-                style={{ color: COLORS.text }}
-              >
-                ${Number(market.totalPool).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="rounded-xl p-4"
-          style={{
-            background: COLORS.cardBg,
-            backdropFilter: "blur(20px)",
-            border: `1px solid ${COLORS.border}`,
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-lg"
-              style={{ background: COLORS.yesBg }}
-            >
-              <TrendingUp className="h-5 w-5" style={{ color: COLORS.yes }} />
-            </div>
-            <div>
-              <p className="text-xs" style={{ color: COLORS.textDim }}>
-                Bet Amount
-              </p>
-              <p
-                className="font-bold font-heading text-xl"
-                style={{ color: COLORS.text }}
-              >
-                ${Number(market.betAmount).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div
           className="rounded-xl p-4"
           style={{
@@ -673,12 +531,20 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
                 className="font-bold font-heading text-xl"
                 style={{ color: COLORS.text }}
               >
-                {totalVotes}
+                {market.result ? "Resolved" : "Encrypted"}
               </p>
             </div>
           </div>
         </div>
       </motion.div>
+
+      {/* Decrypted totals (only shown after resolution) */}
+      {isResolved && hasDecryptedTotals && (
+        <DecryptedTotals
+          noTotal={market.decryptedNoTotal!}
+          yesTotal={market.decryptedYesTotal!}
+        />
+      )}
 
       {isLive && market.votingEndsAt && market.resolutionDeadline && (
         <CountdownSection
@@ -688,21 +554,29 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
       )}
 
       {isLive && market.resolutionCriteria && (
-        <ResolutionMethodPreview criteria={market.resolutionCriteria} />
-      )}
-
-      {isResolved && market.result && (
-        <ResolutionSection
-          confidence={market.resolutionConfidence}
-          reasoning={market.resolutionReasoning}
-          result={market.result}
-          sources={market.resolutionSources}
-        />
+        <div
+          className="rounded-xl p-4"
+          style={{
+            background: COLORS.cardBg,
+            backdropFilter: "blur(20px)",
+            border: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <h3
+            className="mb-2 font-heading font-medium text-sm"
+            style={{ color: COLORS.textMuted }}
+          >
+            Resolution Criteria
+          </h3>
+          <p className="text-sm" style={{ color: COLORS.text }}>
+            {market.resolutionCriteria}
+          </p>
+        </div>
       )}
 
       <BettingSection
         isLive={isLive}
-        market={market}
+        market={{ onChainMarketId: market.onChainMarketId }}
         onBet={handleBet}
         placeBet={placeBet}
         userBet={market.userBet}

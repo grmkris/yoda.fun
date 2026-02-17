@@ -29,7 +29,6 @@ export interface CardStackProps<T> {
 export interface CardStackRef {
   swipeLeft: () => void;
   swipeRight: () => void;
-  swipeDown: () => void;
   getCurrentCard: () => unknown | undefined;
   revert: () => void;
 }
@@ -103,7 +102,6 @@ function CardStackComponent<T>(
   useImperativeHandle(ref, () => ({
     swipeLeft: () => topCardRef.current?.swipe("left"),
     swipeRight: () => topCardRef.current?.swipe("right"),
-    swipeDown: () => topCardRef.current?.swipe("down"),
     getCurrentCard: () => visibleCards[0]?.card,
     revert: () => {
       setCurrentIndex((prev) => Math.max(0, prev - 1));

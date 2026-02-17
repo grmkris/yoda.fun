@@ -1,12 +1,7 @@
-import { type AiClient, createAiClient } from "@yoda.fun/ai";
 import {
   type BetService,
   createBetService,
 } from "@yoda.fun/api/services/bet-service";
-import {
-  createDailyService,
-  type DailyService,
-} from "@yoda.fun/api/services/daily-service";
 import {
   createFollowService,
   type FollowService,
@@ -15,10 +10,6 @@ import {
   createLeaderboardService,
   type LeaderboardService,
 } from "@yoda.fun/api/services/leaderboard-service";
-import {
-  createPointsService,
-  type PointsService,
-} from "@yoda.fun/api/services/points-service";
 import {
   createProfileService,
   type ProfileService,
@@ -29,22 +20,12 @@ import {
 } from "@yoda.fun/api/services/reward-service";
 import { type Auth, createAuth } from "@yoda.fun/auth";
 import { createDb, type Database, runMigrations } from "@yoda.fun/db";
-import { createERC8004Client } from "@yoda.fun/erc8004";
 import { createLogger, type Logger, type LoggerConfig } from "@yoda.fun/logger";
-import { createQueueClient, type QueueClient } from "@yoda.fun/queue";
 import { createStorageClient, type StorageClient } from "@yoda.fun/storage";
 import { createPgLite, type PGlite } from "@yoda.fun/test-utils/pg-lite";
-import {
-  createTestRedisSetup,
-  type RedisSetup,
-} from "@yoda.fun/test-utils/redis-test-server";
 import { createTestS3Setup } from "@yoda.fun/test-utils/s3-test-server";
 import type { User } from "better-auth";
 import type { Logger as DrizzleLogger } from "drizzle-orm";
-import {
-  createERC8004Service,
-  type ERC8004Service,
-} from "node_modules/@yoda.fun/api/src/services/erc8004-service";
 import { env } from "@/env";
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
@@ -53,7 +34,7 @@ export interface TestUser {
   id: string;
   email: string;
   name: string;
-  token: string; // session token for cookies
+  token: string;
   user: User;
 }
 
@@ -64,17 +45,11 @@ export interface TestSetup {
     authClient: Auth;
     logger: Logger;
     storage: StorageClient;
-    aiClient: AiClient;
-    redis: RedisSetup;
-    queue: QueueClient;
     betService: BetService;
-    pointsService: PointsService;
-    dailyService: DailyService;
     leaderboardService: LeaderboardService;
     profileService: ProfileService;
     followService: FollowService;
     rewardService: RewardService;
-    erc8004Service: ERC8004Service;
   };
   users: {
     authenticated: TestUser;
@@ -188,60 +163,18 @@ export async function createTestSetup(): Promise<TestSetup> {
     logger,
   });
 
-  const redis = await createTestRedisSetup();
-  const queue = createQueueClient({
-    url: redis.uri,
-    logger,
-  });
-
-  const aiClient = createAiClient({
-    logger,
-    environment: env.APP_ENV,
-    providerConfigs: {
-      googleGeminiApiKey: process.env.GOOGLE_GEMINI_API_KEY || "",
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
-      groqApiKey: process.env.GROQ_API_KEY || "",
-      xaiApiKey: process.env.XAI_API_KEY || "",
-    },
-  });
-
-  const pointsService = createPointsService({ deps: { db, logger } });
-  const dailyService = createDailyService({
-    deps: { db, logger, pointsService },
-  });
-  const betService = createBetService({ deps: { db, logger, dailyService } });
+  const betService = createBetService({ deps: { db, logger } });
   const leaderboardService = createLeaderboardService({ deps: { db, logger } });
   const profileService = createProfileService({ deps: { db, logger } });
   const followService = createFollowService({
     deps: { db, logger, profileService },
   });
-  const rewardService = createRewardService({
-    deps: { db, pointsService },
-  });
-  const erc8004Service = createERC8004Service({
-    deps: {
-      db,
-      logger,
-      erc8004Client: createERC8004Client({
-        logger,
-        privateKey: env.YODA_AGENT_PRIVATE_KEY,
-      }),
-    },
-  });
+  const rewardService = createRewardService({ deps: { db } });
+
   logger.info({
     msg: "Test environment setup complete",
     users: 2,
-    services: [
-      "db",
-      "auth",
-      "storage",
-      "redis",
-      "queue",
-      "ai",
-      "betService",
-      "pointsService",
-      "dailyService",
-    ],
+    services: ["db", "auth", "storage", "betService"],
   });
 
   const cleanup = async () => {
@@ -251,9 +184,7 @@ export async function createTestSetup(): Promise<TestSetup> {
 
   const close = async () => {
     try {
-      await queue.close();
       await s3Setup.shutdown();
-      await redis.shutdown();
       await pgLite.close();
       logger.info({ msg: "Test environment closed" });
     } catch (error) {
@@ -268,17 +199,11 @@ export async function createTestSetup(): Promise<TestSetup> {
       authClient,
       logger,
       storage,
-      aiClient,
-      redis,
-      queue,
       betService,
-      pointsService,
-      dailyService,
       leaderboardService,
       profileService,
       followService,
       rewardService,
-      erc8004Service,
     },
     users: {
       authenticated: authenticatedUser,

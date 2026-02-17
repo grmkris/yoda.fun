@@ -31,6 +31,10 @@
     "./media-utils": {
       "types": "./dist/media-utils.d.ts",
       "default": "./src/media-utils.ts"
+    },
+    "./market-metadata": {
+      "types": "./dist/market-metadata.d.ts",
+      "default": "./src/market-metadata.ts"
     }
   },
   "scripts": {

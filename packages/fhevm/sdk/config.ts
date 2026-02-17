@@ -3,9 +3,9 @@ export const FHEVM_CONFIG = {
     chainId: 11155111,
     rpcUrl: "https://sepolia.infura.io/v3/",
     contracts: {
-      mishaToken: "0xCeF431F34BC12Ea10935E64Ad19F19a7bA3677E4",
-      confidentialMisha: "0x8327CE076DE89A8140cfEa67A939f43F7225638B",
-      mishaMarket: "0xD666442d7FD30E4A2F2bF3E7B3d990AFc47297C6",
+      mishaToken: "0xd6685Dd84DF3Cd344A41bAb2804892E7120f0413",
+      confidentialMisha: "0xDeb73caC5494D5F835A751FB6341C992492696b7",
+      mishaMarket: "0xc78e0c536b60558C11045d1686bbf1e865B9433d",
     },
   },
 } as const;

@@ -24,11 +24,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
     const { id } = await params;
     const market = await serverClient.market.get({ marketId: id as MarketId });
 
-    const totalVotes = market.totalYesVotes + market.totalNoVotes;
-    const yesPercent =
-      totalVotes > 0
-        ? Math.round((market.totalYesVotes / totalVotes) * 100)
-        : 50;
+    const hasDecrypted =
+      market.decryptedYesTotal != null && market.decryptedNoTotal != null;
+    const decryptedTotal = hasDecrypted
+      ? (market.decryptedYesTotal ?? 0) + (market.decryptedNoTotal ?? 0)
+      : 0;
+    const yesPercent = hasDecrypted && decryptedTotal > 0
+      ? Math.round(((market.decryptedYesTotal ?? 0) / decryptedTotal) * 100)
+      : 50;
     const noPercent = 100 - yesPercent;
 
     const categoryColor =
@@ -246,7 +249,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
                     color: COLORS.textLight,
                   }}
                 >
-                  {totalVotes.toLocaleString()}
+                  {hasDecrypted ? decryptedTotal.toLocaleString() : "—"}
                 </div>
                 <div
                   style={{

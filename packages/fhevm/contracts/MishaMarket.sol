@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {FHE, euint64, externalEuint64, ebool, externalEbool} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
-import {ConfidentialMisha} from "./ConfidentialMisha.sol";
+import {IERC7984} from "@openzeppelin/confidential-contracts/interfaces/IERC7984.sol";
 
 /// @title MishaMarket — Confidential Prediction Market
 /// @notice Misha the cat creates markets, users place encrypted bets, pool splits among winners
@@ -25,6 +25,7 @@ contract MishaMarket is ZamaEthereumConfig {
     // --- State ---
     struct Market {
         string title;
+        string metadataUri;
         uint64 votingEndsAt;
         uint64 resolutionDeadline;
         MarketStatus status;
@@ -44,7 +45,7 @@ contract MishaMarket is ZamaEthereumConfig {
         bool claimed;
     }
 
-    ConfidentialMisha public token;
+    IERC7984 public token;
     address public admin;
     uint256 public marketCount;
 
@@ -52,7 +53,7 @@ contract MishaMarket is ZamaEthereumConfig {
     mapping(uint256 => mapping(address => Bet)) internal _bets;
 
     // --- Events ---
-    event MarketCreated(uint256 indexed marketId, string title, uint64 votingEndsAt, uint64 resolutionDeadline);
+    event MarketCreated(uint256 indexed marketId, string title, string metadataUri, uint64 votingEndsAt, uint64 resolutionDeadline);
     event BetPlaced(uint256 indexed marketId, address indexed user);
     event MarketResolved(uint256 indexed marketId, MarketResult result);
     event TotalsDecrypted(uint256 indexed marketId, uint64 yesTotal, uint64 noTotal);
@@ -68,6 +69,7 @@ contract MishaMarket is ZamaEthereumConfig {
     error AlreadyClaimed();
     error MarketNotResolved();
     error TotalsNotDecrypted();
+    error TotalsAlreadyDecrypted();
     error InvalidTimestamps();
     error InvalidResult();
 
@@ -78,7 +80,7 @@ contract MishaMarket is ZamaEthereumConfig {
 
     constructor(address _confidentialToken) {
         admin = msg.sender;
-        token = ConfidentialMisha(_confidentialToken);
+        token = IERC7984(_confidentialToken);
     }
 
     // ======================
@@ -88,6 +90,7 @@ contract MishaMarket is ZamaEthereumConfig {
     /// @notice Create a new prediction market (admin/Misha only)
     function createMarket(
         string calldata title,
+        string calldata metadataUri,
         uint64 votingEndsAt,
         uint64 resolutionDeadline
     ) external onlyAdmin returns (uint256 marketId) {
@@ -99,6 +102,7 @@ contract MishaMarket is ZamaEthereumConfig {
 
         Market storage m = _markets[marketId];
         m.title = title;
+        m.metadataUri = metadataUri;
         m.votingEndsAt = votingEndsAt;
         m.resolutionDeadline = resolutionDeadline;
         m.status = MarketStatus.Active;
@@ -110,7 +114,7 @@ contract MishaMarket is ZamaEthereumConfig {
         FHE.allowThis(m.totalYesAmount);
         FHE.allowThis(m.totalNoAmount);
 
-        emit MarketCreated(marketId, title, votingEndsAt, resolutionDeadline);
+        emit MarketCreated(marketId, title, metadataUri, votingEndsAt, resolutionDeadline);
     }
 
     // ======================
@@ -118,9 +122,10 @@ contract MishaMarket is ZamaEthereumConfig {
     // ======================
 
     /// @notice Place an encrypted bet on a market
+    /// @dev User must have called token.setOperator(thisContract, validUntil) beforehand
     /// @param marketId The market to bet on
     /// @param encryptedVote Encrypted boolean: true = YES, false = NO
-    /// @param encryptedAmount Encrypted bet amount in $MISHA
+    /// @param encryptedAmount Encrypted bet amount in cMISHA (6 decimal units)
     /// @param inputProof ZK proof for both encrypted inputs
     function placeBet(
         uint256 marketId,
@@ -137,11 +142,11 @@ contract MishaMarket is ZamaEthereumConfig {
         ebool vote = FHE.fromExternal(encryptedVote, inputProof);
         euint64 amount = FHE.fromExternal(encryptedAmount, inputProof);
 
-        // Allow token contract to use the amount handle for transfer
+        // Transfer tokens from user to this contract via ERC-7984 operator pattern
+        // Pre-requisite: user called token.setOperator(address(this), validUntil)
+        FHE.allowThis(amount);
         FHE.allow(amount, address(token));
-
-        // Transfer tokens from user to this contract
-        token.transferInternal(msg.sender, address(this), amount);
+        token.confidentialTransferFrom(msg.sender, address(this), amount);
 
         // Conditional accumulation — add to YES or NO pool based on encrypted vote
         euint64 zero = FHE.asEuint64(uint64(0));
@@ -198,15 +203,27 @@ contract MishaMarket is ZamaEthereumConfig {
         emit MarketResolved(marketId, result);
     }
 
-    /// @notice Set decrypted pool totals after async decryption completes
-    /// @dev Oracle reads publicly decrypted values and submits them on-chain
-    function setDecryptedTotals(
+    /// @notice Submit KMS-verified decrypted totals
+    /// @dev Permissionless — anyone can relay, contract verifies KMS proof
+    function submitVerifiedTotals(
         uint256 marketId,
-        uint64 yesTotal,
-        uint64 noTotal
-    ) external onlyAdmin {
+        bytes memory abiEncodedCleartexts,
+        bytes memory decryptionProof
+    ) external {
         Market storage m = _markets[marketId];
         if (m.status != MarketStatus.Resolved) revert MarketNotResolved();
+        if (m.totalsDecrypted) revert TotalsAlreadyDecrypted();
+
+        // Build handles list matching the order in resolveMarket
+        bytes32[] memory handlesList = new bytes32[](2);
+        handlesList[0] = FHE.toBytes32(m.totalYesAmount);
+        handlesList[1] = FHE.toBytes32(m.totalNoAmount);
+
+        // Verify KMS threshold signatures — reverts if invalid
+        FHE.checkSignatures(handlesList, abiEncodedCleartexts, decryptionProof);
+
+        // Decode verified values
+        (uint64 yesTotal, uint64 noTotal) = abi.decode(abiEncodedCleartexts, (uint64, uint64));
 
         m.decryptedYesTotal = yesTotal;
         m.decryptedNoTotal = noTotal;
@@ -230,9 +247,10 @@ contract MishaMarket is ZamaEthereumConfig {
         bet.claimed = true;
 
         if (m.result == MarketResult.Invalid) {
-            // Refund: return original bet amount
+            // Refund: return original bet amount via ERC-7984
+            FHE.allowThis(bet.amount);
             FHE.allow(bet.amount, address(token));
-            token.transferInternal(address(this), msg.sender, bet.amount);
+            token.confidentialTransfer(msg.sender, bet.amount);
             emit PayoutClaimed(marketId, msg.sender);
             return;
         }
@@ -259,9 +277,10 @@ contract MishaMarket is ZamaEthereumConfig {
         euint64 zero = FHE.asEuint64(uint64(0));
         euint64 finalPayout = FHE.select(userWon, payout, zero);
 
-        // Transfer payout to user
+        // Transfer payout to user via ERC-7984
+        FHE.allowThis(finalPayout);
         FHE.allow(finalPayout, address(token));
-        token.transferInternal(address(this), msg.sender, finalPayout);
+        token.confidentialTransfer(msg.sender, finalPayout);
 
         emit PayoutClaimed(marketId, msg.sender);
     }
@@ -273,6 +292,7 @@ contract MishaMarket is ZamaEthereumConfig {
     /// @notice Get market details (public fields only)
     function getMarket(uint256 marketId) external view returns (
         string memory title,
+        string memory metadataUri,
         uint64 votingEndsAt,
         uint64 resolutionDeadline,
         MarketStatus status,
@@ -285,6 +305,7 @@ contract MishaMarket is ZamaEthereumConfig {
         Market storage m = _markets[marketId];
         return (
             m.title,
+            m.metadataUri,
             m.votingEndsAt,
             m.resolutionDeadline,
             m.status,
@@ -294,6 +315,15 @@ contract MishaMarket is ZamaEthereumConfig {
             m.decryptedNoTotal,
             m.totalsDecrypted
         );
+    }
+
+    /// @notice Get encrypted pool total handles as bytes32 (for off-chain decryption)
+    function getMarketHandles(uint256 marketId) external view returns (
+        bytes32 yesHandle,
+        bytes32 noHandle
+    ) {
+        Market storage m = _markets[marketId];
+        return (FHE.toBytes32(m.totalYesAmount), FHE.toBytes32(m.totalNoAmount));
     }
 
     /// @notice Get user's encrypted bet handles (only user can decrypt)

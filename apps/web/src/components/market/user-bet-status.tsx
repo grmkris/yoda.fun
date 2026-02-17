@@ -3,9 +3,7 @@
 import {
   CheckCircle2,
   Clock,
-  Coins,
-  ThumbsDown,
-  ThumbsUp,
+  ExternalLink,
   Trophy,
   XCircle,
 } from "lucide-react";
@@ -17,7 +15,6 @@ const COLORS = {
   yesGlow: "0 0 20px oklch(0.72 0.18 175 / 40%)",
   no: "oklch(0.68 0.20 25)",
   noBg: "oklch(0.68 0.20 25 / 15%)",
-  noGlow: "0 0 20px oklch(0.68 0.20 25 / 40%)",
   text: "oklch(0.95 0.02 280)",
   textMuted: "oklch(0.65 0.04 280)",
   textDim: "oklch(0.50 0.04 280)",
@@ -25,37 +22,9 @@ const COLORS = {
   border: "oklch(0.65 0.25 290 / 15%)",
   gold: "oklch(0.80 0.16 90)",
   goldBg: "oklch(0.80 0.16 90 / 15%)",
+  purple: "oklch(0.65 0.25 290)",
+  purpleBg: "oklch(0.65 0.25 290 / 15%)",
 } as const;
-
-function getReturnLabel(status: string) {
-  if (status === "WON") {
-    return "Points Returned";
-  }
-  if (status === "ACTIVE") {
-    return "Potential Return";
-  }
-  if (status === "REFUNDED") {
-    return "Refunded";
-  }
-  return "Points Lost";
-}
-
-function getReturnDisplay(
-  pointsReturned: number | null | undefined,
-  pointsSpent: number,
-  status: string
-) {
-  if (status === "WON" && pointsReturned) {
-    return `+${pointsReturned} pts`;
-  }
-  if (status === "REFUNDED") {
-    return `+${pointsSpent} pts`;
-  }
-  if (status === "ACTIVE") {
-    return `+${pointsSpent} pts`;
-  }
-  return "0 pts";
-}
 
 const statusConfig = {
   ACTIVE: {
@@ -78,7 +47,7 @@ const statusConfig = {
   },
   REFUNDED: {
     label: "Refunded",
-    icon: Coins,
+    icon: CheckCircle2,
     color: COLORS.textMuted,
     bg: COLORS.cardBg,
   },
@@ -86,31 +55,15 @@ const statusConfig = {
 
 interface UserBetStatusProps {
   bet: {
-    vote: "YES" | "NO" | "SKIP";
-    pointsSpent: number;
     status: "ACTIVE" | "WON" | "LOST" | "REFUNDED";
-    pointsReturned?: number | null;
-  };
-  market: {
-    totalYesVotes: number;
-    totalNoVotes: number;
-    totalPool: string;
+    onChainTxHash: string;
   };
   className?: string;
 }
 
-export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
-  const isYes = bet.vote === "YES";
-  const voteColor = isYes ? COLORS.yes : COLORS.no;
-  const voteBg = isYes ? COLORS.yesBg : COLORS.noBg;
-  const voteGlow = isYes ? COLORS.yesGlow : COLORS.noGlow;
-  const VoteIcon = isYes ? ThumbsUp : ThumbsDown;
-
+export function UserBetStatus({ bet, className }: UserBetStatusProps) {
   const status = statusConfig[bet.status];
   const StatusIcon = status.icon;
-
-  // In points-based system, winners get their points back (break even)
-  const _totalVotes = market.totalYesVotes + market.totalNoVotes;
 
   return (
     <motion.div
@@ -118,12 +71,11 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
       className={className}
       initial={{ opacity: 0, y: 20 }}
       style={{
-        background: `linear-gradient(135deg, ${voteBg} 0%, ${COLORS.cardBg} 100%)`,
+        background: `linear-gradient(135deg, ${COLORS.purpleBg} 0%, ${COLORS.cardBg} 100%)`,
         backdropFilter: "blur(20px)",
-        border: `2px solid ${voteColor}40`,
+        border: `2px solid ${COLORS.purple}40`,
         borderRadius: "1rem",
         padding: "1.5rem",
-        boxShadow: voteGlow,
       }}
       transition={{ duration: 0.4, delay: 0.4 }}
     >
@@ -134,23 +86,26 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
             animate={{ scale: 1, rotate: 0 }}
             className="rounded-xl p-2.5"
             initial={{ scale: 0, rotate: -45 }}
-            style={{ background: voteBg }}
+            style={{ background: COLORS.purpleBg }}
             transition={{ delay: 0.5, type: "spring" }}
           >
-            <VoteIcon className="h-6 w-6" style={{ color: voteColor }} />
+            <CheckCircle2
+              className="h-6 w-6"
+              style={{ color: COLORS.purple }}
+            />
           </motion.div>
           <div>
             <p
               className="font-heading text-xs uppercase tracking-wider"
               style={{ color: COLORS.textMuted }}
             >
-              Your Prediction
+              Your Bet
             </p>
             <p
               className="font-bold font-heading text-xl"
-              style={{ color: voteColor }}
+              style={{ color: COLORS.purple }}
             >
-              {bet.vote}
+              Placed
             </p>
           </div>
         </div>
@@ -176,54 +131,27 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
         </motion.div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Points spent */}
-        <motion.div
+      {/* Tx hash link */}
+      {bet.onChainTxHash && (
+        <motion.a
           animate={{ opacity: 1 }}
-          className="rounded-xl p-3"
+          className="flex items-center gap-2 rounded-xl p-3 transition-colors hover:bg-white/5"
+          href={`https://sepolia.etherscan.io/tx/${bet.onChainTxHash}`}
           initial={{ opacity: 0 }}
+          rel="noopener noreferrer"
           style={{
             background: "oklch(0.08 0.02 270 / 50%)",
             border: `1px solid ${COLORS.border}`,
           }}
+          target="_blank"
           transition={{ delay: 0.7 }}
         >
-          <p className="mb-1 text-xs" style={{ color: COLORS.textDim }}>
-            Points Spent
-          </p>
-          <p
-            className="font-heading font-semibold text-lg"
-            style={{ color: COLORS.text }}
-          >
-            {bet.pointsSpent} pts
-          </p>
-        </motion.div>
-
-        {/* Return / Potential */}
-        <motion.div
-          animate={{ opacity: 1 }}
-          className="rounded-xl p-3"
-          initial={{ opacity: 0 }}
-          style={{
-            background: "oklch(0.08 0.02 270 / 50%)",
-            border: `1px solid ${COLORS.border}`,
-          }}
-          transition={{ delay: 0.8 }}
-        >
-          <p className="mb-1 text-xs" style={{ color: COLORS.textDim }}>
-            {getReturnLabel(bet.status)}
-          </p>
-          <p
-            className="font-heading font-semibold text-lg"
-            style={{
-              color: bet.status === "WON" ? COLORS.gold : COLORS.text,
-            }}
-          >
-            {getReturnDisplay(bet.pointsReturned, bet.pointsSpent, bet.status)}
-          </p>
-        </motion.div>
-      </div>
+          <ExternalLink className="h-4 w-4" style={{ color: COLORS.purple }} />
+          <span className="font-mono text-xs" style={{ color: COLORS.textDim }}>
+            {bet.onChainTxHash.slice(0, 10)}...{bet.onChainTxHash.slice(-8)}
+          </span>
+        </motion.a>
+      )}
 
       {/* Message for active bets */}
       {bet.status === "ACTIVE" && (
@@ -232,11 +160,11 @@ export function UserBetStatus({ bet, market, className }: UserBetStatusProps) {
           className="mt-4 text-center text-sm"
           initial={{ opacity: 0 }}
           style={{ color: COLORS.textMuted }}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 0.8 }}
         >
           <CheckCircle2
             className="mr-1.5 inline-block h-4 w-4"
-            style={{ color: voteColor }}
+            style={{ color: COLORS.purple }}
           />
           Your prediction is locked in. Results coming soon!
         </motion.p>

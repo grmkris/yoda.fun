@@ -1,11 +1,8 @@
 import { faker } from "@faker-js/faker";
 import type { Context } from "@yoda.fun/api/context";
-import type { PointsService } from "@yoda.fun/api/services/points-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
-import type { QueueClient } from "@yoda.fun/queue";
-import type { JobType } from "@yoda.fun/shared/constants";
-import { type MarketId, UserId } from "@yoda.fun/shared/typeid";
+import { UserId } from "@yoda.fun/shared/typeid";
 import type { TestSetup, TestUser } from "./test.setup";
 
 export async function createTestContext(props: {
@@ -25,13 +22,9 @@ export async function createTestContext(props: {
     session,
     db: deps.db,
     logger: deps.logger,
-    erc8004Service: deps.erc8004Service,
     posthog: undefined,
     storage: deps.storage,
-    queue: deps.queue,
     betService: deps.betService,
-    pointsService: deps.pointsService,
-    dailyService: deps.dailyService,
     leaderboardService: deps.leaderboardService,
     profileService: deps.profileService,
     followService: deps.followService,
@@ -47,15 +40,11 @@ export function createUnauthenticatedContext(testEnv: TestSetup): Context {
     logger: testEnv.deps.logger,
     posthog: undefined,
     storage: testEnv.deps.storage,
-    queue: testEnv.deps.queue,
     betService: testEnv.deps.betService,
-    pointsService: testEnv.deps.pointsService,
-    dailyService: testEnv.deps.dailyService,
     leaderboardService: testEnv.deps.leaderboardService,
     profileService: testEnv.deps.profileService,
     followService: testEnv.deps.followService,
     rewardService: testEnv.deps.rewardService,
-    erc8004Service: testEnv.deps.erc8004Service,
     fhevmClient: null as unknown as Context["fhevmClient"],
   };
 }
@@ -76,10 +65,9 @@ export interface CreateTestMarketOptions {
   title?: string;
   description?: string;
   category?: string;
-  betAmount?: string;
+  onChainMarketId?: number;
   votingEndsAt?: Date;
   resolutionDeadline?: Date;
-  createdById?: UserId;
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -97,12 +85,12 @@ export async function createTestMarket(
       title: options.title ?? faker.lorem.sentence(),
       description: options.description ?? faker.lorem.paragraph(),
       category: options.category ?? "test",
-      betAmount: options.betAmount ?? "10.00",
+      onChainMarketId: options.onChainMarketId ?? 0,
+      onChainTxHash: `0x${faker.string.hexadecimal({ length: 64, casing: "lower", prefix: "" })}`,
       votingEndsAt:
         options.votingEndsAt ?? new Date(now.getTime() + ONE_DAY_MS),
       resolutionDeadline:
         options.resolutionDeadline ?? new Date(now.getTime() + 2 * ONE_DAY_MS),
-      createdById: options.createdById,
       status: "LIVE",
     })
     .returning();
@@ -115,61 +103,6 @@ export async function createTestMarket(
   return market;
 }
 
-export function createEndedTestMarket(
-  db: Database,
-  options: CreateTestMarketOptions = {}
-): Promise<typeof DB_SCHEMA.market.$inferSelect> {
-  const now = new Date();
-
-  return createTestMarket(db, {
-    ...options,
-    votingEndsAt: new Date(now.getTime() - ONE_HOUR_MS),
-    resolutionDeadline: new Date(now.getTime() - ONE_HOUR_MS / 2),
-  });
-}
-
-export async function fundUserPoints(
-  pointsService: PointsService,
-  userId: UserId,
-  amount: number
-): Promise<void> {
-  await pointsService.creditPoints(userId, amount, "REWARD", {
-    source: "test",
-  });
-}
-
-interface CreateTestBetOptions {
-  db: Database;
-  userId: UserId;
-  marketId: MarketId;
-  vote: "YES" | "NO" | "SKIP";
-  pointsSpent?: number;
-}
-
-export async function createTestBet(
-  options: CreateTestBetOptions
-): Promise<typeof DB_SCHEMA.bet.$inferSelect> {
-  const { db, userId, marketId, vote, pointsSpent = 3 } = options;
-
-  const betRecords = await db
-    .insert(DB_SCHEMA.bet)
-    .values({
-      userId,
-      marketId,
-      vote,
-      pointsSpent,
-      status: "ACTIVE",
-    })
-    .returning();
-
-  const bet = betRecords[0];
-  if (!bet) {
-    throw new Error("Failed to create test bet");
-  }
-
-  return bet;
-}
-
 export type E2ETestUser = TestUser & { userId: UserId };
 
 const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
@@ -178,7 +111,6 @@ export async function createTestUserWithFunds(
   testSetup: TestSetup,
   name: string,
   email: string,
-  initialBalance: number
 ): Promise<E2ETestUser> {
   const { deps } = testSetup;
   const password = "testtesttesttest";
@@ -208,8 +140,6 @@ export async function createTestUserWithFunds(
 
   const userId = UserId.parse(signUpResult.user.id);
 
-  await fundUserPoints(deps.pointsService, userId, initialBalance);
-
   return {
     id: signUpResult.user.id,
     email,
@@ -217,47 +147,5 @@ export async function createTestUserWithFunds(
     token: sessionTokenMatch[1],
     user: signUpResult.user,
     userId,
-  };
-}
-
-export async function waitForQueueJob<T extends JobType>(
-  queue: QueueClient,
-  queueName: T,
-  jobId: string,
-  maxWaitMs = 30_000
-): Promise<{ success: boolean; state: string }> {
-  const pollInterval = 500;
-  let elapsed = 0;
-
-  while (elapsed < maxWaitMs) {
-    const status = await queue.getJobStatus(queueName, jobId);
-
-    if (status?.state === "completed") {
-      return { success: true, state: "completed" };
-    }
-
-    if (status?.state === "failed") {
-      throw new Error(`Job failed: ${status.failedReason}`);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, pollInterval));
-    elapsed += pollInterval;
-  }
-
-  throw new Error(`Job timed out after ${maxWaitMs}ms`);
-}
-
-export async function verifyPointsIntegrity(
-  db: Database,
-  expectedTotal: number
-): Promise<{ valid: boolean; actual: number; expected: number }> {
-  const balances = await db.select().from(DB_SCHEMA.userBalance);
-
-  const totalPoints = balances.reduce((sum, b) => sum + b.points, 0);
-
-  return {
-    valid: totalPoints === expectedTotal,
-    actual: totalPoints,
-    expected: expectedTotal,
   };
 }

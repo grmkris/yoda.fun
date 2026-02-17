@@ -4,7 +4,6 @@ import "../index.css";
 import { SERVICE_URLS } from "@yoda.fun/shared/services";
 import Script from "next/script";
 import Header from "@/components/header";
-import { MiniAppReady } from "@/components/miniapp-ready";
 import Providers from "@/components/providers";
 import { AppSidebar } from "@/components/sidebar/sidebar";
 import { SidebarProvider } from "@/components/sidebar/sidebar-context";
@@ -48,22 +47,6 @@ export const metadata: Metadata = {
       "The future is tradeable. Pick your side on sports, crypto, politics, and culture. Win real money when you're right. Instant payouts.",
     images: ["/api/og"],
   },
-  other: {
-    "fc:miniapp": JSON.stringify({
-      version: "next",
-      imageUrl: "https://yoda.fun/api/og",
-      button: {
-        title: "Launch yoda.fun",
-        action: {
-          type: "launch_miniapp",
-          name: "yoda.fun",
-          url: "https://yoda.fun",
-          splashImageUrl: "https://yoda.fun/splash.png",
-          splashBackgroundColor: "#0f0a1a",
-        },
-      },
-    }),
-  },
 };
 
 export default function RootLayout({
@@ -87,7 +70,6 @@ export default function RootLayout({
         className={`${fredoka.variable} ${nunito.variable} ${righteous.variable} antialiased`}
       >
         <Providers>
-          <MiniAppReady />
           <SidebarProvider>
             <div className="flex h-svh bg-cosmic-subtle">
               <AppSidebar />

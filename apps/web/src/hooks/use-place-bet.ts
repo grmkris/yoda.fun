@@ -1,30 +1,26 @@
 "use client";
 
 import {
+  confidentialMishaAbi,
   encryptBet,
   mishaMarketAbi,
 } from "@yoda.fun/fhevm/sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAccount, useWalletClient, useWriteContract } from "wagmi";
+import { bytesToHex } from "viem";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { useFhevm } from "@/components/fhevm-provider";
-import type { PlaceBetInput } from "@/lib/orpc-types";
-import { client, orpc } from "@/utils/orpc";
+import { useLocalVotes } from "@/hooks/use-local-votes";
+import { orpc } from "@/utils/orpc";
 
-interface ORPCErrorData {
-  code?: string;
-  message?: string;
-}
+const MAX_UINT48 = 281474976710655; // 2^48 - 1
+const CMISHA_DECIMALS = 6;
 
-function getErrorData(error: unknown): ORPCErrorData {
-  if (error && typeof error === "object" && "data" in error) {
-    return (error as { data: ORPCErrorData }).data ?? {};
-  }
-  return {};
-}
-
-interface PlaceBetOnChainInput extends PlaceBetInput {
-  onChainMarketId?: number;
+interface PlaceBetInput {
+  marketId: string;
+  vote: "YES" | "NO";
+  onChainMarketId: number;
+  /** Bet amount in whole cMISHA tokens (e.g. 100). Will be scaled to 6-decimal units. */
   amount?: number;
 }
 
@@ -33,23 +29,36 @@ export function usePlaceBet() {
   const { address } = useAccount();
   const { instance, contracts } = useFhevm();
   const { data: walletClient } = useWalletClient();
-  const writeContract = useWriteContract();
+  const publicClient = usePublicClient();
+  const { recordVote } = useLocalVotes();
 
   return useMutation({
-    mutationFn: async (input: PlaceBetOnChainInput) => {
-      // Off-chain path: SKIP votes or markets without on-chain ID
-      if (
-        input.vote === "SKIP" ||
-        !input.onChainMarketId ||
-        !instance ||
-        !address ||
-        !walletClient
-      ) {
-        return client.bet.place(input);
+    mutationFn: async (input: PlaceBetInput) => {
+      if (!instance || !address || !walletClient || !publicClient) {
+        throw new Error("Wallet not connected or FHEVM not initialized");
       }
 
-      // On-chain path: encrypt and send tx
-      const betAmount = input.amount ?? 100;
+      // Check operator approval, auto-approve if needed
+      const isApproved = await publicClient.readContract({
+        address: contracts.confidentialMisha,
+        abi: confidentialMishaAbi,
+        functionName: "isOperator",
+        args: [address, contracts.mishaMarket],
+      });
+
+      if (!isApproved) {
+        const approveHash = await walletClient.writeContract({
+          address: contracts.confidentialMisha,
+          abi: confidentialMishaAbi,
+          functionName: "setOperator",
+          args: [contracts.mishaMarket, MAX_UINT48],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: approveHash });
+      }
+
+      // Amount in 6-decimal units (100 cMISHA = 100_000000)
+      const wholeAmount = input.amount ?? 100;
+      const betAmount = wholeAmount * 10 ** CMISHA_DECIMALS;
       const voteAsBool = input.vote === "YES";
 
       const encrypted = await encryptBet(
@@ -60,43 +69,29 @@ export function usePlaceBet() {
         betAmount
       );
 
-      // Send the encrypted bet transaction
       const txHash = await walletClient.writeContract({
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
         functionName: "placeBet",
         args: [
           BigInt(input.onChainMarketId),
-          encrypted.encryptedVote as unknown as `0x${string}`,
-          encrypted.encryptedAmount as unknown as `0x${string}`,
-          encrypted.inputProof as unknown as `0x${string}`,
+          bytesToHex(encrypted.encryptedVote),
+          bytesToHex(encrypted.encryptedAmount),
+          bytesToHex(encrypted.inputProof),
         ],
       });
 
-      // Record in backend DB
-      const result = await client.bet.recordOnChain({
-        marketId: input.marketId,
-        txHash,
-        vote: input.vote,
-        amount: betAmount,
-      });
+      // Record vote locally for UX (backend can't see encrypted votes)
+      recordVote(input.marketId, input.vote);
 
       return {
         success: true,
-        betId: result.betId,
         marketId: input.marketId,
         vote: input.vote,
-        message: `On-chain bet placed! You voted ${input.vote}.`,
         txHash,
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: orpc.points.get.queryOptions({}).queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.points.dailyStatus.queryOptions({}).queryKey,
-      });
       queryClient.invalidateQueries({
         queryKey: orpc.bet.history.queryOptions({
           input: {},
@@ -106,29 +101,9 @@ export function usePlaceBet() {
       queryClient.invalidateQueries({ queryKey: ["readContract"] });
     },
     onError: (error) => {
-      const { code, message } = getErrorData(error);
-      const fallbackMessage =
+      const message =
         error instanceof Error ? error.message : "Failed to place vote";
-
-      switch (code) {
-        case "INSUFFICIENT_POINTS":
-          toast.error("Not enough points. Buy more to continue.");
-          break;
-        case "ALREADY_BET":
-          toast.error("You already voted on this market.");
-          break;
-        case "MARKET_NOT_FOUND":
-          toast.error("Market not found.");
-          break;
-        case "MARKET_NOT_ACTIVE":
-          toast.error("This market is no longer active.");
-          break;
-        case "VOTING_ENDED":
-          toast.error("Voting period has ended.");
-          break;
-        default:
-          toast.error(message ?? fallbackMessage);
-      }
+      toast.error(message);
     },
   });
 }

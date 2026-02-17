@@ -1,6 +1,11 @@
 import type { Signer } from "ethers";
 
-interface RelayerInstance {
+/**
+ * Interface for decryption operations.
+ * The relayer SDK's FhevmInstance has a lower-level userDecrypt() method;
+ * these convenience wrappers expect a higher-level adapter with typed methods.
+ */
+export interface DecryptInstance {
   userDecrypt64(
     handle: bigint | string,
     contractAddress: string,
@@ -18,7 +23,7 @@ interface RelayerInstance {
  * Only works if the user has ACL permission on the handle.
  */
 export async function decryptBalance(
-  instance: RelayerInstance,
+  instance: DecryptInstance,
   handle: bigint | string,
   contractAddress: string,
   signer: Signer
@@ -30,7 +35,7 @@ export async function decryptBalance(
  * Decrypt an encrypted vote (ebool) using the user's signer.
  */
 export async function decryptVote(
-  instance: RelayerInstance,
+  instance: DecryptInstance,
   handle: bigint | string,
   contractAddress: string,
   signer: Signer

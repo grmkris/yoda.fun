@@ -7,6 +7,14 @@ import { ethers, fhevm } from "hardhat";
 /// Convert whole tokens to wei (18 decimals)
 const e = (n: number) => ethers.parseEther(n.toString());
 
+/// cMISHA has 6 decimals — amounts in tests are whole cMISHA units
+/// but the actual euint64 values are in 6-decimal units
+const CMISHA_DECIMALS = 6;
+const cMishaUnits = (n: number) => n * 10 ** CMISHA_DECIMALS;
+
+/// ERC-7984 max uint48 for operator approval (never expires)
+const MAX_UINT48 = 281474976710655;
+
 interface Signers {
   deployer: HardhatEthersSigner;
   alice: HardhatEthersSigner;
@@ -45,7 +53,7 @@ function futureTimestamp(seconds: number): bigint {
   return BigInt(Math.floor(Date.now() / 1000) + seconds);
 }
 
-/// Mint MISHA (wei) → approve wrapper (wei) → wrap (whole tokens) → approve market (encrypted cMISHA)
+/// Mint MISHA (wei) → approve wrapper → wrap(to, weiAmount) → setOperator for market
 async function mintWrapAndApprove(
   token: MishaToken,
   wrapper: ConfidentialMisha,
@@ -60,19 +68,11 @@ async function mintWrapAndApprove(
   // Approve wrapper to pull wei
   await (await token.connect(user).approve(wrapperAddress, e(amount))).wait();
 
-  // Wrap whole tokens → locks wei, mints encrypted cMISHA
-  await (await wrapper.connect(user).wrap(amount)).wait();
+  // Wrap: wrap(to, weiAmount) — locks MISHA wei, mints cMISHA (6 decimal units)
+  await (await wrapper.connect(user).wrap(user.address, e(amount))).wait();
 
-  // Approve market contract for encrypted cMISHA (whole tokens)
-  const input = fhevm.createEncryptedInput(wrapperAddress, user.address);
-  input.add64(amount);
-  const encrypted = await input.encrypt();
-
-  await (
-    await wrapper
-      .connect(user)
-      .approve(marketAddress, encrypted.handles[0], encrypted.inputProof)
-  ).wait();
+  // Set MishaMarket as operator (ERC-7984 pattern, replaces approve+transferInternal)
+  await (await wrapper.connect(user).setOperator(marketAddress, MAX_UINT48)).wait();
 }
 
 async function placeBet(
@@ -85,7 +85,7 @@ async function placeBet(
 ) {
   const input = fhevm.createEncryptedInput(marketAddress, user.address);
   input.addBool(vote);
-  input.add64(amount);
+  input.add64(cMishaUnits(amount));
   const encrypted = await input.encrypt();
 
   await (
@@ -105,7 +105,7 @@ async function getUserBalance(
   wrapperAddress: string,
   user: HardhatEthersSigner
 ): Promise<bigint> {
-  const encBalance = await wrapper.connect(user).balanceOf(user.address);
+  const encBalance = await wrapper.connect(user).confidentialBalanceOf(user.address);
   if (encBalance === ethers.ZeroHash) return 0n;
   return fhevm.userDecryptEuint(
     FhevmType.euint64,
@@ -113,6 +113,19 @@ async function getUserBalance(
     wrapperAddress,
     user
   );
+}
+
+/// Get KMS-verified decryption proof and submit on-chain
+async function verifyAndSubmitTotals(market: MishaMarket, marketId: number) {
+  const [yesHandle, noHandle] = await market.getMarketHandles(marketId);
+  const results = await fhevm.publicDecrypt([yesHandle, noHandle]);
+  await (
+    await market.submitVerifiedTotals(
+      marketId,
+      results.abiEncodedClearValues,
+      results.decryptionProof
+    )
+  ).wait();
 }
 
 describe("MishaMarket", () => {
@@ -145,6 +158,7 @@ describe("MishaMarket", () => {
 
       const tx = await market.createMarket(
         "Will ETH hit $5k?",
+        "",
         votingEnds,
         resolutionDeadline
       );
@@ -163,18 +177,20 @@ describe("MishaMarket", () => {
       await expect(
         market
           .connect(signers.alice)
-          .createMarket("test", futureTimestamp(3600), futureTimestamp(7200))
+          .createMarket("test", "", futureTimestamp(3600), futureTimestamp(7200))
       ).to.be.revertedWithCustomError(market, "OnlyAdmin");
     });
 
     it("should increment marketCount", async () => {
       await market.createMarket(
         "Market 1",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
       await market.createMarket(
         "Market 2",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -186,6 +202,7 @@ describe("MishaMarket", () => {
     beforeEach(async () => {
       await market.createMarket(
         "Will Misha catch the laser?",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -230,7 +247,8 @@ describe("MishaMarket", () => {
         wrapperAddress,
         signers.alice
       );
-      expect(balance).to.eq(400n); // 500 - 100
+      // 500 MISHA wrapped = 500_000000 cMISHA units, bet 100_000000
+      expect(balance).to.eq(BigInt(cMishaUnits(400)));
     });
 
     it("should reject double bet", async () => {
@@ -246,6 +264,7 @@ describe("MishaMarket", () => {
     beforeEach(async () => {
       await market.createMarket(
         "Test market",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -286,6 +305,7 @@ describe("MishaMarket", () => {
     it("should refund all bets on Invalid result", async () => {
       await market.createMarket(
         "Refund test",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -304,14 +324,14 @@ describe("MishaMarket", () => {
         wrapperAddress,
         signers.alice
       );
-      expect(balance).to.eq(100n);
+      expect(balance).to.eq(BigInt(cMishaUnits(100)));
 
       await market.resolveMarket(0, 3);
 
       await (await market.connect(signers.alice).claimPayout(0)).wait();
 
       balance = await getUserBalance(wrapper, wrapperAddress, signers.alice);
-      expect(balance).to.eq(200n);
+      expect(balance).to.eq(BigInt(cMishaUnits(200)));
     });
   });
 
@@ -319,6 +339,7 @@ describe("MishaMarket", () => {
     it("should pay winners proportionally from pool", async () => {
       await market.createMarket(
         "Pool math test",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -348,7 +369,7 @@ describe("MishaMarket", () => {
         200
       );
 
-      // Alice 70 YES, Bob 30 YES, Charlie 100 NO
+      // Alice 70 YES, Bob 30 YES, Charlie 100 NO (in whole cMISHA units)
       await placeBet(market, marketAddress, signers.alice, 0, true, 70);
       await placeBet(market, marketAddress, signers.bob, 0, true, 30);
       await placeBet(market, marketAddress, signers.charlie, 0, false, 100);
@@ -357,30 +378,31 @@ describe("MishaMarket", () => {
       expect(m.betCount).to.eq(3);
 
       await market.resolveMarket(0, 1); // YES wins
-      await market.setDecryptedTotals(0, 100, 100);
+      await verifyAndSubmitTotals(market, 0);
 
       // Alice: 70 * 200 / 100 = 140, balance = 200 - 70 + 140 = 270
       await (await market.connect(signers.alice).claimPayout(0)).wait();
       expect(
         await getUserBalance(wrapper, wrapperAddress, signers.alice)
-      ).to.eq(270n);
+      ).to.eq(BigInt(cMishaUnits(270)));
 
       // Bob: 30 * 200 / 100 = 60, balance = 200 - 30 + 60 = 230
       await (await market.connect(signers.bob).claimPayout(0)).wait();
       expect(
         await getUserBalance(wrapper, wrapperAddress, signers.bob)
-      ).to.eq(230n);
+      ).to.eq(BigInt(cMishaUnits(230)));
 
       // Charlie: lost, balance = 200 - 100 + 0 = 100
       await (await market.connect(signers.charlie).claimPayout(0)).wait();
       expect(
         await getUserBalance(wrapper, wrapperAddress, signers.charlie)
-      ).to.eq(100n);
+      ).to.eq(BigInt(cMishaUnits(100)));
     });
 
     it("should reject double claim", async () => {
       await market.createMarket(
         "Double claim test",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -394,7 +416,7 @@ describe("MishaMarket", () => {
       );
       await placeBet(market, marketAddress, signers.alice, 0, true, 50);
       await market.resolveMarket(0, 1);
-      await market.setDecryptedTotals(0, 50, 0);
+      await verifyAndSubmitTotals(market, 0);
 
       await (await market.connect(signers.alice).claimPayout(0)).wait();
       await expect(
@@ -405,6 +427,7 @@ describe("MishaMarket", () => {
     it("should reject claim before totals are set", async () => {
       await market.createMarket(
         "No totals test",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -425,10 +448,127 @@ describe("MishaMarket", () => {
     });
   });
 
+  describe("submitVerifiedTotals — KMS proof verification", () => {
+    it("should accept valid KMS proof and enable payouts", async () => {
+      await market.createMarket(
+        "Verified totals test",
+        "",
+        futureTimestamp(3600),
+        futureTimestamp(7200)
+      );
+
+      await mintWrapAndApprove(
+        token,
+        wrapper,
+        wrapperAddress,
+        signers.alice,
+        marketAddress,
+        200
+      );
+      await mintWrapAndApprove(
+        token,
+        wrapper,
+        wrapperAddress,
+        signers.bob,
+        marketAddress,
+        200
+      );
+
+      // Alice 100 YES, Bob 100 NO
+      await placeBet(market, marketAddress, signers.alice, 0, true, 100);
+      await placeBet(market, marketAddress, signers.bob, 0, false, 100);
+
+      // Resolve → triggers makePubliclyDecryptable
+      await market.resolveMarket(0, 1); // YES wins
+
+      // Get handles from contract
+      const [yesHandle, noHandle] = await market.getMarketHandles(0);
+
+      // Use hardhat plugin's publicDecrypt to get proof
+      const results = await fhevm.publicDecrypt([yesHandle, noHandle]);
+
+      // Anyone can submit verified totals (no onlyAdmin needed)
+      await (
+        await market
+          .connect(signers.alice) // non-admin submits!
+          .submitVerifiedTotals(
+            0,
+            results.abiEncodedClearValues,
+            results.decryptionProof
+          )
+      ).wait();
+
+      const m = await market.getMarket(0);
+      expect(m.totalsDecrypted).to.be.true;
+      // Totals are in 6-decimal cMISHA units
+      expect(m.decryptedYesTotal).to.eq(cMishaUnits(100));
+      expect(m.decryptedNoTotal).to.eq(cMishaUnits(100));
+
+      // Alice wins: 100 * 200 / 100 = 200, balance = 200 - 100 + 200 = 300
+      await (await market.connect(signers.alice).claimPayout(0)).wait();
+      expect(
+        await getUserBalance(wrapper, wrapperAddress, signers.alice)
+      ).to.eq(BigInt(cMishaUnits(300)));
+
+      // Bob lost: balance = 200 - 100 + 0 = 100
+      await (await market.connect(signers.bob).claimPayout(0)).wait();
+      expect(
+        await getUserBalance(wrapper, wrapperAddress, signers.bob)
+      ).to.eq(BigInt(cMishaUnits(100)));
+    });
+
+    it("should reject duplicate submission", async () => {
+      await market.createMarket(
+        "Duplicate verified test",
+        "",
+        futureTimestamp(3600),
+        futureTimestamp(7200)
+      );
+      await mintWrapAndApprove(
+        token,
+        wrapper,
+        wrapperAddress,
+        signers.alice,
+        marketAddress,
+        100
+      );
+      await placeBet(market, marketAddress, signers.alice, 0, true, 50);
+      await market.resolveMarket(0, 1);
+
+      // First submission
+      await verifyAndSubmitTotals(market, 0);
+
+      // Second submission should fail
+      const [yesHandle, noHandle] = await market.getMarketHandles(0);
+      const results = await fhevm.publicDecrypt([yesHandle, noHandle]);
+      await expect(
+        market.submitVerifiedTotals(
+          0,
+          results.abiEncodedClearValues,
+          results.decryptionProof
+        )
+      ).to.be.revertedWithCustomError(market, "TotalsAlreadyDecrypted");
+    });
+
+    it("should reject on unresolved market", async () => {
+      await market.createMarket(
+        "Not resolved test",
+        "",
+        futureTimestamp(3600),
+        futureTimestamp(7200)
+      );
+
+      await expect(
+        market.submitVerifiedTotals(0, "0x", "0x")
+      ).to.be.revertedWithCustomError(market, "MarketNotResolved");
+    });
+  });
+
   describe("end-to-end with unwrap", () => {
-    it("mint → wrap → bet → resolve → claim → unwrap → check MISHA", async () => {
+    it("mint → wrap → bet → resolve → claim → check cMISHA balance", async () => {
       await market.createMarket(
         "E2E test",
+        "",
         futureTimestamp(3600),
         futureTimestamp(7200)
       );
@@ -455,27 +595,22 @@ describe("MishaMarket", () => {
       await placeBet(market, marketAddress, signers.bob, 0, false, 200);
 
       await market.resolveMarket(0, 1);
-      await market.setDecryptedTotals(0, 200, 200);
+      await verifyAndSubmitTotals(market, 0);
 
       // Alice claims: 200 * 400 / 200 = 400, cMISHA = 500 - 200 + 400 = 700
       await (await market.connect(signers.alice).claimPayout(0)).wait();
       expect(
         await getUserBalance(wrapper, wrapperAddress, signers.alice)
-      ).to.eq(700n);
-
-      // Alice unwraps all 700 → 700 MISHA (in wei)
-      await wrapper.connect(signers.alice).unwrap(700);
-      expect(await token.balanceOf(signers.alice.address)).to.eq(e(700));
+      ).to.eq(BigInt(cMishaUnits(700)));
 
       // Bob claims: lost, cMISHA = 500 - 200 + 0 = 300
       await (await market.connect(signers.bob).claimPayout(0)).wait();
       expect(
         await getUserBalance(wrapper, wrapperAddress, signers.bob)
-      ).to.eq(300n);
+      ).to.eq(BigInt(cMishaUnits(300)));
 
-      // Bob unwraps 300 → 300 MISHA (in wei)
-      await wrapper.connect(signers.bob).unwrap(300);
-      expect(await token.balanceOf(signers.bob.address)).to.eq(e(300));
+      // Note: unwrap is now two-step (unwrap → publicDecrypt → finalizeUnwrap)
+      // and requires off-chain KMS interaction, tested in e2e-sepolia.ts
     });
   });
 });

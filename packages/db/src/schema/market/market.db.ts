@@ -1,19 +1,16 @@
 import {
   type BetId,
   type MarketId,
-  type MediaId,
-  type SettlementBatchId,
   typeIdGenerator,
-  type UserBalanceId,
   type UserId,
 } from "@yoda.fun/shared/typeid";
 import {
+  boolean,
   integer,
-  jsonb,
-  numeric,
   pgEnum,
   pgTable,
   text,
+  timestamp,
   unique,
 } from "drizzle-orm/pg-core";
 import {
@@ -38,19 +35,11 @@ export const marketResultEnum = pgEnum("market_result", [
   "INVALID",
 ]);
 
-export const betVoteEnum = pgEnum("bet_vote", ["YES", "NO", "SKIP"]);
-
 export const betStatusEnum = pgEnum("bet_status", [
   "ACTIVE",
   "WON",
   "LOST",
   "REFUNDED",
-]);
-
-export const settlementStatusEnum = pgEnum("settlement_status", [
-  "PENDING",
-  "SETTLED",
-  "FAILED",
 ]);
 
 // Tables
@@ -60,40 +49,24 @@ export const market = pgTable("market", {
     .$defaultFn(() => typeIdGenerator("market"))
     .$type<MarketId>(),
   title: text("title").notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   imageUrl: text("image_url"),
   thumbnailUrl: text("thumbnail_url"),
-  mediaId: typeId("media", "media_id").$type<MediaId>(),
   category: text("category"),
   tags: text("tags").array(),
   status: marketStatusEnum("status").notNull().default("PROCESSING"),
+  result: marketResultEnum("result"),
   votingEndsAt: createTimestampField("voting_ends_at").notNull(),
   resolutionDeadline: createTimestampField("resolution_deadline").notNull(),
-  betAmount: numeric("bet_amount", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0.10"),
-  totalYesVotes: integer("total_yes_votes").notNull().default(0),
-  totalNoVotes: integer("total_no_votes").notNull().default(0),
-  totalPool: numeric("total_pool", { precision: 12, scale: 2 })
-    .notNull()
-    .default("0.00"),
-  result: marketResultEnum("result"),
-  createdById: typeId("user", "created_by_id")
-    .references(() => user.id, { onDelete: "set null" })
-    .$type<UserId>(),
   resolvedAt: createTimestampField("resolved_at"),
   resolutionCriteria: text("resolution_criteria"),
-  resolutionSources:
-    jsonb("resolution_sources").$type<
-      Array<{ url: string; snippet: string }>
-    >(),
-  resolutionConfidence: integer("resolution_confidence"),
-  resolutionReasoning: text("resolution_reasoning"),
-  resolutionError: text("resolution_error"),
-  resolutionFailedAt: createTimestampField("resolution_failed_at"),
-  // On-chain (FHEVM) tracking
-  onChainMarketId: integer("on_chain_market_id"),
-  onChainTxHash: text("on_chain_tx_hash"),
+  // On-chain (FHEVM) — required for all markets
+  onChainMarketId: integer("on_chain_market_id").notNull(),
+  onChainTxHash: text("on_chain_tx_hash").notNull(),
+  metadataUri: text("metadata_uri"),
+  // Decrypted totals (from TotalsDecrypted event)
+  decryptedYesTotal: integer("decrypted_yes_total"),
+  decryptedNoTotal: integer("decrypted_no_total"),
   ...baseEntityFields,
 });
 
@@ -104,52 +77,29 @@ export const bet = pgTable(
       .primaryKey()
       .$defaultFn(() => typeIdGenerator("bet"))
       .$type<BetId>(),
+    userAddress: text("user_address").notNull(),
     userId: typeId("user", "user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" })
+      .references(() => user.id, { onDelete: "set null" })
       .$type<UserId>(),
     marketId: typeId("market", "market_id")
       .notNull()
       .references(() => market.id, { onDelete: "cascade" })
       .$type<MarketId>(),
-    vote: betVoteEnum("vote").notNull(),
-    // Points-based: YES/NO costs 3, SKIP costs 0-1
-    pointsSpent: integer("points_spent").notNull().default(0),
-    pointsReturned: integer("points_returned").default(0),
+    onChainTxHash: text("on_chain_tx_hash").notNull(),
+    claimed: boolean("claimed").notNull().default(false),
     status: betStatusEnum("status").notNull().default("ACTIVE"),
-    // On-chain (FHEVM) tracking
-    onChainTxHash: text("on_chain_tx_hash"),
-    onChainBetAmount: integer("on_chain_bet_amount"),
-    // Settlement tracking
-    settlementStatus: settlementStatusEnum("settlement_status")
-      .notNull()
-      .default("PENDING"),
-    settledAt: createTimestampField("settled_at"),
-    settlementBatchId: typeId(
-      "settlementBatch",
-      "settlement_batch_id"
-    ).$type<SettlementBatchId>(),
     ...baseEntityFields,
   },
   (table) => [
-    // Each user can only bet once per market
-    unique("unique_user_market_bet").on(table.userId, table.marketId),
+    unique("unique_user_market_bet").on(table.userAddress, table.marketId),
   ]
 );
 
-export const userBalance = pgTable("user_balance", {
-  id: typeId("userBalance", "id")
-    .primaryKey()
-    .$defaultFn(() => typeIdGenerator("userBalance"))
-    .$type<UserBalanceId>(),
-  userId: typeId("user", "user_id")
+// Indexer state — tracks last indexed block for event sync
+export const indexerState = pgTable("indexer_state", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .unique()
-    .references(() => user.id, { onDelete: "cascade" })
-    .$type<UserId>(),
-  // Points-based economy (integer, not decimal)
-  points: integer("points").notNull().default(0),
-  // Track total points purchased with USDC for analytics
-  totalPointsPurchased: integer("total_points_purchased").notNull().default(0),
-  ...baseEntityFields,
+    .defaultNow(),
 });

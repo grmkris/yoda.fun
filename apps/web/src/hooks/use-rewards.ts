@@ -38,12 +38,9 @@ export function useApplyReferralCode() {
     mutationFn: async (code: string) =>
       client.reward.applyReferralCode({ code }),
     onSuccess: () => {
-      toast.success("Referral code applied! +10 bonus points");
+      toast.success("Referral code applied!");
       queryClient.invalidateQueries({
         queryKey: orpc.reward.getSummary.queryOptions({ input: {} }).queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.points.get.queryOptions({ input: {} }).queryKey,
       });
     },
     onError: (error) => {

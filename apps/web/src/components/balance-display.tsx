@@ -1,8 +1,8 @@
 "use client";
 
-import { Coins } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { Coins, Loader2, Lock } from "lucide-react";
 import { useState } from "react";
+import { formatUnits } from "viem";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import {
   Sheet,
@@ -11,11 +11,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCmishaBalance } from "@/hooks/use-cmisha-balance";
+import { useDecryptCmisha } from "@/hooks/use-decrypt-cmisha";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { usePoints } from "@/hooks/use-points";
-import { useClaimableRewards } from "@/hooks/use-rewards";
-import { DailyStreakCard } from "./rewards/daily-streak-card";
+import { useMishaBalance } from "@/hooks/use-misha-balance";
 import { ReferralCard } from "./rewards/referral-card";
+import { WrapUnwrap } from "./token/wrap-unwrap";
 
 function RewardsHeader() {
   return (
@@ -41,27 +42,39 @@ function RewardsHeader() {
 function RewardsContent() {
   return (
     <div className="space-y-4">
-      <DailyStreakCard />
+      <WrapUnwrap />
       <ReferralCard />
     </div>
   );
 }
 
 export function PointsDisplay() {
-  const { data, isLoading, error } = usePoints();
-  const { data: rewards } = useClaimableRewards();
+  const { data: mishaBalance, isLoading } = useMishaBalance();
+  const { data: cmishaHandle } = useCmishaBalance();
+  const { decryptedBalance, decrypt, isDecrypting, hasHandle } =
+    useDecryptCmisha();
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
-
-  const hasRewards = (rewards?.count ?? 0) > 0 || data?.canClaimDaily;
 
   if (isLoading) {
     return <Skeleton className="h-8 w-24 rounded-full" />;
   }
 
-  if (error || !data) {
-    return null;
-  }
+  const formatted =
+    mishaBalance != null
+      ? Number(formatUnits(mishaBalance, 18)).toLocaleString("en-US", {
+          maximumFractionDigits: 0,
+        })
+      : "0";
+
+  const cmishaFormatted =
+    decryptedBalance != null
+      ? Number(formatUnits(decryptedBalance, 6)).toLocaleString("en-US", {
+          maximumFractionDigits: 0,
+        })
+      : null;
+
+  const showCmisha = hasHandle || cmishaHandle != null;
 
   return (
     <>
@@ -69,15 +82,9 @@ export function PointsDisplay() {
         className="group relative flex items-center gap-1.5 rounded-full px-2 py-1 transition-all duration-200"
         onClick={() => setOpen(true)}
         style={{
-          background: hasRewards
-            ? "linear-gradient(135deg, oklch(0.15 0.06 75 / 90%), oklch(0.12 0.04 60 / 90%))"
-            : "oklch(0.12 0.02 270 / 80%)",
-          border: hasRewards
-            ? "1px solid oklch(0.75 0.14 75 / 50%)"
-            : "1px solid oklch(0.65 0.25 290 / 25%)",
-          boxShadow: hasRewards
-            ? "0 0 16px oklch(0.75 0.14 75 / 25%), inset 0 1px 0 oklch(1 0 0 / 10%)"
-            : "inset 0 1px 0 oklch(1 0 0 / 5%)",
+          background: "oklch(0.12 0.02 270 / 80%)",
+          border: "1px solid oklch(0.65 0.25 290 / 25%)",
+          boxShadow: "inset 0 1px 0 oklch(1 0 0 / 5%)",
         }}
         type="button"
       >
@@ -90,39 +97,48 @@ export function PointsDisplay() {
             className="font-semibold text-xs tabular-nums"
             style={{ color: "oklch(0.92 0.03 85)" }}
           >
-            {data.points.toLocaleString()}
+            {formatted} MISHA
           </span>
         </span>
-
-        {data.freeSkipsRemaining > 0 && (
-          <span
-            className="text-[10px]"
-            style={{ color: "oklch(0.55 0.02 270)" }}
-            title={`${data.freeSkipsRemaining} free skips remaining today`}
-          >
-            · {data.freeSkipsRemaining}
-          </span>
-        )}
-
-        <AnimatePresence>
-          {hasRewards && (
-            <motion.span
-              animate={{ scale: 1, opacity: 1 }}
-              className="relative flex h-2 w-2"
-              exit={{ scale: 0, opacity: 0 }}
-              initial={{ scale: 0, opacity: 0 }}
+        {showCmisha && (
+          <>
+            <span
+              className="text-xs"
+              style={{ color: "oklch(0.5 0 270 / 50%)" }}
             >
+              |
+            </span>
+            {cmishaFormatted != null ? (
               <span
-                className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                style={{ background: "oklch(0.75 0.14 75)" }}
-              />
-              <span
-                className="relative inline-flex h-2 w-2 rounded-full"
-                style={{ background: "oklch(0.82 0.14 75)" }}
-              />
-            </motion.span>
-          )}
-        </AnimatePresence>
+                className="font-semibold text-xs tabular-nums"
+                style={{ color: "oklch(0.85 0.12 180)" }}
+              >
+                {cmishaFormatted} cMISHA
+              </span>
+            ) : (
+              <button
+                className="flex items-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  decrypt();
+                }}
+                type="button"
+              >
+                {isDecrypting ? (
+                  <Loader2
+                    className="h-3 w-3 animate-spin"
+                    style={{ color: "oklch(0.7 0.1 180)" }}
+                  />
+                ) : (
+                  <Lock
+                    className="h-3 w-3 transition-colors hover:opacity-80"
+                    style={{ color: "oklch(0.7 0.1 180)" }}
+                  />
+                )}
+              </button>
+            )}
+          </>
+        )}
       </button>
 
       {isMobile ? (

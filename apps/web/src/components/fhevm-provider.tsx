@@ -1,6 +1,10 @@
 "use client";
 
-import { FHEVM_CONFIG } from "@yoda.fun/fhevm/sdk";
+import {
+  FHEVM_CONFIG,
+  type FhevmInstance,
+  createFhevmInstance,
+} from "@yoda.fun/fhevm/sdk";
 import {
   createContext,
   useContext,
@@ -9,20 +13,6 @@ import {
   useState,
 } from "react";
 import { useAccount, useWalletClient } from "wagmi";
-
-interface FhevmInstance {
-  createEncryptedInput(
-    contractAddress: string,
-    userAddress: string
-  ): {
-    addBool(value: boolean): unknown;
-    add64(value: number | bigint): unknown;
-    encrypt(): Promise<{
-      handles: Uint8Array[];
-      inputProof: Uint8Array;
-    }>;
-  };
-}
 
 interface FhevmContextValue {
   instance: FhevmInstance | null;
@@ -57,13 +47,10 @@ export function FhevmProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       setIsInitializing(true);
       try {
-        // Dynamic import to avoid SSR issues
-        const { RelayerClient } = await import("@zama-fhe/relayer-sdk");
-        const client = new RelayerClient();
-        await client.init();
+        const client = await createFhevmInstance();
 
         if (!cancelled) {
-          setInstance(client as unknown as FhevmInstance);
+          setInstance(client);
         }
       } catch (error) {
         console.error("Failed to initialize FHEVM:", error);

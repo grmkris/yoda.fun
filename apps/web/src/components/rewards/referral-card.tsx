@@ -18,7 +18,7 @@ export function ReferralCard() {
   const referral = data?.referral;
   const code = referral?.code ?? "";
   const count = referral?.count ?? 0;
-  const earnings = referral?.earnings ?? 0;
+  const earnings = 0; // Referral earnings not yet implemented
 
   const inviteUrl =
     typeof window !== "undefined" && code

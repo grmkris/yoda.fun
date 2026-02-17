@@ -33,12 +33,6 @@ export const idTypesMapNameToPrefix = {
   referral: "ref",
   dailyState: "dly",
 
-  // observability
-  aiEvent: "aie",
-
-  // erc8004
-  agentIdentity: "agi",
-  agentFeedback: "afb",
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -172,13 +166,3 @@ export type ReferralId = z.infer<typeof ReferralId>;
 export const DailyStateId = typeIdValidator("dailyState");
 export type DailyStateId = z.infer<typeof DailyStateId>;
 
-// Observability types
-export const AiEventId = typeIdValidator("aiEvent");
-export type AiEventId = z.infer<typeof AiEventId>;
-
-// ERC-8004 types
-export const AgentIdentityId = typeIdValidator("agentIdentity");
-export type AgentIdentityId = z.infer<typeof AgentIdentityId>;
-
-export const AgentFeedbackId = typeIdValidator("agentFeedback");
-export type AgentFeedbackId = z.infer<typeof AgentFeedbackId>;

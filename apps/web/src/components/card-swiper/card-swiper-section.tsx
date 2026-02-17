@@ -42,12 +42,16 @@ export function CardSwiperSection() {
     }
   }, [remaining, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleSwipe = (card: MarketCard, vote: "YES" | "NO" | "SKIP") => {
+  const handleSwipe = (card: MarketCard, vote: "YES" | "NO") => {
     setSwipedCount((prev) => prev + 1);
     setSelectedCard(null);
 
     placeBet.mutate(
-      { marketId: card.id, vote },
+      {
+        marketId: card.id,
+        vote,
+        onChainMarketId: card.onChainMarketId,
+      },
       {
         onError: () => {
           setSwipedCount((prev) => prev - 1);
@@ -64,7 +68,7 @@ export function CardSwiperSection() {
     card: MarketCard,
     direction: SwipeDirection
   ) => {
-    const voteMap = { left: "NO", right: "YES", down: "SKIP" } as const;
+    const voteMap = { left: "NO", right: "YES" } as const;
     handleSwipe(card, voteMap[direction]);
   };
 
@@ -75,10 +79,6 @@ export function CardSwiperSection() {
 
   const handleVoteNo = () => {
     stackRef.current?.swipeLeft();
-  };
-
-  const handleSkip = () => {
-    stackRef.current?.swipeDown();
   };
 
   if (isLoading) {
@@ -154,7 +154,6 @@ export function CardSwiperSection() {
               card={selectedCard}
               isOpen={!!selectedCard}
               onClose={() => setSelectedCard(null)}
-              onSkip={handleSkip}
               onVoteNo={handleVoteNo}
               onVoteYes={handleVoteYes}
             />

@@ -57,8 +57,8 @@ export function CardFront({ card }: CardFrontProps) {
         {/* Card Content */}
         <div className="absolute right-0 bottom-0 left-0 p-6">
           {/* Top badges row */}
-          <div className="mb-4 flex items-center justify-between">
-            {card.category ? (
+          {card.category ? (
+            <div className="mb-4">
               <div
                 className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-heading font-medium text-xs backdrop-blur-md"
                 style={{
@@ -74,19 +74,8 @@ export function CardFront({ card }: CardFrontProps) {
                 />
                 {card.category}
               </div>
-            ) : null}
-            <div
-              className="rounded-full px-4 py-1.5 font-accent font-bold text-sm tracking-wide"
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.72 0.18 175), oklch(0.65 0.16 180))",
-                color: "oklch(0.08 0.02 175)",
-                boxShadow: "0 0 20px oklch(0.72 0.18 175 / 30%)",
-              }}
-            >
-              ${card.betAmount}
             </div>
-          </div>
+          ) : null}
 
           {/* Title */}
           <h3

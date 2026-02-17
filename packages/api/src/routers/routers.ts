@@ -1,12 +1,10 @@
 import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../api";
-import { agentRouter } from "./agent-router";
+import { adminRouter } from "./admin-router";
 import { betRouter } from "./bet-router";
-import { faucetRouter } from "./faucet-router";
 import { followRouter } from "./follow-router";
 import { leaderboardRouter } from "./leaderboard-router";
 import { marketRouter } from "./market-router";
-import { pointsRouter } from "./points-router";
 import { profileRouter } from "./profile-router";
 import { rewardRouter } from "./reward-router";
 
@@ -18,13 +16,11 @@ export const appRouter = {
   })),
   market: marketRouter,
   bet: betRouter,
-  points: pointsRouter,
   leaderboard: leaderboardRouter,
   profile: profileRouter,
   follow: followRouter,
   reward: rewardRouter,
-  agent: agentRouter,
-  faucet: faucetRouter,
+  admin: adminRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

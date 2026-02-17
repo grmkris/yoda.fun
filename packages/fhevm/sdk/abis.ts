@@ -121,10 +121,11 @@ export const mishaTokenAbi = [
 
 export const confidentialMishaAbi = [
   {
-    inputs: [{ name: "_underlying", type: "address" }],
+    inputs: [{ name: "token", type: "address" }],
     stateMutability: "nonpayable",
     type: "constructor",
   },
+  // --- Errors ---
   {
     inputs: [
       { name: "handle", type: "bytes32" },
@@ -134,15 +135,21 @@ export const confidentialMishaAbi = [
     type: "error",
   },
   { inputs: [], name: "ZamaProtocolUnsupported", type: "error" },
-  { inputs: [], name: "ZeroAddress", type: "error" },
-  { inputs: [], name: "ZeroAmount", type: "error" },
+  {
+    inputs: [{ name: "amount", type: "bytes32" }],
+    name: "InvalidUnwrapRequest",
+    type: "error",
+  },
+  { inputs: [], name: "ERC7984TotalSupplyOverflow", type: "error" },
+  // --- Events ---
   {
     anonymous: false,
     inputs: [
-      { indexed: true, name: "owner", type: "address" },
-      { indexed: true, name: "spender", type: "address" },
+      { indexed: true, name: "holder", type: "address" },
+      { indexed: true, name: "operator", type: "address" },
+      { indexed: false, name: "until", type: "uint48" },
     ],
-    name: "Approval",
+    name: "OperatorSet",
     type: "event",
   },
   {
@@ -150,70 +157,40 @@ export const confidentialMishaAbi = [
     inputs: [
       { indexed: true, name: "from", type: "address" },
       { indexed: true, name: "to", type: "address" },
+      { indexed: true, name: "amount", type: "bytes32" },
     ],
-    name: "Transfer",
+    name: "ConfidentialTransfer",
     type: "event",
   },
   {
     anonymous: false,
     inputs: [
-      { indexed: true, name: "user", type: "address" },
-      { indexed: false, name: "amount", type: "uint256" },
+      { indexed: true, name: "encryptedAmount", type: "bytes32" },
+      { indexed: false, name: "amount", type: "uint64" },
     ],
-    name: "Unwrap",
+    name: "AmountDisclosed",
     type: "event",
   },
   {
     anonymous: false,
     inputs: [
-      { indexed: true, name: "user", type: "address" },
-      { indexed: false, name: "amount", type: "uint256" },
+      { indexed: true, name: "receiver", type: "address" },
+      { indexed: false, name: "amount", type: "bytes32" },
     ],
-    name: "Wrap",
+    name: "UnwrapRequested",
     type: "event",
   },
   {
-    inputs: [],
-    name: "SCALING_FACTOR",
-    outputs: [{ name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
+    anonymous: false,
     inputs: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
+      { indexed: true, name: "receiver", type: "address" },
+      { indexed: false, name: "encryptedAmount", type: "bytes32" },
+      { indexed: false, name: "cleartextAmount", type: "uint64" },
     ],
-    name: "allowance",
-    outputs: [{ name: "", type: "bytes32" }],
-    stateMutability: "view",
-    type: "function",
+    name: "UnwrapFinalized",
+    type: "event",
   },
-  {
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "encryptedAmount", type: "bytes32" },
-      { name: "inputProof", type: "bytes" },
-    ],
-    name: "approve",
-    outputs: [{ name: "", type: "bool" }],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "account", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ name: "", type: "bytes32" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "decimals",
-    outputs: [{ name: "", type: "uint8" }],
-    stateMutability: "view",
-    type: "function",
-  },
+  // --- Metadata ---
   {
     inputs: [],
     name: "name",
@@ -229,13 +206,63 @@ export const confidentialMishaAbi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "decimals",
+    outputs: [{ name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "contractURI",
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  // --- Balance & Supply ---
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name: "confidentialBalanceOf",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "confidentialTotalSupply",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  // --- Operators ---
+  {
+    inputs: [
+      { name: "operator", type: "address" },
+      { name: "until", type: "uint48" },
+    ],
+    name: "setOperator",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "holder", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    name: "isOperator",
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  // --- Wrap / Unwrap ---
+  {
     inputs: [
       { name: "to", type: "address" },
-      { name: "encryptedAmount", type: "bytes32" },
-      { name: "inputProof", type: "bytes" },
+      { name: "amount", type: "uint256" },
     ],
-    name: "transfer",
-    outputs: [{ name: "", type: "bool" }],
+    name: "wrap",
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
@@ -246,8 +273,75 @@ export const confidentialMishaAbi = [
       { name: "encryptedAmount", type: "bytes32" },
       { name: "inputProof", type: "bytes" },
     ],
-    name: "transferFrom",
-    outputs: [{ name: "", type: "bool" }],
+    name: "unwrap",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "unwrapAmount", type: "bytes32" },
+      { name: "unwrapAmountCleartext", type: "uint64" },
+      { name: "decryptionProof", type: "bytes" },
+    ],
+    name: "finalizeUnwrap",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  // --- Wrapper info ---
+  {
+    inputs: [],
+    name: "underlying",
+    outputs: [{ name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "rate",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "inferredTotalSupply",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  // --- Confidential Transfers ---
+  {
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "encryptedAmount", type: "bytes32" },
+      { name: "inputProof", type: "bytes" },
+    ],
+    name: "confidentialTransfer",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "bytes32" },
+    ],
+    name: "confidentialTransfer",
+    outputs: [{ name: "", type: "bytes32" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "encryptedAmount", type: "bytes32" },
+      { name: "inputProof", type: "bytes" },
+    ],
+    name: "confidentialTransferFrom",
+    outputs: [{ name: "", type: "bytes32" }],
     stateMutability: "nonpayable",
     type: "function",
   },
@@ -257,30 +351,17 @@ export const confidentialMishaAbi = [
       { name: "to", type: "address" },
       { name: "amount", type: "bytes32" },
     ],
-    name: "transferInternal",
-    outputs: [],
+    name: "confidentialTransferFrom",
+    outputs: [{ name: "", type: "bytes32" }],
     stateMutability: "nonpayable",
     type: "function",
   },
+  // --- ERC-165 ---
   {
-    inputs: [],
-    name: "underlying",
-    outputs: [{ name: "", type: "address" }],
+    inputs: [{ name: "interfaceId", type: "bytes4" }],
+    name: "supportsInterface",
+    outputs: [{ name: "", type: "bool" }],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "amount", type: "uint256" }],
-    name: "unwrap",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [{ name: "amount", type: "uint256" }],
-    name: "wrap",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
 ] as const;
@@ -307,6 +388,7 @@ export const mishaMarketAbi = [
     name: "SenderNotAllowedToUseHandle",
     type: "error",
   },
+  { inputs: [], name: "TotalsAlreadyDecrypted", type: "error" },
   { inputs: [], name: "TotalsNotDecrypted", type: "error" },
   { inputs: [], name: "VotingEnded", type: "error" },
   { inputs: [], name: "VotingNotEnded", type: "error" },
@@ -325,6 +407,7 @@ export const mishaMarketAbi = [
     inputs: [
       { indexed: true, name: "marketId", type: "uint256" },
       { indexed: false, name: "title", type: "string" },
+      { indexed: false, name: "metadataUri", type: "string" },
       { indexed: false, name: "votingEndsAt", type: "uint64" },
       { indexed: false, name: "resolutionDeadline", type: "uint64" },
     ],
@@ -376,6 +459,7 @@ export const mishaMarketAbi = [
   {
     inputs: [
       { name: "title", type: "string" },
+      { name: "metadataUri", type: "string" },
       { name: "votingEndsAt", type: "uint64" },
       { name: "resolutionDeadline", type: "uint64" },
     ],
@@ -389,6 +473,7 @@ export const mishaMarketAbi = [
     name: "getMarket",
     outputs: [
       { name: "title", type: "string" },
+      { name: "metadataUri", type: "string" },
       { name: "votingEndsAt", type: "uint64" },
       { name: "resolutionDeadline", type: "uint64" },
       { name: "status", type: "uint8" },
@@ -397,6 +482,16 @@ export const mishaMarketAbi = [
       { name: "decryptedYesTotal", type: "uint64" },
       { name: "decryptedNoTotal", type: "uint64" },
       { name: "totalsDecrypted", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ name: "marketId", type: "uint256" }],
+    name: "getMarketHandles",
+    outputs: [
+      { name: "yesHandle", type: "bytes32" },
+      { name: "noHandle", type: "bytes32" },
     ],
     stateMutability: "view",
     type: "function",
@@ -448,10 +543,10 @@ export const mishaMarketAbi = [
   {
     inputs: [
       { name: "marketId", type: "uint256" },
-      { name: "yesTotal", type: "uint64" },
-      { name: "noTotal", type: "uint64" },
+      { name: "abiEncodedCleartexts", type: "bytes" },
+      { name: "decryptionProof", type: "bytes" },
     ],
-    name: "setDecryptedTotals",
+    name: "submitVerifiedTotals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

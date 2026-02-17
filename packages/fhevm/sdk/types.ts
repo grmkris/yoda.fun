@@ -13,6 +13,7 @@ export enum MarketResult {
 
 export interface MarketView {
   title: string;
+  metadataUri: string;
   votingEndsAt: bigint;
   resolutionDeadline: bigint;
   status: MarketStatus;

@@ -22,7 +22,6 @@ interface CardDetailsSheetProps {
   onClose: () => void;
   onVoteYes: () => void;
   onVoteNo: () => void;
-  onSkip: () => void;
 }
 
 export function CardDetailsSheet({
@@ -31,7 +30,6 @@ export function CardDetailsSheet({
   onClose,
   onVoteYes,
   onVoteNo,
-  onSkip,
 }: CardDetailsSheetProps) {
   const isMobile = useIsMobile();
 
@@ -50,7 +48,6 @@ export function CardDetailsSheet({
           <GameCardBack
             card={card}
             inSheet
-            onSkip={onSkip}
             onVoteNo={onVoteNo}
             onVoteYes={onVoteYes}
           />
@@ -67,7 +64,6 @@ export function CardDetailsSheet({
           <GameCardBack
             card={card}
             inSheet
-            onSkip={onSkip}
             onVoteNo={onVoteNo}
             onVoteYes={onVoteYes}
           />

@@ -1,23 +1,13 @@
-interface RelayerInstance {
-  createEncryptedInput(
-    contractAddress: string,
-    userAddress: string
-  ): {
-    addBool(value: boolean): unknown;
-    add64(value: number | bigint): unknown;
-    encrypt(): Promise<{
-      handles: Uint8Array[];
-      inputProof: Uint8Array;
-    }>;
-  };
-}
+import type { FhevmInstance } from "./client";
 
 /**
  * Encrypt a bet (vote + amount) for the MishaMarket contract.
  * Returns handles and proof ready to pass to placeBet().
+ *
+ * @param amount — Amount in cMISHA 6-decimal units (e.g. 100_000000 for 100 cMISHA).
  */
 export async function encryptBet(
-  instance: RelayerInstance,
+  instance: FhevmInstance,
   contractAddress: string,
   userAddress: string,
   vote: boolean,
@@ -37,9 +27,11 @@ export async function encryptBet(
 
 /**
  * Encrypt a token amount for transfer/approve operations.
+ *
+ * @param amount — Amount in cMISHA 6-decimal units (e.g. 100_000000 for 100 cMISHA).
  */
 export async function encryptAmount(
-  instance: RelayerInstance,
+  instance: FhevmInstance,
   contractAddress: string,
   userAddress: string,
   amount: number

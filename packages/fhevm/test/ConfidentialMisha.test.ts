@@ -7,6 +7,13 @@ import { ethers, fhevm } from "hardhat";
 /// Convert whole tokens to wei (18 decimals)
 const e = (n: number) => ethers.parseEther(n.toString());
 
+/// cMISHA has 6 decimals, rate = 1e12
+const CMISHA_DECIMALS = 6;
+const cMishaUnits = (n: number) => n * 10 ** CMISHA_DECIMALS;
+
+/// ERC-7984 max uint48 for operator approval
+const MAX_UINT48 = 281474976710655;
+
 interface Signers {
   deployer: HardhatEthersSigner;
   alice: HardhatEthersSigner;
@@ -32,7 +39,7 @@ async function getEncryptedBalance(
   wrapperAddress: string,
   user: HardhatEthersSigner
 ): Promise<bigint> {
-  const encBalance = await wrapper.connect(user).balanceOf(user.address);
+  const encBalance = await wrapper.connect(user).confidentialBalanceOf(user.address);
   if (encBalance === ethers.ZeroHash) return 0n;
   return fhevm.userDecryptEuint(
     FhevmType.euint64,
@@ -42,7 +49,7 @@ async function getEncryptedBalance(
   );
 }
 
-describe("ConfidentialMisha (Wrapper)", () => {
+describe("ConfidentialMisha (ERC-7984 Wrapper)", () => {
   let signers: Signers;
   let token: MishaToken;
   let wrapper: ConfidentialMisha;
@@ -61,126 +68,52 @@ describe("ConfidentialMisha (Wrapper)", () => {
     ({ token, wrapper, wrapperAddress } = await deployFixture());
   });
 
+  describe("metadata", () => {
+    it("should have correct name, symbol, decimals", async () => {
+      expect(await wrapper.name()).to.eq("Confidential Misha");
+      expect(await wrapper.symbol()).to.eq("cMISHA");
+      expect(await wrapper.decimals()).to.eq(6);
+    });
+
+    it("should have rate = 1e12", async () => {
+      expect(await wrapper.rate()).to.eq(BigInt(1e12));
+    });
+
+    it("should point to underlying MishaToken", async () => {
+      const tokenAddress = await token.getAddress();
+      expect(await wrapper.underlying()).to.eq(tokenAddress);
+    });
+  });
+
   describe("wrap", () => {
     it("should lock MISHA and mint encrypted cMISHA", async () => {
       // Mint 1000 MISHA (wei) to alice
       await token.mint(signers.alice.address, e(1000));
       // Alice approves wrapper for 1000 MISHA (wei)
       await token.connect(signers.alice).approve(wrapperAddress, e(1000));
-      // Alice wraps 500 whole tokens
-      await wrapper.connect(signers.alice).wrap(500);
+      // Alice wraps 500 MISHA — wrap(to, weiAmount)
+      await wrapper.connect(signers.alice).wrap(signers.alice.address, e(500));
 
       // Standard MISHA balance should decrease by 500 tokens worth of wei
       expect(await token.balanceOf(signers.alice.address)).to.eq(e(500));
       // Wrapper should hold 500 tokens worth of wei
       expect(await token.balanceOf(wrapperAddress)).to.eq(e(500));
 
-      // Encrypted cMISHA balance = 500 (whole tokens)
+      // Encrypted cMISHA balance = 500_000000 (6-decimal units)
       const encBalance = await getEncryptedBalance(
         wrapper,
         wrapperAddress,
         signers.alice
       );
-      expect(encBalance).to.eq(500n);
-    });
-
-    it("should reject wrap of zero amount", async () => {
-      await expect(
-        wrapper.connect(signers.alice).wrap(0)
-      ).to.be.revertedWithCustomError(wrapper, "ZeroAmount");
+      expect(encBalance).to.eq(BigInt(cMishaUnits(500)));
     });
   });
 
-  describe("unwrap", () => {
+  describe("confidentialTransfer", () => {
     beforeEach(async () => {
       await token.mint(signers.alice.address, e(1000));
       await token.connect(signers.alice).approve(wrapperAddress, e(1000));
-      await wrapper.connect(signers.alice).wrap(500);
-    });
-
-    it("should burn cMISHA and release MISHA", async () => {
-      await wrapper.connect(signers.alice).unwrap(200);
-
-      // Standard balance: e(500) + e(200) = e(700)
-      expect(await token.balanceOf(signers.alice.address)).to.eq(e(700));
-      // Wrapper holds: e(500) - e(200) = e(300)
-      expect(await token.balanceOf(wrapperAddress)).to.eq(e(300));
-
-      // Encrypted balance: 500 - 200 = 300
-      const encBalance = await getEncryptedBalance(
-        wrapper,
-        wrapperAddress,
-        signers.alice
-      );
-      expect(encBalance).to.eq(300n);
-    });
-
-    it("should reject unwrap of zero amount", async () => {
-      await expect(
-        wrapper.connect(signers.alice).unwrap(0)
-      ).to.be.revertedWithCustomError(wrapper, "ZeroAmount");
-    });
-  });
-
-  describe("full roundtrip", () => {
-    it("mint MISHA → wrap → encrypted transfer → unwrap → verify MISHA", async () => {
-      // Mint 1000 MISHA to alice
-      await token.mint(signers.alice.address, e(1000));
-      await token.connect(signers.alice).approve(wrapperAddress, e(1000));
-
-      // Alice wraps 600
-      await wrapper.connect(signers.alice).wrap(600);
-
-      // Alice transfers 200 encrypted cMISHA to bob
-      const input = fhevm.createEncryptedInput(
-        wrapperAddress,
-        signers.alice.address
-      );
-      input.add64(200);
-      const encrypted = await input.encrypt();
-
-      await (
-        await wrapper
-          .connect(signers.alice)
-          .transfer(
-            signers.bob.address,
-            encrypted.handles[0],
-            encrypted.inputProof
-          )
-      ).wait();
-
-      // Alice encrypted balance: 600 - 200 = 400
-      const aliceEnc = await getEncryptedBalance(
-        wrapper,
-        wrapperAddress,
-        signers.alice
-      );
-      expect(aliceEnc).to.eq(400n);
-
-      // Bob encrypted balance: 200
-      const bobEnc = await getEncryptedBalance(
-        wrapper,
-        wrapperAddress,
-        signers.bob
-      );
-      expect(bobEnc).to.eq(200n);
-
-      // Bob unwraps 200 → gets 200 MISHA (wei)
-      await wrapper.connect(signers.bob).unwrap(200);
-      expect(await token.balanceOf(signers.bob.address)).to.eq(e(200));
-
-      // Alice unwraps remaining 400
-      await wrapper.connect(signers.alice).unwrap(400);
-      // Alice: e(400) not wrapped + e(400) unwrapped = e(800)
-      expect(await token.balanceOf(signers.alice.address)).to.eq(e(800));
-    });
-  });
-
-  describe("encrypted transfer", () => {
-    beforeEach(async () => {
-      await token.mint(signers.alice.address, e(1000));
-      await token.connect(signers.alice).approve(wrapperAddress, e(1000));
-      await wrapper.connect(signers.alice).wrap(1000);
+      await wrapper.connect(signers.alice).wrap(signers.alice.address, e(1000));
     });
 
     it("should transfer encrypted amount between users", async () => {
@@ -188,13 +121,13 @@ describe("ConfidentialMisha (Wrapper)", () => {
         wrapperAddress,
         signers.alice.address
       );
-      input.add64(300);
+      input.add64(cMishaUnits(300));
       const encrypted = await input.encrypt();
 
       await (
         await wrapper
           .connect(signers.alice)
-          .transfer(
+          ["confidentialTransfer(address,bytes32,bytes)"](
             signers.bob.address,
             encrypted.handles[0],
             encrypted.inputProof
@@ -206,57 +139,48 @@ describe("ConfidentialMisha (Wrapper)", () => {
         wrapperAddress,
         signers.alice
       );
-      expect(aliceBalance).to.eq(700n);
+      expect(aliceBalance).to.eq(BigInt(cMishaUnits(700)));
 
       const bobBalance = await getEncryptedBalance(
         wrapper,
         wrapperAddress,
         signers.bob
       );
-      expect(bobBalance).to.eq(300n);
+      expect(bobBalance).to.eq(BigInt(cMishaUnits(300)));
     });
   });
 
-  describe("approve + transferFrom (encrypted)", () => {
+  describe("operator + confidentialTransferFrom", () => {
     beforeEach(async () => {
       await token.mint(signers.alice.address, e(1000));
       await token.connect(signers.alice).approve(wrapperAddress, e(1000));
-      await wrapper.connect(signers.alice).wrap(1000);
+      await wrapper.connect(signers.alice).wrap(signers.alice.address, e(1000));
     });
 
-    it("should approve and transferFrom with encrypted amounts", async () => {
-      const approveInput = fhevm.createEncryptedInput(
-        wrapperAddress,
-        signers.alice.address
-      );
-      approveInput.add64(200);
-      const approveEncrypted = await approveInput.encrypt();
+    it("should allow operator to transfer on behalf of holder", async () => {
+      // Alice sets bob as operator
+      await wrapper.connect(signers.alice).setOperator(signers.bob.address, MAX_UINT48);
 
-      await (
-        await wrapper
-          .connect(signers.alice)
-          .approve(
-            signers.bob.address,
-            approveEncrypted.handles[0],
-            approveEncrypted.inputProof
-          )
-      ).wait();
+      expect(
+        await wrapper.isOperator(signers.alice.address, signers.bob.address)
+      ).to.be.true;
 
-      const transferInput = fhevm.createEncryptedInput(
+      // Bob creates encrypted input for confidentialTransferFrom
+      const input = fhevm.createEncryptedInput(
         wrapperAddress,
         signers.bob.address
       );
-      transferInput.add64(150);
-      const transferEncrypted = await transferInput.encrypt();
+      input.add64(cMishaUnits(200));
+      const encrypted = await input.encrypt();
 
       await (
         await wrapper
           .connect(signers.bob)
-          .transferFrom(
+          ["confidentialTransferFrom(address,address,bytes32,bytes)"](
             signers.alice.address,
             signers.bob.address,
-            transferEncrypted.handles[0],
-            transferEncrypted.inputProof
+            encrypted.handles[0],
+            encrypted.inputProof
           )
       ).wait();
 
@@ -265,14 +189,34 @@ describe("ConfidentialMisha (Wrapper)", () => {
         wrapperAddress,
         signers.alice
       );
-      expect(aliceBalance).to.eq(850n);
+      expect(aliceBalance).to.eq(BigInt(cMishaUnits(800)));
 
       const bobBalance = await getEncryptedBalance(
         wrapper,
         wrapperAddress,
         signers.bob
       );
-      expect(bobBalance).to.eq(150n);
+      expect(bobBalance).to.eq(BigInt(cMishaUnits(200)));
+    });
+
+    it("should reject transferFrom without operator approval", async () => {
+      const input = fhevm.createEncryptedInput(
+        wrapperAddress,
+        signers.bob.address
+      );
+      input.add64(cMishaUnits(100));
+      const encrypted = await input.encrypt();
+
+      await expect(
+        wrapper
+          .connect(signers.bob)
+          ["confidentialTransferFrom(address,address,bytes32,bytes)"](
+            signers.alice.address,
+            signers.bob.address,
+            encrypted.handles[0],
+            encrypted.inputProof
+          )
+      ).to.be.reverted;
     });
   });
 });

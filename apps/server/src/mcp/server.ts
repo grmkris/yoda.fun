@@ -1,7 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createBetService } from "@yoda.fun/api/services/bet-service";
-import { createDailyService } from "@yoda.fun/api/services/daily-service";
-import { createPointsService } from "@yoda.fun/api/services/points-service";
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { and, desc, eq } from "@yoda.fun/db/drizzle";
@@ -45,19 +42,12 @@ function getScoreFromStats(
 }
 
 export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
-  const { db, logger } = deps;
-  const pointsService = createPointsService({ deps: { db, logger } });
-  const dailyService = createDailyService({
-    deps: { db, logger, pointsService },
-  });
-  const betService = createBetService({ deps: { db, logger, dailyService } });
+  const { db } = deps;
 
   const server = new McpServer({
     name: "yoda-fun",
     version: "1.0.0",
   });
-
-  // Free tools
 
   server.registerTool(
     "list_markets",
@@ -83,10 +73,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
           title: m.title,
           description: m.description,
           category: m.category,
-          betAmount: m.betAmount,
-          totalPool: m.totalPool,
-          totalYesVotes: m.totalYesVotes,
-          totalNoVotes: m.totalNoVotes,
+          onChainMarketId: m.onChainMarketId,
           votingEndsAt: m.votingEndsAt,
         })),
       };
@@ -177,115 +164,10 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
     }
   );
 
-  // Paid tools (require userId from x402)
-
-  server.registerTool(
-    "place_bet",
-    {
-      description: "Place a bet on a prediction market. Requires x402 payment.",
-      inputSchema: z.object({
-        marketId: MarketId,
-        vote: z.enum(["YES", "NO", "SKIP"]),
-      }),
-    },
-    async ({ marketId, vote }) => {
-      if (!userId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                error: "Unauthorized - x402 payment required",
-              }),
-            },
-          ],
-        };
-      }
-
-      const parsedMarketId = MarketId.parse(marketId);
-      const result = await betService.placeBet(userId, {
-        marketId: parsedMarketId,
-        vote,
-      });
-
-      if (result.isErr()) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ error: result.error.message }),
-            },
-          ],
-        };
-      }
-
-      const bet = result.value;
-
-      // SKIP votes return null (no bet record created)
-      if (!bet) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ success: true, skipped: true }, null, 2),
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                success: true,
-                betId: bet.id,
-                marketId: bet.marketId,
-                vote: bet.vote,
-                pointsSpent: bet.pointsSpent,
-                message: "Bet placed successfully",
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    }
-  );
-
-  server.registerTool(
-    "get_points",
-    {
-      description:
-        "Get your current yoda.fun points balance. Requires x402 payment.",
-    },
-    async () => {
-      if (!userId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                error: "Unauthorized - x402 payment required",
-              }),
-            },
-          ],
-        };
-      }
-
-      const points = await pointsService.getPoints(userId);
-      return {
-        content: [{ type: "text", text: JSON.stringify(points, null, 2) }],
-      };
-    }
-  );
-
   server.registerTool(
     "get_bet_history",
     {
-      description: "Get your betting history. Requires x402 payment.",
+      description: "Get betting history for a user. Requires authentication.",
       inputSchema: z.object({
         limit: z.number().optional(),
         status: z.enum(["ACTIVE", "WON", "LOST", "REFUNDED"]).optional(),
@@ -298,7 +180,7 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
             {
               type: "text",
               text: JSON.stringify({
-                error: "Unauthorized - x402 payment required",
+                error: "Unauthorized - authentication required",
               }),
             },
           ],
@@ -329,10 +211,8 @@ export function createMcpServer(deps: McpServerDeps, userId: UserId | null) {
         bets: bets.map((b) => ({
           id: b.bet.id,
           marketTitle: b.market.title,
-          vote: b.bet.vote,
-          pointsSpent: b.bet.pointsSpent,
           status: b.bet.status,
-          pointsReturned: b.bet.pointsReturned,
+          claimed: b.bet.claimed,
           createdAt: b.bet.createdAt,
         })),
       };

@@ -2,7 +2,6 @@ import {
   type ReferralId,
   type RewardClaimId,
   type RewardId,
-  type TransactionId,
   typeIdGenerator,
   type UserId,
 } from "@yoda.fun/shared/typeid";
@@ -22,7 +21,6 @@ import {
   typeId,
 } from "../../utils/db-utils";
 import { user } from "../auth/auth.db";
-import { transaction } from "../market/transaction.db";
 
 // Enums
 export const rewardTypeEnum = pgEnum("reward_type", [
@@ -103,9 +101,6 @@ export const rewardClaim = pgTable(
 
     claimedAt: createTimestampField("claimed_at"),
     expiresAt: createTimestampField("expires_at"),
-    transactionId: typeId("transaction", "transaction_id")
-      .references(() => transaction.id, { onDelete: "set null" })
-      .$type<TransactionId>(),
     ...baseEntityFields,
   },
   (table) => [

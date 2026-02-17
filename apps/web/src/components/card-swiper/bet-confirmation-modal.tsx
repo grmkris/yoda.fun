@@ -76,16 +76,15 @@ export function BetConfirmationModal({
                 className="font-heading text-sm"
                 style={{ color: "oklch(0.65 0.04 280)" }}
               >
-                Bet Amount
+                On-chain bet
               </span>
               <span
-                className="font-accent font-bold text-lg"
+                className="font-accent font-bold text-sm"
                 style={{
                   color: "oklch(0.72 0.18 175)",
-                  textShadow: "0 0 20px oklch(0.72 0.18 175 / 40%)",
                 }}
               >
-                ${market.betAmount}
+                cMISHA tokens
               </span>
             </div>
           </div>
@@ -154,7 +153,7 @@ export function BetConfirmationModal({
             }}
             variant="ghost"
           >
-            Skip this market
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -10,20 +10,21 @@
  *   1. Fund players with ETH
  *   2. Mint MISHA to players
  *   3. Players approve + wrap MISHA → cMISHA
- *   4. Admin creates a market
- *   5. Players place encrypted bets (YES/NO)
- *   6. Admin resolves market → YES
- *   7. Admin sets decrypted totals
- *   8. Winners claim payouts
- *   9. Everyone unwraps cMISHA → MISHA
+ *   4. Players set MishaMarket as operator (ERC-7984)
+ *   5. Admin creates a market
+ *   6. Players place encrypted bets (YES/NO)
+ *   7. Admin resolves market → YES
+ *   8. KMS-verified decryption → submit proof on-chain
+ *   9. Winners claim payouts
+ *  10. Final state
  *
  * Run: bun run scripts/e2e-sepolia.ts
  */
 
 import {
+  bytesToHex,
   createPublicClient,
   createWalletClient,
-  encodeFunctionData,
   formatEther,
   http,
   parseEther,
@@ -34,8 +35,10 @@ import {
   confidentialMishaAbi,
   mishaMarketAbi,
   mishaTokenAbi,
-} from "../sdk/abis";
-import { FHEVM_CONFIG } from "../sdk/config";
+  FHEVM_CONFIG,
+  createFhevmInstance,
+  encryptBet,
+} from "../sdk";
 
 const MNEMONIC = process.env.MNEMONIC!;
 const INFURA_API_KEY = process.env.INFURA_API_KEY!;
@@ -50,9 +53,11 @@ const contracts = FHEVM_CONFIG.sepolia.contracts;
 
 const PLAYER_NAMES = ["alice", "bob", "charlie", "dave", "eve"] as const;
 const MINT_AMOUNT = parseEther("1000"); // 1000 MISHA per player
-const WRAP_AMOUNT = BigInt(500); // 500 cMISHA (whole units, not wei)
-const BET_AMOUNT = BigInt(100); // 100 cMISHA per bet
-const ETH_FUND_AMOUNT = parseEther("0.005"); // gas money for FHE txs (more expensive)
+const WRAP_AMOUNT = parseEther("500"); // 500 MISHA in wei → wrap(to, weiAmount)
+const CMISHA_DECIMALS = 6;
+const BET_AMOUNT = 100 * 10 ** CMISHA_DECIMALS; // 100 cMISHA in 6-decimal units
+const ETH_FUND_AMOUNT = parseEther("0.005"); // gas money for FHE txs
+const MAX_UINT48 = 281474976710655; // 2^48 - 1
 
 // Player betting strategy: first 3 bet YES, last 2 bet NO
 const PLAYER_VOTES = [true, true, true, false, false] as const;
@@ -105,7 +110,7 @@ async function step(label: string, fn: () => Promise<void>) {
 }
 
 async function main() {
-  console.log("Misha Market — Sepolia E2E Full Flow\n");
+  console.log("Misha Market — Sepolia E2E Full Flow (ERC-7984)\n");
 
   console.log("Accounts:");
   console.log(`  admin:   ${admin.address}`);
@@ -144,7 +149,6 @@ async function main() {
   // ============================================================
   await step("Step 2: Mint MISHA to players", async () => {
     for (const p of players) {
-      // Check if already minted (idempotent reruns)
       const bal = (await publicClient.readContract({
         address: contracts.mishaToken,
         abi: mishaTokenAbi,
@@ -168,39 +172,55 @@ async function main() {
   });
 
   // ============================================================
-  // Step 3: Approve + Wrap MISHA -> cMISHA
+  // Step 3: Approve + Wrap MISHA -> cMISHA (ERC-7984 wrap(to, weiAmount))
   // ============================================================
   await step("Step 3: Approve + Wrap MISHA -> cMISHA", async () => {
     for (const p of players) {
       const playerWallet = walletFor(p.account);
-      const wrapWei = WRAP_AMOUNT * parseEther("1"); // wrap() takes whole units but needs wei approval
 
-      // Approve
+      // Approve wrapper to pull MISHA wei
       const approveHash = await playerWallet.writeContract({
         address: contracts.mishaToken,
         abi: mishaTokenAbi,
         functionName: "approve",
-        args: [contracts.confidentialMisha, wrapWei],
+        args: [contracts.confidentialMisha, WRAP_AMOUNT],
       });
       await waitTx(approveHash, `${p.name} approve`);
 
-      // Wrap
+      // Wrap: wrap(to, weiAmount)
       const wrapHash = await playerWallet.writeContract({
         address: contracts.confidentialMisha,
         abi: confidentialMishaAbi,
         functionName: "wrap",
-        args: [WRAP_AMOUNT],
+        args: [p.account.address, WRAP_AMOUNT],
       });
-      await waitTx(wrapHash, `${p.name} wrap ${WRAP_AMOUNT} -> cMISHA`);
+      await waitTx(wrapHash, `${p.name} wrap 500 MISHA -> cMISHA`);
     }
   });
 
   // ============================================================
-  // Step 4: Admin creates a market
+  // Step 4: Set MishaMarket as operator (ERC-7984)
+  // ============================================================
+  await step("Step 4: Set MishaMarket as operator", async () => {
+    for (const p of players) {
+      const playerWallet = walletFor(p.account);
+
+      const hash = await playerWallet.writeContract({
+        address: contracts.confidentialMisha,
+        abi: confidentialMishaAbi,
+        functionName: "setOperator",
+        args: [contracts.mishaMarket, MAX_UINT48],
+      });
+      await waitTx(hash, `${p.name} setOperator(mishaMarket)`);
+    }
+  });
+
+  // ============================================================
+  // Step 5: Admin creates a market
   // ============================================================
   let marketId: bigint | undefined;
 
-  await step("Step 4: Create market", async () => {
+  await step("Step 5: Create market", async () => {
     const now = BigInt(Math.floor(Date.now() / 1000));
     const votingEndsAt = now + BigInt(300); // 5 min from now
     const resolutionDeadline = now + BigInt(600); // 10 min from now
@@ -211,6 +231,7 @@ async function main() {
       functionName: "createMarket",
       args: [
         "Will Misha the cat eat tuna today?",
+        "",
         votingEndsAt,
         resolutionDeadline,
       ],
@@ -234,77 +255,51 @@ async function main() {
   }
 
   // ============================================================
-  // Step 5: Players place encrypted bets
+  // Step 6: Players place encrypted bets (amounts in 6-decimal units)
   // ============================================================
-  await step("Step 5: Place encrypted bets", async () => {
-    // Dynamic import to avoid SSR/node issues with relayer SDK
-    let RelayerClient: unknown;
-    try {
-      const mod = await import("@zama-fhe/relayer-sdk");
-      RelayerClient = mod.RelayerClient;
-    } catch {
-      console.log("  @zama-fhe/relayer-sdk not available — skipping encrypted bets");
-      console.log("  (Install it or use hardhat tests for FHE betting)");
-      return;
-    }
+  await step("Step 6: Place encrypted bets", async () => {
+    const instance = await createFhevmInstance({
+      network: RPC_URL,
+    });
 
     for (const p of players) {
       const playerWallet = walletFor(p.account);
 
-      // Init FHEVM relayer instance
-      const client = new (RelayerClient as new () => {
-        init(): Promise<void>;
-        createEncryptedInput(
-          contract: string,
-          user: string
-        ): {
-          addBool(v: boolean): unknown;
-          add64(v: number | bigint): unknown;
-          encrypt(): Promise<{
-            handles: Uint8Array[];
-            inputProof: Uint8Array;
-          }>;
-        };
-      })();
-      await client.init();
-
-      // Encrypt vote + amount
-      const input = client.createEncryptedInput(
+      const encrypted = await encryptBet(
+        instance,
         contracts.mishaMarket,
-        p.account.address
+        p.account.address,
+        p.vote,
+        BET_AMOUNT
       );
-      input.addBool(p.vote);
-      input.add64(Number(BET_AMOUNT));
-      const encrypted = await input.encrypt();
 
-      // Place bet
       const hash = await playerWallet.writeContract({
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
         functionName: "placeBet",
         args: [
           marketId!,
-          encrypted.handles[0] as unknown as `0x${string}`,
-          encrypted.handles[1] as unknown as `0x${string}`,
-          encrypted.inputProof as unknown as `0x${string}`,
+          bytesToHex(encrypted.encryptedVote),
+          bytesToHex(encrypted.encryptedAmount),
+          bytesToHex(encrypted.inputProof),
         ],
       });
-      await waitTx(hash, `${p.name} bet ${p.vote ? "YES" : "NO"} (${BET_AMOUNT} cMISHA)`);
+      await waitTx(hash, `${p.name} bet ${p.vote ? "YES" : "NO"} (100 cMISHA)`);
     }
   });
 
   // ============================================================
-  // Step 6: Read market state before resolution
+  // Step 7: Read market state before resolution
   // ============================================================
-  await step("Step 6: Market state before resolution", async () => {
+  await step("Step 7: Market state before resolution", async () => {
     const market = await publicClient.readContract({
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "getMarket",
       args: [marketId!],
     });
-    const [title, , , status, result, betCount] = market as [
-      string, bigint, bigint, number, number, number, bigint, bigint, boolean
+    const [title, , , , status, result, betCount] = market as [
+      string, string, bigint, bigint, number, number, number, bigint, bigint, boolean
     ];
     console.log(`  Title: ${title}`);
     console.log(`  Status: ${status} (0=Active)`);
@@ -313,9 +308,9 @@ async function main() {
   });
 
   // ============================================================
-  // Step 7: Resolve market -> YES
+  // Step 8: Resolve market -> YES
   // ============================================================
-  await step("Step 7: Resolve market -> YES", async () => {
+  await step("Step 8: Resolve market -> YES", async () => {
     // MarketResult.Yes = 1
     const hash = await adminWallet.writeContract({
       address: contracts.mishaMarket,
@@ -327,29 +322,41 @@ async function main() {
   });
 
   // ============================================================
-  // Step 8: Wait for decryption + set totals
+  // Step 9: Get KMS-verified decryption + submit proof on-chain
   // ============================================================
-  await step("Step 8: Set decrypted totals", async () => {
-    // In production, the gateway decrypts asynchronously.
-    // For the test, we know: 3 players bet 100 YES = 300, 2 players bet 100 NO = 200
-    const yesTotal = BigInt(300);
-    const noTotal = BigInt(200);
+  await step("Step 9: Submit verified decrypted totals", async () => {
+    // Read encrypted handles from contract
+    const handles = (await publicClient.readContract({
+      address: contracts.mishaMarket,
+      abi: mishaMarketAbi,
+      functionName: "getMarketHandles",
+      args: [marketId!],
+    })) as [`0x${string}`, `0x${string}`];
 
-    console.log(`  Setting totals: YES=${yesTotal}, NO=${noTotal}`);
+    console.log(`  YES handle: ${handles[0].slice(0, 18)}...`);
+    console.log(`  NO handle:  ${handles[1].slice(0, 18)}...`);
 
+    // Use Relayer SDK to get KMS-verified decryption
+    const instance = await createFhevmInstance({ network: RPC_URL });
+    const results = await instance.publicDecrypt(handles);
+
+    const values = Object.values(results.clearValues);
+    console.log(`  Decrypted: YES=${values[0]} NO=${values[1]}`);
+
+    // Submit verified proof on-chain (permissionless — anyone can relay)
     const hash = await adminWallet.writeContract({
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
-      functionName: "setDecryptedTotals",
-      args: [marketId!, yesTotal, noTotal],
+      functionName: "submitVerifiedTotals",
+      args: [marketId!, results.abiEncodedClearValues, results.decryptionProof],
     });
-    await waitTx(hash, "Decrypted totals set");
+    await waitTx(hash, "Verified totals submitted with KMS proof");
   });
 
   // ============================================================
-  // Step 9: Winners claim payouts
+  // Step 10: Winners claim payouts
   // ============================================================
-  await step("Step 9: Winners claim payouts", async () => {
+  await step("Step 10: Winners claim payouts", async () => {
     for (const p of players) {
       const playerWallet = walletFor(p.account);
 
@@ -364,17 +371,17 @@ async function main() {
   });
 
   // ============================================================
-  // Step 10: Final state
+  // Step 11: Final state
   // ============================================================
-  await step("Step 10: Final state", async () => {
+  await step("Step 11: Final state", async () => {
     const market = await publicClient.readContract({
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "getMarket",
       args: [marketId!],
     });
-    const [title, , , status, result, betCount, yesTotal, noTotal, decrypted] =
-      market as [string, bigint, bigint, number, number, number, bigint, bigint, boolean];
+    const [title, , , , status, result, betCount, yesTotal, noTotal, decrypted] =
+      market as [string, string, bigint, bigint, number, number, number, bigint, bigint, boolean];
     console.log(`  Title: ${title}`);
     console.log(`  Status: ${status} (1=Resolved)`);
     console.log(`  Result: ${result} (1=Yes)`);

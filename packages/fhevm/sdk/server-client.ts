@@ -1,4 +1,5 @@
 import {
+  type Hex,
   createPublicClient,
   createWalletClient,
   http,
@@ -34,6 +35,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
     /// Create a prediction market on-chain
     async createMarket(
       title: string,
+      metadataUri: string,
       votingEndsAt: bigint,
       resolutionDeadline: bigint
     ): Promise<{ marketId: bigint; txHash: `0x${string}` }> {
@@ -42,7 +44,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
         functionName: "createMarket",
-        args: [title, votingEndsAt, resolutionDeadline],
+        args: [title, metadataUri, votingEndsAt, resolutionDeadline],
       });
 
       const hash = await walletClient.writeContract(request);
@@ -88,25 +90,25 @@ export function createFhevmClient(config: FhevmClientConfig) {
       return hash;
     },
 
-    /// Submit decrypted pool totals after Zama coprocessor decryption
-    async setDecryptedTotals(
+    /// Submit KMS-verified decrypted totals (permissionless, verifies KMS proof on-chain)
+    async submitVerifiedTotals(
       marketId: bigint,
-      yesTotal: bigint,
-      noTotal: bigint
+      abiEncodedCleartexts: `0x${string}`,
+      decryptionProof: `0x${string}`
     ): Promise<`0x${string}`> {
       const { request } = await publicClient.simulateContract({
         account,
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
-        functionName: "setDecryptedTotals",
-        args: [marketId, yesTotal, noTotal],
+        functionName: "submitVerifiedTotals",
+        args: [marketId, abiEncodedCleartexts, decryptionProof],
       });
 
       const hash = await walletClient.writeContract(request);
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
       if (receipt.status === "reverted") {
-        throw new Error(`setDecryptedTotals reverted: ${hash}`);
+        throw new Error(`submitVerifiedTotals reverted: ${hash}`);
       }
 
       return hash;
@@ -148,6 +150,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
 
       const [
         title,
+        metadataUri,
         votingEndsAt,
         resolutionDeadline,
         status,
@@ -160,6 +163,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
 
       return {
         title,
+        metadataUri,
         votingEndsAt,
         resolutionDeadline,
         status,
@@ -190,6 +194,104 @@ export function createFhevmClient(config: FhevmClientConfig) {
       });
 
       return { vote, amount, exists, claimed };
+    },
+
+    /// Read encrypted FHE handles for a market's YES/NO totals
+    async getMarketHandles(
+      marketId: bigint
+    ): Promise<[Hex, Hex]> {
+      const handles = await publicClient.readContract({
+        address: contracts.mishaMarket,
+        abi: mishaMarketAbi,
+        functionName: "getMarketHandles",
+        args: [marketId],
+      });
+      return handles as [Hex, Hex];
+    },
+
+    /// Full resolve flow: resolve → decrypt via KMS → submit verified totals
+    async resolveAndDecrypt(
+      marketId: bigint,
+      result: number,
+      rpcUrl?: string
+    ): Promise<{
+      resolveTxHash: Hex;
+      submitTotalsTxHash: Hex | null;
+      decryptedYes: bigint | null;
+      decryptedNo: bigint | null;
+    }> {
+      // 1. Resolve market on-chain
+      const { request: resolveReq } = await publicClient.simulateContract({
+        account,
+        address: contracts.mishaMarket,
+        abi: mishaMarketAbi,
+        functionName: "resolveMarket",
+        args: [marketId, result],
+      });
+      const resolveTxHash = await walletClient.writeContract(resolveReq);
+      const resolveReceipt = await publicClient.waitForTransactionReceipt({
+        hash: resolveTxHash,
+      });
+      if (resolveReceipt.status === "reverted") {
+        throw new Error(`resolveMarket reverted: ${resolveTxHash}`);
+      }
+
+      // For INVALID result (3), skip decryption — users get refunds directly
+      if (result === 3) {
+        return {
+          resolveTxHash,
+          submitTotalsTxHash: null,
+          decryptedYes: null,
+          decryptedNo: null,
+        };
+      }
+
+      // 2. Read encrypted handles
+      const handles = await publicClient.readContract({
+        address: contracts.mishaMarket,
+        abi: mishaMarketAbi,
+        functionName: "getMarketHandles",
+        args: [marketId],
+      }) as [Hex, Hex];
+
+      // 3. KMS-verified decryption via Relayer SDK
+      const { createFhevmInstance } = await import("./client");
+      const network = rpcUrl ?? config.rpcUrl;
+      const instance = await createFhevmInstance({ network });
+      const results = await instance.publicDecrypt(handles);
+
+      const values = Object.values(results.clearValues);
+      const decryptedYes = BigInt(values[0] ?? 0);
+      const decryptedNo = BigInt(values[1] ?? 0);
+
+      // 4. Submit verified totals on-chain
+      const { request: submitReq } = await publicClient.simulateContract({
+        account,
+        address: contracts.mishaMarket,
+        abi: mishaMarketAbi,
+        functionName: "submitVerifiedTotals",
+        args: [
+          marketId,
+          results.abiEncodedClearValues,
+          results.decryptionProof,
+        ],
+      });
+      const submitTotalsTxHash = await walletClient.writeContract(submitReq);
+      const submitReceipt = await publicClient.waitForTransactionReceipt({
+        hash: submitTotalsTxHash,
+      });
+      if (submitReceipt.status === "reverted") {
+        throw new Error(
+          `submitVerifiedTotals reverted: ${submitTotalsTxHash}`
+        );
+      }
+
+      return {
+        resolveTxHash,
+        submitTotalsTxHash,
+        decryptedYes,
+        decryptedNo,
+      };
     },
 
     /// Get the admin signer address

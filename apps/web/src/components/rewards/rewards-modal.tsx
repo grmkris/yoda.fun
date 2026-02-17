@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useClaimableRewards } from "@/hooks/use-rewards";
-import { DailyStreakCard } from "./daily-streak-card";
 import { ReferralCard } from "./referral-card";
 
 export function RewardsModal({ compact = false }: { compact?: boolean }) {
@@ -91,7 +90,6 @@ export function RewardsModal({ compact = false }: { compact?: boolean }) {
         </DialogHeader>
 
         <div className="space-y-4 p-6">
-          <DailyStreakCard />
           <ReferralCard />
         </div>
       </DialogContent>

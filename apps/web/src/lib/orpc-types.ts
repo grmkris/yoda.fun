@@ -29,10 +29,6 @@ export type BetByIdResponse = ExtractSuccess<
 
 // Resolution
 export type MarketResult = NonNullable<Market["result"]>;
-export type MarketResolutionSources = Market["resolutionSources"];
-export type ResolutionSource = NonNullable<MarketResolutionSources>[0];
-export type ResolutionConfidence = Market["resolutionConfidence"];
-export type ResolutionReasoning = Market["resolutionReasoning"];
 
 // Leaderboard
 export type LeaderboardResponse = ExtractSuccess<
@@ -45,8 +41,3 @@ export type LeaderboardMetric = NonNullable<LeaderboardInput["metric"]>;
 // Input
 export type MarketListInput = Parameters<typeof client.market.list>[0];
 export type BetHistoryInput = Parameters<typeof client.bet.history>[0];
-export type PlaceBetInput = Parameters<typeof client.bet.place>[0];
-export type RecordOnChainBetInput = Parameters<
-  typeof client.bet.recordOnChain
->[0];
-export type FaucetMintInput = Parameters<typeof client.faucet.mint>[0];

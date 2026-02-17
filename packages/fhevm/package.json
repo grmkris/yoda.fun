@@ -22,8 +22,11 @@
     "@fhevm/host-contracts": "0.10.0",
     "@fhevm/mock-utils": "^0.4.0",
     "@fhevm/solidity": "^0.10.0",
+    "@openzeppelin/confidential-contracts": "^0.3.1",
+    "@openzeppelin/contracts": "^5.3.0",
     "encrypted-types": "^0.0.4",
-    "viem": "^2.46.0"
+    "viem": "^2.46.0",
+    "@zama-fhe/relayer-sdk": "0.4.0"
   },
   "devDependencies": {
     "@fhevm/hardhat-plugin": "^0.4.0",
@@ -35,7 +38,6 @@
     "@types/chai": "^4.3.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "^22.0.0",
-    "@zama-fhe/relayer-sdk": "0.4.0",
     "chai": "^4.3.0",
     "ethers": "^6.16.0",
     "hardhat": "^2.28.4",

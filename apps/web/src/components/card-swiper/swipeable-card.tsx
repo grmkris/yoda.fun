@@ -17,7 +17,7 @@ import {
 } from "react";
 import { useHaptic } from "@/hooks/use-haptic";
 
-export type SwipeDirection = "left" | "right" | "down";
+export type SwipeDirection = "left" | "right";
 
 export interface SwipeableCardRef {
   swipe: (direction: SwipeDirection) => void;
@@ -65,7 +65,6 @@ function getExitPosition(direction: SwipeDirection, exitDistance: number) {
   const positions = {
     right: { x: exitDistance, y: 0, rotate: 20 },
     left: { x: -exitDistance, y: 0, rotate: -20 },
-    down: { x: 0, y: exitDistance, rotate: 0 },
   };
   return positions[direction];
 }
@@ -87,7 +86,6 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const hasTriggeredThreshold = useRef({
       left: false,
       right: false,
-      down: false,
     });
     const dragOffset = useRef({ x: 0, y: 0 });
     const { vibrateOnThreshold, vibrateOnSwipe } = useHaptic();
@@ -107,16 +105,11 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
       [-config.horizontalThreshold, 0],
       [0.5, 0]
     );
-    const skipOpacity = useTransform(
-      y,
-      [0, config.downSwipeThreshold],
-      [0, 0.5]
-    );
     const rotate = useTransform(x, [-200, 200], [-15, 15]);
 
     // Haptic feedback when crossing thresholds
     const checkThresholds = useCallback(
-      (offsetX: number, offsetY: number) => {
+      (offsetX: number) => {
         if (
           offsetX > config.horizontalThreshold &&
           !hasTriggeredThreshold.current.right
@@ -129,21 +122,12 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         ) {
           hasTriggeredThreshold.current.left = true;
           vibrateOnThreshold();
-        } else if (
-          offsetY > config.downSwipeThreshold &&
-          !hasTriggeredThreshold.current.down
-        ) {
-          hasTriggeredThreshold.current.down = true;
-          vibrateOnThreshold();
         }
 
         // Reset if back within threshold
         if (Math.abs(offsetX) < config.horizontalThreshold * 0.8) {
           hasTriggeredThreshold.current.left = false;
           hasTriggeredThreshold.current.right = false;
-        }
-        if (offsetY < config.downSwipeThreshold * 0.8) {
-          hasTriggeredThreshold.current.down = false;
         }
       },
       [vibrateOnThreshold]
@@ -164,7 +148,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         vibrateOnSwipe();
 
         const exit = getExitPosition(direction, config.exitDistance);
-        const exitVelocity = direction === "down" ? velocity.y : velocity.x;
+        const exitVelocity = velocity.x;
 
         // Smoother tween for button clicks, spring for natural swipes
         const transition = isProgrammatic
@@ -192,7 +176,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const handleDrag = useCallback(
       (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         dragOffset.current = { x: info.offset.x, y: info.offset.y };
-        checkThresholds(info.offset.x, info.offset.y);
+        checkThresholds(info.offset.x);
       },
       [checkThresholds]
     );
@@ -200,15 +184,6 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const handleDragEnd = useCallback(
       (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         const { offset, velocity } = info;
-
-        // Check down swipe first (priority)
-        if (
-          offset.y > config.downSwipeThreshold ||
-          velocity.y > config.downVelocityThreshold
-        ) {
-          executeSwipe("down", velocity);
-          return;
-        }
 
         // Check horizontal swipes
         if (
@@ -235,7 +210,6 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         hasTriggeredThreshold.current = {
           left: false,
           right: false,
-          down: false,
         };
         dragOffset.current = { x: 0, y: 0 };
       },
@@ -250,7 +224,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         swipe: (direction: SwipeDirection) => {
           executeSwipe(
             direction,
-            { x: config.velocityThreshold, y: config.downVelocityThreshold },
+            { x: config.velocityThreshold, y: 0 },
             true // isProgrammatic - use smooth tween animation
           );
         },
@@ -313,17 +287,6 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
                 "linear-gradient(225deg, oklch(0.68 0.20 25 / 40%), oklch(0.68 0.20 25 / 20%))",
               boxShadow: "inset 0 0 80px oklch(0.68 0.20 25 / 40%)",
               opacity: noOpacity,
-            }}
-          />
-
-          {/* SKIP overlay */}
-          <motion.div
-            style={{
-              ...OVERLAY_BASE_STYLE,
-              background:
-                "linear-gradient(180deg, oklch(0.50 0.15 290 / 40%), oklch(0.50 0.15 290 / 20%))",
-              boxShadow: "inset 0 0 80px oklch(0.50 0.15 290 / 40%)",
-              opacity: skipOpacity,
             }}
           />
         </div>

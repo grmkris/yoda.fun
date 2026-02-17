@@ -17,18 +17,6 @@
       "types": "./dist/services/bet-service.d.ts",
       "default": "./src/services/bet-service.ts"
     },
-    "./services/balance-service": {
-      "types": "./dist/services/balance-service.d.ts",
-      "default": "./src/services/balance-service.ts"
-    },
-    "./services/settlement-service": {
-      "types": "./dist/services/settlement-service.d.ts",
-      "default": "./src/services/settlement-service.ts"
-    },
-    "./services/withdrawal-service": {
-      "types": "./dist/services/withdrawal-service.d.ts",
-      "default": "./src/services/withdrawal-service.ts"
-    },
     "./services/follow-service": {
       "types": "./dist/services/follow-service.d.ts",
       "default": "./src/services/follow-service.ts"
@@ -44,14 +32,6 @@
     "./services/reward-service": {
       "types": "./dist/services/reward-service.d.ts",
       "default": "./src/services/reward-service.ts"
-    },
-    "./services/points-service": {
-      "types": "./dist/services/points-service.d.ts",
-      "default": "./src/services/points-service.ts"
-    },
-    "./services/daily-service": {
-      "types": "./dist/services/daily-service.d.ts",
-      "default": "./src/services/daily-service.ts"
     }
   },
   "type": "module",
@@ -68,18 +48,16 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@yoda.fun/ai": "workspace:*",
     "@yoda.fun/auth": "workspace:*",
     "@yoda.fun/db": "workspace:*",
-    "@yoda.fun/erc8004": "workspace:*",
     "@yoda.fun/fhevm": "workspace:*",
     "@yoda.fun/logger": "workspace:*",
-    "@yoda.fun/queue": "workspace:*",
     "@yoda.fun/shared": "workspace:*",
     "@yoda.fun/storage": "workspace:*",
     "hono": "catalog:",
     "nanoid": "^5.1.6",
     "neverthrow": "^8.2.0",
+    "sharp": "^0.34.5",
     "posthog-node": "catalog:",
     "zod": "catalog:"
   }
