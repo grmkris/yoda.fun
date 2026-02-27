@@ -43,17 +43,18 @@ function getServerSnapshot(): VoteRecord {
 }
 
 export function useLocalVotes() {
-  const votes = useSyncExternalStore(subscribe, getStoreSnapshot, getServerSnapshot);
-
-  const recordVote = useCallback(
-    (marketId: string, vote: "YES" | "NO") => {
-      const current = getSnapshot();
-      current[marketId] = vote;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-      notify();
-    },
-    []
+  const votes = useSyncExternalStore(
+    subscribe,
+    getStoreSnapshot,
+    getServerSnapshot
   );
+
+  const recordVote = useCallback((marketId: string, vote: "YES" | "NO") => {
+    const current = getSnapshot();
+    current[marketId] = vote;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    notify();
+  }, []);
 
   const getVote = useCallback(
     (marketId: string): "YES" | "NO" | null => {

@@ -2,9 +2,9 @@
 
 import { AppKitButton } from "@reown/appkit/react";
 import {
+  Check,
   LogOut,
   Pencil,
-  Check,
   TrendingDown,
   TrendingUp,
   Trophy,
@@ -335,7 +335,7 @@ function StatsRow() {
         icon={<Wallet className="h-4 w-4" />}
         isLoading={isLoading}
         label="MISHA"
-        value={!isAuthenticated ? "—" : formattedBalance}
+        value={isAuthenticated ? formattedBalance : "—"}
       />
       <StatPill
         color={winRate >= 50 ? COLORS.teal : COLORS.orange}
@@ -348,15 +348,15 @@ function StatsRow() {
         }
         isLoading={isLoading}
         label="Win Rate"
-        secondary={!isAuthenticated ? undefined : `${wins}W / ${losses}L`}
-        value={!isAuthenticated ? "—" : `${winRate}%`}
+        secondary={isAuthenticated ? `${wins}W / ${losses}L` : undefined}
+        value={isAuthenticated ? `${winRate}%` : "—"}
       />
       <StatPill
         color={COLORS.yellow}
         icon={<Trophy className="h-4 w-4" />}
         isLoading={isLoading}
         label="Rank"
-        value={!isAuthenticated || !myRank?.rank ? "—" : `#${myRank.rank}`}
+        value={isAuthenticated && myRank?.rank ? `#${myRank.rank}` : "—"}
       />
     </div>
   );

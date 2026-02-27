@@ -13,7 +13,9 @@ interface CreateFhevmInstanceOptions {
  * Environment-aware FHEVM instance factory.
  * Uses @zama-fhe/relayer-sdk/node in Node.js, /web in browser.
  */
-export async function createFhevmInstance(options?: CreateFhevmInstanceOptions) {
+export async function createFhevmInstance(
+  options?: CreateFhevmInstanceOptions
+) {
   const isNode = typeof window === "undefined";
 
   const mod = isNode

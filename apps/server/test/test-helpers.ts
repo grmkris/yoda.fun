@@ -110,7 +110,7 @@ const SessionTokenRegex = /better-auth\.session_token=([^;]+)/;
 export async function createTestUserWithFunds(
   testSetup: TestSetup,
   name: string,
-  email: string,
+  email: string
 ): Promise<E2ETestUser> {
   const { deps } = testSetup;
   const password = "testtesttesttest";

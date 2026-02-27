@@ -29,9 +29,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
     const decryptedTotal = hasDecrypted
       ? (market.decryptedYesTotal ?? 0) + (market.decryptedNoTotal ?? 0)
       : 0;
-    const yesPercent = hasDecrypted && decryptedTotal > 0
-      ? Math.round(((market.decryptedYesTotal ?? 0) / decryptedTotal) * 100)
-      : 50;
+    const yesPercent =
+      hasDecrypted && decryptedTotal > 0
+        ? Math.round(((market.decryptedYesTotal ?? 0) / decryptedTotal) * 100)
+        : 50;
     const noPercent = 100 - yesPercent;
 
     const categoryColor =

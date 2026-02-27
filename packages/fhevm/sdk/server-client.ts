@@ -1,13 +1,13 @@
 import {
-  type Hex,
   createPublicClient,
   createWalletClient,
+  type Hex,
   http,
   parseEther,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
-import { mishaTokenAbi, mishaMarketAbi } from "./abis";
+import { mishaMarketAbi, mishaTokenAbi } from "./abis";
 import { FHEVM_CONFIG } from "./config";
 
 export interface FhevmClientConfig {
@@ -56,7 +56,8 @@ export function createFhevmClient(config: FhevmClientConfig) {
 
       // Parse MarketCreated event for marketId
       const marketCreatedLog = receipt.logs.find(
-        (log: { address: string; topics: string[] }) => log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
+        (log: { address: string; topics: string[] }) =>
+          log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
       );
 
       if (!marketCreatedLog?.topics[1]) {
@@ -176,7 +177,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
     },
 
     /// Get total market count
-    async getMarketCount(): Promise<bigint> {
+    getMarketCount(): Promise<bigint> {
       return publicClient.readContract({
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
@@ -197,9 +198,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
     },
 
     /// Read encrypted FHE handles for a market's YES/NO totals
-    async getMarketHandles(
-      marketId: bigint
-    ): Promise<[Hex, Hex]> {
+    async getMarketHandles(marketId: bigint): Promise<[Hex, Hex]> {
       const handles = await publicClient.readContract({
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
@@ -247,12 +246,12 @@ export function createFhevmClient(config: FhevmClientConfig) {
       }
 
       // 2. Read encrypted handles
-      const handles = await publicClient.readContract({
+      const handles = (await publicClient.readContract({
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
         functionName: "getMarketHandles",
         args: [marketId],
-      }) as [Hex, Hex];
+      })) as [Hex, Hex];
 
       // 3. KMS-verified decryption via Relayer SDK
       const { createFhevmInstance } = await import("./client");
@@ -281,9 +280,7 @@ export function createFhevmClient(config: FhevmClientConfig) {
         hash: submitTotalsTxHash,
       });
       if (submitReceipt.status === "reverted") {
-        throw new Error(
-          `submitVerifiedTotals reverted: ${submitTotalsTxHash}`
-        );
+        throw new Error(`submitVerifiedTotals reverted: ${submitTotalsTxHash}`);
       }
 
       return {

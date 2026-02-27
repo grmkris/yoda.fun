@@ -1,17 +1,11 @@
 "use client";
 
 import {
+  createFhevmInstance,
   FHEVM_CONFIG,
   type FhevmInstance,
-  createFhevmInstance,
 } from "@yoda.fun/fhevm/sdk";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 
 interface FhevmContextValue {
@@ -37,7 +31,7 @@ export function FhevmProvider({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
-    if (!isConnected || !walletClient || !address) {
+    if (!(isConnected && walletClient && address)) {
       setInstance(null);
       return;
     }

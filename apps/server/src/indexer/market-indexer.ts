@@ -1,16 +1,10 @@
 import type { Database } from "@yoda.fun/db";
 import { DB_SCHEMA } from "@yoda.fun/db";
 import { eq } from "@yoda.fun/db/drizzle";
-import { mishaMarketAbi, FHEVM_CONFIG } from "@yoda.fun/fhevm/sdk";
+import { FHEVM_CONFIG, mishaMarketAbi } from "@yoda.fun/fhevm/sdk";
 import type { Logger } from "@yoda.fun/logger";
 import { typeIdGenerator } from "@yoda.fun/shared/typeid";
-import {
-  createPublicClient,
-  http,
-  keccak256,
-  type Log,
-  toHex,
-} from "viem";
+import { createPublicClient, http, keccak256, type Log, toHex } from "viem";
 import { sepolia } from "viem/chains";
 import { fetchMarketMetadata } from "./metadata-fetcher";
 
@@ -68,9 +62,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
   }
 
   async function handleMarketCreated(log: Log): Promise<void> {
-    const marketId = log.topics[1]
-      ? BigInt(log.topics[1])
-      : null;
+    const marketId = log.topics[1] ? BigInt(log.topics[1]) : null;
 
     if (marketId === null) {
       return;
@@ -84,7 +76,8 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
       args: [marketId],
     });
 
-    const [title, metadataUri, votingEndsAt, resolutionDeadline] = onChainMarket;
+    const [title, metadataUri, votingEndsAt, resolutionDeadline] =
+      onChainMarket;
 
     // Fetch metadata from URI
     const metadata = metadataUri
@@ -129,7 +122,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
     const marketIdTopic = log.topics[1];
     const userTopic = log.topics[2];
 
-    if (!marketIdTopic || !userTopic) {
+    if (!(marketIdTopic && userTopic)) {
       return;
     }
 
@@ -145,10 +138,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
 
     const market = markets[0];
     if (!market) {
-      logger.warn(
-        { onChainMarketId },
-        "BetPlaced for unknown market"
-      );
+      logger.warn({ onChainMarketId }, "BetPlaced for unknown market");
       return;
     }
 
@@ -172,10 +162,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
         status: "ACTIVE",
       });
 
-      logger.info(
-        { onChainMarketId, userAddress },
-        "Indexed BetPlaced"
-      );
+      logger.info({ onChainMarketId, userAddress }, "Indexed BetPlaced");
     } catch {
       // Duplicate — already indexed
     }
@@ -216,10 +203,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
       })
       .where(eq(DB_SCHEMA.market.onChainMarketId, onChainMarketId));
 
-    logger.info(
-      { onChainMarketId, result },
-      "Indexed MarketResolved"
-    );
+    logger.info({ onChainMarketId, result }, "Indexed MarketResolved");
   }
 
   async function handleTotalsDecrypted(log: Log): Promise<void> {
@@ -257,7 +241,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
     const marketIdTopic = log.topics[1];
     const userTopic = log.topics[2];
 
-    if (!marketIdTopic || !userTopic) {
+    if (!(marketIdTopic && userTopic)) {
       return;
     }
 
@@ -280,17 +264,23 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
     await db
       .update(DB_SCHEMA.bet)
       .set({ claimed: true })
-      .where(
-        eq(DB_SCHEMA.bet.marketId, market.id)
-      );
+      .where(eq(DB_SCHEMA.bet.marketId, market.id));
 
-    logger.info(
-      { onChainMarketId, userAddress },
-      "Indexed PayoutClaimed"
-    );
+    logger.info({ onChainMarketId, userAddress }, "Indexed PayoutClaimed");
   }
 
-  async function processLogs(fromBlock: bigint, toBlock: bigint): Promise<void> {
+  const EVENT_HANDLERS: Record<string, (log: Log) => Promise<void>> = {
+    [EVENT_TOPICS.MarketCreated]: handleMarketCreated,
+    [EVENT_TOPICS.BetPlaced]: handleBetPlaced,
+    [EVENT_TOPICS.MarketResolved]: handleMarketResolved,
+    [EVENT_TOPICS.TotalsDecrypted]: handleTotalsDecrypted,
+    [EVENT_TOPICS.PayoutClaimed]: handlePayoutClaimed,
+  };
+
+  async function processLogs(
+    fromBlock: bigint,
+    toBlock: bigint
+  ): Promise<void> {
     const logs = await publicClient.getLogs({
       address: contracts.mishaMarket,
       fromBlock,
@@ -303,23 +293,16 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
         continue;
       }
 
-      try {
-        if (eventSig === EVENT_TOPICS.MarketCreated) {
-          await handleMarketCreated(log);
-        } else if (eventSig === EVENT_TOPICS.BetPlaced) {
-          await handleBetPlaced(log);
-        } else if (eventSig === EVENT_TOPICS.MarketResolved) {
-          await handleMarketResolved(log);
-        } else if (eventSig === EVENT_TOPICS.TotalsDecrypted) {
-          await handleTotalsDecrypted(log);
-        } else if (eventSig === EVENT_TOPICS.PayoutClaimed) {
-          await handlePayoutClaimed(log);
+      const handler = EVENT_HANDLERS[eventSig];
+      if (handler) {
+        try {
+          await handler(log);
+        } catch (error) {
+          logger.error(
+            { error, txHash: log.transactionHash, eventSig },
+            "Error processing event"
+          );
         }
-      } catch (error) {
-        logger.error(
-          { error, txHash: log.transactionHash, eventSig },
-          "Error processing event"
-        );
       }
     }
   }
@@ -374,7 +357,7 @@ export function createMarketIndexer(config: MarketIndexerConfig) {
       await poll();
     },
 
-    async close(): Promise<void> {
+    close(): void {
       running = false;
       if (pollTimer) {
         clearTimeout(pollTimer);
@@ -391,7 +374,9 @@ function getEventTopic(signature: string): `0x${string}` {
 
 // Precompute event topics
 const EVENT_TOPICS = {
-  MarketCreated: getEventTopic("MarketCreated(uint256,string,string,uint64,uint64)"),
+  MarketCreated: getEventTopic(
+    "MarketCreated(uint256,string,string,uint64,uint64)"
+  ),
   BetPlaced: getEventTopic("BetPlaced(uint256,address)"),
   MarketResolved: getEventTopic("MarketResolved(uint256,uint8)"),
   TotalsDecrypted: getEventTopic("TotalsDecrypted(uint256,uint64,uint64)"),

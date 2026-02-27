@@ -1,10 +1,15 @@
 "use client";
 
 import { confidentialMishaAbi } from "@yoda.fun/fhevm/sdk";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useAccount,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 import { useFhevm } from "@/components/fhevm-provider";
 
-const MAX_UINT48 = 281474976710655; // 2^48 - 1
+const MAX_UINT48 = 281_474_976_710_655; // 2^48 - 1
 
 /**
  * Check if MishaMarket is an approved ERC-7984 operator for the current user.
@@ -21,7 +26,8 @@ export function useOperatorApproval() {
     functionName: "isOperator",
     args: address ? [address, contracts.mishaMarket] : undefined,
     query: {
-      enabled: !!address && !!contracts.confidentialMisha && !!contracts.mishaMarket,
+      enabled:
+        !!address && !!contracts.confidentialMisha && !!contracts.mishaMarket,
     },
   });
 

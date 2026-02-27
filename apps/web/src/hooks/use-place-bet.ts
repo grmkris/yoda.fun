@@ -1,11 +1,11 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   confidentialMishaAbi,
   encryptBet,
   mishaMarketAbi,
 } from "@yoda.fun/fhevm/sdk";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { bytesToHex } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
@@ -13,7 +13,7 @@ import { useFhevm } from "@/components/fhevm-provider";
 import { useLocalVotes } from "@/hooks/use-local-votes";
 import { orpc } from "@/utils/orpc";
 
-const MAX_UINT48 = 281474976710655; // 2^48 - 1
+const MAX_UINT48 = 281_474_976_710_655; // 2^48 - 1
 const CMISHA_DECIMALS = 6;
 
 interface PlaceBetInput {
@@ -34,7 +34,7 @@ export function usePlaceBet() {
 
   return useMutation({
     mutationFn: async (input: PlaceBetInput) => {
-      if (!instance || !address || !walletClient || !publicClient) {
+      if (!(instance && address && walletClient && publicClient)) {
         throw new Error("Wallet not connected or FHEVM not initialized");
       }
 

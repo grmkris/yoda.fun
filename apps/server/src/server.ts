@@ -14,12 +14,12 @@ import { S3Client } from "bun";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { env } from "@/env";
+import { createMarketIndexer } from "@/indexer/market-indexer";
 import {
   captureException,
   createPostHogClient,
   shutdownPostHog,
 } from "@/lib/posthog";
-import { createMarketIndexer } from "@/indexer/market-indexer";
 import { handleMcpRequest } from "@/mcp/transport";
 
 const logger = createLogger({
@@ -68,7 +68,8 @@ const storage = createStorageClient({
 
 // FHEVM client for on-chain prediction markets
 const fhevmClient = createFhevmClient({
-  privateKey: (env.FHEVM_PRIVATE_KEY ?? env.YODA_AGENT_PRIVATE_KEY) as `0x${string}`,
+  privateKey: (env.FHEVM_PRIVATE_KEY ??
+    env.YODA_AGENT_PRIVATE_KEY) as `0x${string}`,
   rpcUrl: env.FHEVM_RPC_URL,
 });
 logger.info({ address: fhevmClient.getAddress() }, "FHEVM client initialized");
@@ -151,7 +152,10 @@ app.use("/*", async (c, next) => {
   });
 
   if (rpcResult.matched) {
-    return c.newResponse(rpcResult.response.body as ReadableStream, rpcResult.response);
+    return c.newResponse(
+      rpcResult.response.body as ReadableStream,
+      rpcResult.response
+    );
   }
 
   const apiResult = await apiHandler.handle(c.req.raw, {
@@ -160,7 +164,10 @@ app.use("/*", async (c, next) => {
   });
 
   if (apiResult.matched) {
-    return c.newResponse(apiResult.response.body as ReadableStream, apiResult.response);
+    return c.newResponse(
+      apiResult.response.body as ReadableStream,
+      apiResult.response
+    );
   }
 
   await next();

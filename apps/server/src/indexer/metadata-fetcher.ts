@@ -1,8 +1,8 @@
-import {
-  marketMetadataSchema,
-  type MarketMetadata,
-} from "@yoda.fun/shared/market-metadata";
 import type { Logger } from "@yoda.fun/logger";
+import {
+  type MarketMetadata,
+  marketMetadataSchema,
+} from "@yoda.fun/shared/market-metadata";
 
 export async function fetchMarketMetadata(
   metadataUri: string,
@@ -36,10 +36,7 @@ export async function fetchMarketMetadata(
 
     return parsed.data;
   } catch (error) {
-    logger.error(
-      { metadataUri, error },
-      "Error fetching market metadata"
-    );
+    logger.error({ metadataUri, error }, "Error fetching market metadata");
     return null;
   }
 }

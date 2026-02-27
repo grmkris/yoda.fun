@@ -1,7 +1,7 @@
-import type { MishaToken } from "../types";
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import type { MishaToken } from "../types";
 
 const e = (n: number) => ethers.parseEther(n.toString());
 

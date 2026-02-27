@@ -18,7 +18,9 @@
       "!**/.alchemy",
       "!**/.svelte-kit",
       "!**/wrangler.jsonc",
-      "!**/.source"
+      "!**/.source",
+      "!packages/fhevm/test",
+      "!packages/fhevm/deploy"
     ]
   },
   "extends": [

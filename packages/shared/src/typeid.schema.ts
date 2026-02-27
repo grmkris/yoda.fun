@@ -32,7 +32,6 @@ export const idTypesMapNameToPrefix = {
   rewardClaim: "rwc",
   referral: "ref",
   dailyState: "dly",
-
 } as const;
 
 type IdTypesMapNameToPrefix = typeof idTypesMapNameToPrefix;
@@ -165,4 +164,3 @@ export type ReferralId = z.infer<typeof ReferralId>;
 
 export const DailyStateId = typeIdValidator("dailyState");
 export type DailyStateId = z.infer<typeof DailyStateId>;
-

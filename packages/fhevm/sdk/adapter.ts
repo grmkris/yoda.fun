@@ -5,10 +5,12 @@ import type { WalletClient } from "viem";
  * Bridges a viem/wagmi WalletClient to an ethers JsonRpcSigner.
  * Required because @zama-fhe/relayer-sdk only accepts ethers signers.
  */
-export function walletClientToSigner(walletClient: WalletClient): JsonRpcSigner {
+export function walletClientToSigner(
+  walletClient: WalletClient
+): JsonRpcSigner {
   const { account, chain, transport } = walletClient;
 
-  if (!account || !chain) {
+  if (!(account && chain)) {
     throw new Error("WalletClient must have account and chain");
   }
 

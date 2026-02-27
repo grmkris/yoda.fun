@@ -1,8 +1,8 @@
-import type { ConfidentialMisha, MishaToken } from "../types";
 import { FhevmType } from "@fhevm/hardhat-plugin";
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, fhevm } from "hardhat";
+import type { ConfidentialMisha, MishaToken } from "../types";
 
 /// Convert whole tokens to wei (18 decimals)
 const e = (n: number) => ethers.parseEther(n.toString());
@@ -12,7 +12,7 @@ const CMISHA_DECIMALS = 6;
 const cMishaUnits = (n: number) => n * 10 ** CMISHA_DECIMALS;
 
 /// ERC-7984 max uint48 for operator approval
-const MAX_UINT48 = 281474976710655;
+const MAX_UINT48 = 281_474_976_710_655;
 
 interface Signers {
   deployer: HardhatEthersSigner;
@@ -39,8 +39,12 @@ async function getEncryptedBalance(
   wrapperAddress: string,
   user: HardhatEthersSigner
 ): Promise<bigint> {
-  const encBalance = await wrapper.connect(user).confidentialBalanceOf(user.address);
-  if (encBalance === ethers.ZeroHash) return 0n;
+  const encBalance = await wrapper
+    .connect(user)
+    .confidentialBalanceOf(user.address);
+  if (encBalance === ethers.ZeroHash) {
+    return 0n;
+  }
   return fhevm.userDecryptEuint(
     FhevmType.euint64,
     encBalance,
@@ -159,7 +163,9 @@ describe("ConfidentialMisha (ERC-7984 Wrapper)", () => {
 
     it("should allow operator to transfer on behalf of holder", async () => {
       // Alice sets bob as operator
-      await wrapper.connect(signers.alice).setOperator(signers.bob.address, MAX_UINT48);
+      await wrapper
+        .connect(signers.alice)
+        .setOperator(signers.bob.address, MAX_UINT48);
 
       expect(
         await wrapper.isOperator(signers.alice.address, signers.bob.address)

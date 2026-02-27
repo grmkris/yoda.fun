@@ -22,7 +22,7 @@ export interface DecryptInstance {
  * Decrypt an encrypted balance (euint64) using the user's signer.
  * Only works if the user has ACL permission on the handle.
  */
-export async function decryptBalance(
+export function decryptBalance(
   instance: DecryptInstance,
   handle: bigint | string,
   contractAddress: string,
@@ -34,7 +34,7 @@ export async function decryptBalance(
 /**
  * Decrypt an encrypted vote (ebool) using the user's signer.
  */
-export async function decryptVote(
+export function decryptVote(
   instance: DecryptInstance,
   handle: bigint | string,
   contractAddress: string,

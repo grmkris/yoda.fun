@@ -19,11 +19,17 @@ export function useDecryptCmisha() {
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const zeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
-  const hasHandle = encryptedHandle != null && String(encryptedHandle) !== zeroHash && BigInt(encryptedHandle) !== BigInt(0);
+  const zeroHash =
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const hasHandle =
+    encryptedHandle != null &&
+    String(encryptedHandle) !== zeroHash &&
+    BigInt(encryptedHandle) !== BigInt(0);
 
   const decrypt = useCallback(async () => {
-    if (!instance || !walletClient || !encryptedHandle || !hasHandle) return;
+    if (!(instance && walletClient && encryptedHandle && hasHandle)) {
+      return;
+    }
 
     setIsDecrypting(true);
     setError(null);
@@ -34,7 +40,7 @@ export function useDecryptCmisha() {
         instance as unknown as DecryptInstance,
         encryptedHandle,
         contracts.confidentialMisha,
-        signer,
+        signer
       );
       setDecryptedBalance(result);
     } catch (err) {
@@ -42,7 +48,13 @@ export function useDecryptCmisha() {
     } finally {
       setIsDecrypting(false);
     }
-  }, [instance, walletClient, encryptedHandle, hasHandle, contracts.confidentialMisha]);
+  }, [
+    instance,
+    walletClient,
+    encryptedHandle,
+    hasHandle,
+    contracts.confidentialMisha,
+  ]);
 
   return { decryptedBalance, decrypt, isDecrypting, error, hasHandle };
 }

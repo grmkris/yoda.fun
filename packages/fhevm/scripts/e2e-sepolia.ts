@@ -33,17 +33,17 @@ import { mnemonicToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import {
   confidentialMishaAbi,
-  mishaMarketAbi,
-  mishaTokenAbi,
-  FHEVM_CONFIG,
   createFhevmInstance,
   encryptBet,
+  FHEVM_CONFIG,
+  mishaMarketAbi,
+  mishaTokenAbi,
 } from "../sdk";
 
-const MNEMONIC = process.env.MNEMONIC!;
-const INFURA_API_KEY = process.env.INFURA_API_KEY!;
+const MNEMONIC = process.env.MNEMONIC ?? "";
+const INFURA_API_KEY = process.env.INFURA_API_KEY ?? "";
 
-if (!MNEMONIC || !INFURA_API_KEY) {
+if (!(MNEMONIC && INFURA_API_KEY)) {
   console.error("Missing MNEMONIC or INFURA_API_KEY in .env");
   process.exit(1);
 }
@@ -56,8 +56,8 @@ const MINT_AMOUNT = parseEther("1000"); // 1000 MISHA per player
 const WRAP_AMOUNT = parseEther("500"); // 500 MISHA in wei → wrap(to, weiAmount)
 const CMISHA_DECIMALS = 6;
 const BET_AMOUNT = 100 * 10 ** CMISHA_DECIMALS; // 100 cMISHA in 6-decimal units
-const ETH_FUND_AMOUNT = parseEther("0.005"); // gas money for FHE txs
-const MAX_UINT48 = 281474976710655; // 2^48 - 1
+const ETH_FUND_AMOUNT = parseEther("0.05"); // gas money for FHE txs (need more for coprocessor ops)
+const MAX_UINT48 = 281_474_976_710_655; // 2^48 - 1
 
 // Player betting strategy: first 3 bet YES, last 2 bet NO
 const PLAYER_VOTES = [true, true, true, false, false] as const;
@@ -104,7 +104,7 @@ async function step(label: string, fn: () => Promise<void>) {
     await fn();
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    const short = msg.length > 300 ? `${msg.slice(0, 300)}...` : msg;
+    const short = msg.length > 1500 ? `${msg.slice(0, 1500)}...` : msg;
     console.log(`  FAILED: ${short}`);
   }
 }
@@ -115,15 +115,19 @@ async function main() {
   console.log("Accounts:");
   console.log(`  admin:   ${admin.address}`);
   for (const p of players) {
-    console.log(`  ${p.name.padEnd(8)} ${p.account.address} (votes ${p.vote ? "YES" : "NO"})`);
+    console.log(
+      `  ${p.name.padEnd(8)} ${p.account.address} (votes ${p.vote ? "YES" : "NO"})`
+    );
   }
 
-  console.log(`\nContracts:`);
+  console.log("\nContracts:");
   console.log(`  MishaToken:        ${contracts.mishaToken}`);
   console.log(`  ConfidentialMisha: ${contracts.confidentialMisha}`);
   console.log(`  MishaMarket:       ${contracts.mishaMarket}`);
 
-  const adminBalance = await publicClient.getBalance({ address: admin.address });
+  const adminBalance = await publicClient.getBalance({
+    address: admin.address,
+  });
   console.log(`\nAdmin ETH: ${formatEther(adminBalance)} ETH`);
 
   // ============================================================
@@ -240,8 +244,7 @@ async function main() {
 
     // Parse marketId from MarketCreated event
     const eventLog = receipt.logs.find(
-      (log) =>
-        log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
+      (log) => log.address.toLowerCase() === contracts.mishaMarket.toLowerCase()
     );
     if (eventLog?.topics[1]) {
       marketId = BigInt(eventLog.topics[1]);
@@ -253,6 +256,7 @@ async function main() {
     console.log("\nCannot proceed without market ID");
     return;
   }
+  const mid = marketId;
 
   // ============================================================
   // Step 6: Players place encrypted bets (amounts in 6-decimal units)
@@ -278,11 +282,12 @@ async function main() {
         abi: mishaMarketAbi,
         functionName: "placeBet",
         args: [
-          marketId!,
+          mid,
           bytesToHex(encrypted.encryptedVote),
           bytesToHex(encrypted.encryptedAmount),
           bytesToHex(encrypted.inputProof),
         ],
+        gas: 5_000_000n,
       });
       await waitTx(hash, `${p.name} bet ${p.vote ? "YES" : "NO"} (100 cMISHA)`);
     }
@@ -296,10 +301,19 @@ async function main() {
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "getMarket",
-      args: [marketId!],
+      args: [mid],
     });
     const [title, , , , status, result, betCount] = market as [
-      string, string, bigint, bigint, number, number, number, bigint, bigint, boolean
+      string,
+      string,
+      bigint,
+      bigint,
+      number,
+      number,
+      number,
+      bigint,
+      bigint,
+      boolean,
     ];
     console.log(`  Title: ${title}`);
     console.log(`  Status: ${status} (0=Active)`);
@@ -316,7 +330,7 @@ async function main() {
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "resolveMarket",
-      args: [marketId!, 1],
+      args: [mid, 1],
     });
     await waitTx(hash, "Market resolved to YES");
   });
@@ -330,7 +344,7 @@ async function main() {
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "getMarketHandles",
-      args: [marketId!],
+      args: [mid],
     })) as [`0x${string}`, `0x${string}`];
 
     console.log(`  YES handle: ${handles[0].slice(0, 18)}...`);
@@ -348,7 +362,7 @@ async function main() {
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "submitVerifiedTotals",
-      args: [marketId!, results.abiEncodedClearValues, results.decryptionProof],
+      args: [mid, results.abiEncodedClearValues, results.decryptionProof],
     });
     await waitTx(hash, "Verified totals submitted with KMS proof");
   });
@@ -364,9 +378,13 @@ async function main() {
         address: contracts.mishaMarket,
         abi: mishaMarketAbi,
         functionName: "claimPayout",
-        args: [marketId!],
+        args: [mid],
+        gas: 5_000_000n,
       });
-      await waitTx(hash, `${p.name} claimed payout (voted ${p.vote ? "YES" : "NO"})`);
+      await waitTx(
+        hash,
+        `${p.name} claimed payout (voted ${p.vote ? "YES" : "NO"})`
+      );
     }
   });
 
@@ -378,15 +396,38 @@ async function main() {
       address: contracts.mishaMarket,
       abi: mishaMarketAbi,
       functionName: "getMarket",
-      args: [marketId!],
+      args: [mid],
     });
-    const [title, , , , status, result, betCount, yesTotal, noTotal, decrypted] =
-      market as [string, string, bigint, bigint, number, number, number, bigint, bigint, boolean];
+    const [
+      title,
+      ,
+      ,
+      ,
+      status,
+      result,
+      betCount,
+      yesTotal,
+      noTotal,
+      decrypted,
+    ] = market as [
+      string,
+      string,
+      bigint,
+      bigint,
+      number,
+      number,
+      number,
+      bigint,
+      bigint,
+      boolean,
+    ];
     console.log(`  Title: ${title}`);
     console.log(`  Status: ${status} (1=Resolved)`);
     console.log(`  Result: ${result} (1=Yes)`);
     console.log(`  Bets: ${betCount}`);
-    console.log(`  Totals: YES=${yesTotal} NO=${noTotal} (decrypted=${decrypted})`);
+    console.log(
+      `  Totals: YES=${yesTotal} NO=${noTotal} (decrypted=${decrypted})`
+    );
 
     console.log("\n  MISHA balances after claiming:");
     for (const p of players) {

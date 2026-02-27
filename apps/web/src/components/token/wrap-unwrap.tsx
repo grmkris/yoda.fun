@@ -2,16 +2,16 @@
 
 import {
   confidentialMishaAbi,
-  mishaTokenAbi,
   encryptAmount,
+  mishaTokenAbi,
 } from "@yoda.fun/fhevm/sdk";
 import { useState } from "react";
+import { bytesToHex, parseEther } from "viem";
 import {
   useAccount,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
-import { bytesToHex, parseEther } from "viem";
 import { useFhevm } from "@/components/fhevm-provider";
 import { Button } from "@/components/ui/button";
 import { useMishaBalance } from "@/hooks/use-misha-balance";
@@ -37,7 +37,7 @@ export function WrapUnwrap() {
     hash: action.data,
   });
 
-  if (!isConnected || !address) {
+  if (!(isConnected && address)) {
     return null;
   }
 
@@ -51,7 +51,9 @@ export function WrapUnwrap() {
     actionReceipt.isLoading;
 
   const handleWrap = () => {
-    if (!address || !parsedWrapAmount) return;
+    if (!(address && parsedWrapAmount)) {
+      return;
+    }
 
     // Approve cMISHA contract to spend MISHA (amount in wei)
     approve.writeContract({
@@ -63,7 +65,9 @@ export function WrapUnwrap() {
   };
 
   const handleUnwrap = async () => {
-    if (!instance || !address || !amount) return;
+    if (!(instance && address && amount)) {
+      return;
+    }
 
     // Encrypt the unwrap amount (in 6-decimal cMISHA units)
     const unwrapUnits = Number(amount) * 1e6;
@@ -109,7 +113,9 @@ export function WrapUnwrap() {
   };
 
   const formatBalance = (value: bigint | undefined) => {
-    if (value === undefined) return "—";
+    if (value === undefined) {
+      return "—";
+    }
     return (Number(value) / 1e18).toFixed(2);
   };
 
@@ -144,7 +150,7 @@ export function WrapUnwrap() {
 
       <div className="flex gap-2">
         <input
-          className="bg-input h-9 flex-1 rounded-md border px-3 text-sm"
+          className="h-9 flex-1 rounded-md border bg-input px-3 text-sm"
           disabled={isPending}
           onChange={(e) => setAmount(e.target.value)}
           placeholder={mode === "wrap" ? "MISHA amount" : "cMISHA amount"}
@@ -152,20 +158,22 @@ export function WrapUnwrap() {
           value={amount}
         />
         <Button
-          disabled={isPending || !amount || (mode === "wrap" && parsedWrapAmount === BigInt(0))}
+          disabled={
+            isPending ||
+            !amount ||
+            (mode === "wrap" && parsedWrapAmount === BigInt(0))
+          }
           onClick={handleSubmit}
           size="sm"
         >
-          {isPending
-            ? "Processing..."
-            : mode === "wrap"
-              ? "Wrap → cMISHA"
-              : "Unwrap → MISHA"}
+          {isPending && "Processing..."}
+          {!isPending && mode === "wrap" && "Wrap → cMISHA"}
+          {!isPending && mode !== "wrap" && "Unwrap → MISHA"}
         </Button>
       </div>
 
       {actionReceipt.isSuccess && (
-        <p className="text-sm text-green-500">
+        <p className="text-green-500 text-sm">
           {mode === "wrap"
             ? "Wrapped successfully!"
             : "Unwrap requested! Finalization pending after decryption."}

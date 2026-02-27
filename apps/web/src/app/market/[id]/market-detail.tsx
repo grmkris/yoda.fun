@@ -548,8 +548,8 @@ export function MarketDetail({ marketId }: MarketDetailProps) {
       {/* Decrypted totals (only shown after resolution) */}
       {isResolved && hasDecryptedTotals && (
         <DecryptedTotals
-          noTotal={market.decryptedNoTotal!}
-          yesTotal={market.decryptedYesTotal!}
+          noTotal={market.decryptedNoTotal ?? 0}
+          yesTotal={market.decryptedYesTotal ?? 0}
         />
       )}
 
